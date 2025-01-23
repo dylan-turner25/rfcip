@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(rsob)
+library(rfcip)
 
-test_check("rsob")
+test_check("rfcip")
