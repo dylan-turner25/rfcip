@@ -2,7 +2,7 @@ Package: rfcip
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9003
 Authors@R: 
-    person("Dylan", "Turner", , "dylan.turner25@outlook.com", role = c("aut", "cre"),
+    person("Dylan", "Turner", , "dylan.turner3@outlook.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0915-7384"))
 Description: This package is a wrapper for RMA's summary of business app. The package helps users get data on the Federal Crop Insurance Program in an easy to use format. 
 License: CC0
