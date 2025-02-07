@@ -50,6 +50,9 @@ dis-aggregated by year only where. The function call
 \code{get_sob_data(year = 2023:2024, group_by = c("insurance_plan","cov_lvl"))} will
 return the same data, but further dissagregated by insurance plan and coverage level}
 }
+\value{
+Returns a tibble
+}
 \description{
 Downloads and imports data from RMA's summary of buisness app
 }
@@ -57,6 +60,6 @@ Downloads and imports data from RMA's summary of buisness app
 \dontrun{
 get_sob_data(year = 2023)
 get_sob_data(year = 2015:2020, crop = "corn")
-get_sob_data(year = 2022, crop = c(41,81), group_by = "state")
+get_sob_data(year = 2022, crop = c(41, 81), group_by = "state")
 }
 }

@@ -1,4 +1,3 @@
-
 #' Downloads and imports data from RMA's summary of buisness app
 #'
 #' @param year a numeric value (either single value or a vector of values) that indicate the crop year (ex: `2024` or `c(2022,2023,2024)`)
@@ -18,7 +17,7 @@
 #' dis-aggregated by year only where. The function call
 #' `get_sob_data(year = 2023:2024, group_by = c("insurance_plan","cov_lvl"))` will
 #'  return the same data, but further dissagregated by insurance plan and coverage level
-#' @return
+#' @return Returns a tibble
 #' @export
 #' @importFrom writexl write_xlsx
 #' @importFrom utils download.file
@@ -27,53 +26,49 @@
 #' \dontrun{
 #' get_sob_data(year = 2023)
 #' get_sob_data(year = 2015:2020, crop = "corn")
-#' get_sob_data(year = 2022, crop = c(41,81), group_by = "state")
+#' get_sob_data(year = 2022, crop = c(41, 81), group_by = "state")
 #' }
 #' @source Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
 
 
-
-get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NULL, delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL,comm_cat = "B",dest_file = NULL, group_by = NULL){
-
+get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NULL, delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", dest_file = NULL, group_by = NULL) {
   # initialize
   full_data <- NULL
 
   # loop over years to avoid server timeout issues.
-  for(y in year){
-
+  for (y in year) {
     message(cat("Downloading data for", y))
 
-    url <- get_url(year = y,
-                   crop = crop,
-                   delivery_type = delivery_type,
-                   insurance_plan = insurance_plan,
-                   state = state,
-                   county = county,
-                   fips = fips,
-                   cov_lvl = cov_lvl,
-                   comm_cat = comm_cat,
-                   group_by = group_by)
+    url <- get_url(
+      year = y,
+      crop = crop,
+      delivery_type = delivery_type,
+      insurance_plan = insurance_plan,
+      state = state,
+      county = county,
+      fips = fips,
+      cov_lvl = cov_lvl,
+      comm_cat = comm_cat,
+      group_by = group_by
+    )
 
 
     temp_data <- tempfile(fileext = ".xlsx")
-    utils::download.file(url, destfile = temp_data,mode = "wb", quiet = T)
+    
+    utils::download.file(url, destfile = temp_data, mode = "wb", quiet = T)
 
     data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data)))
 
-    if(colnames(data)[2] == "x2"){
+    if (colnames(data)[2] == "x2") {
       data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data, skip = 1)))
     }
 
     full_data <- dplyr::bind_rows(full_data, data)
-
   }
 
-  if(is.null(dest_file)){
-  return(full_data)
+  if (is.null(dest_file)) {
+    return(full_data)
   } else {
     writexl::write_xlsx(full_data, path = dest_file)
   }
 }
-
-
-

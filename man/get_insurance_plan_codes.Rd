@@ -29,6 +29,6 @@ get_insurance_plan_codes()
 get_insurance_plan_codes(year = 2023, plan = "yp")
 get_insurance_plan_codes(year = 2023, plan = 1)
 get_insurance_plan_codes(year = 2023, plan = "yield protection")
-get_insurance_plan_codes(year = 2018:2022, plan = c("yp","rp"))
+get_insurance_plan_codes(year = 2018:2022, plan = c("yp", "rp"))
 }
 }

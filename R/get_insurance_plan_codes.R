@@ -12,61 +12,59 @@
 #' get_insurance_plan_codes(year = 2023, plan = "yp")
 #' get_insurance_plan_codes(year = 2023, plan = 1)
 #' get_insurance_plan_codes(year = 2023, plan = "yield protection")
-#' get_insurance_plan_codes(year = 2018:2022, plan = c("yp","rp"))
+#' get_insurance_plan_codes(year = 2018:2022, plan = c("yp", "rp"))
 #' }
 #' @source Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
-get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y")),plan = NULL){
-
+get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y")), plan = NULL) {
   # url for all commodities with commodity codes
-  url <- paste0("https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?CY=",paste(year,collapse = ","),"&ORD=CY,IP&CC=S&VisibleColumns=CommodityYear,InsurancePlanCode,InsurancePlanName,InsurancePlanAbbreviation&SortField=&SortDir=")
+  url <- paste0("https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?CY=", paste(year, collapse = ","), "&ORD=CY,IP&CC=S&VisibleColumns=CommodityYear,InsurancePlanCode,InsurancePlanName,InsurancePlanAbbreviation&SortField=&SortDir=")
 
   # set temporary directory
   dir <- tempdir()
 
   # create a file path for the crop codes file in the temporary directory
-  data_path <- paste0(dir,"/plan_codes.xlsx")
+  data_path <- paste0(dir, "/plan_codes.xlsx")
 
   # download the file to the temporary directory
-  download.file(url, destfile = data_path,mode = "wb")
+  download.file(url, destfile = data_path, mode = "wb")
 
 
   # load data
   data <- suppressMessages(janitor::clean_names(readxl::read_excel(data_path)))
 
   # check for warnings that appear in the header, if so, need to skip one line
-  if(colnames(data)[2] == "x2"){
+  if (colnames(data)[2] == "x2") {
     data <- suppressMessages(janitor::clean_names(readxl::read_excel(data_path, skip = 1)))
   }
 
   # filter to desired columns
-  data <- data[,c("commodity_year","insurance_plan_code","insurance_plan","insurance_plan_abbrv")]
+  data <- data[, c("commodity_year", "insurance_plan_code", "insurance_plan", "insurance_plan_abbrv")]
 
   # if no plan is entered, return all plans
-  if(is.null(plan)){
+  if (is.null(plan)) {
     return(data)
   }
 
   # check entered plan against insurance plan abbreviation
-  to_return <- data[which(tolower(data$insurance_plan_abbrv) %in% tolower(plan)),]
-  if(nrow(to_return) > 0){
+  to_return <- data[which(tolower(data$insurance_plan_abbrv) %in% tolower(plan)), ]
+  if (nrow(to_return) > 0) {
     return(to_return)
   }
 
   # check entered plan against full insurance plan names
-  to_return <- data[which(tolower(data$insurance_plan) %in% tolower(plan)),]
-  if(nrow(to_return) > 0){
+  to_return <- data[which(tolower(data$insurance_plan) %in% tolower(plan)), ]
+  if (nrow(to_return) > 0) {
     return(to_return)
   }
 
   # check entered plan against insurance plan codes
-  to_return <- suppressWarnings(data[which(as.numeric(data$insurance_plan_code) %in% as.numeric(plan)),])
-  if(nrow(to_return) > 0){
+  to_return <- suppressWarnings(data[which(as.numeric(data$insurance_plan_code) %in% as.numeric(plan)), ])
+  if (nrow(to_return) > 0) {
     return(to_return)
   }
 
   # if still no matches, issue warning and return all plan codes
-  if(nrow(to_return) == 0){
+  if (nrow(to_return) == 0) {
     stop("One or more of the entered insurance plan codes or insurance plan names is not valid. Enter `get_insurance_plan_codes()` to see all plans and codes.")
   }
 }
-

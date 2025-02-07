@@ -24,8 +24,8 @@ Lookup crop codes for FCIP commodities
 \dontrun{
 get_crop_codes(year = 2023, comm = "corn")
 get_crop_codes(year = 2024, comm = 41)
-get_crop_codes(comm = c("corn","SOYbEaNs"))
-get_crop_codes(comm = c(41,81))
+get_crop_codes(comm = c("corn", "SOYbEaNs"))
+get_crop_codes(comm = c(41, 81))
 get_crop_codes()
 }
 
