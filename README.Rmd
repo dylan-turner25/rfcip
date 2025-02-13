@@ -34,7 +34,7 @@ devtools::install_github("dylan-turner25/rfcip")
 This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
-library(rfcip)
+#library(rfcip)
 ## basic example code
 ```
 

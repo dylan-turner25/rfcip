@@ -21,7 +21,7 @@ devtools::install_github("dylan-turner25/rfcip")
 ## Example
 
 This is a basic example which shows you how to solve a common problem:
-
+ 
 ``` r
 library(rfcip)
 ## basic example code

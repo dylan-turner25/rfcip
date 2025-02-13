@@ -2,25 +2,25 @@
 % Please edit documentation in R/get_col_data.R
 \name{get_col_data}
 \alias{get_col_data}
-\title{Builds a cause of loss dataset using data from the specified years}
+\title{Builds a cause of loss data set using data from the specified years}
 \usage{
 get_col_data(
-  years = c(as.numeric(format(Sys.Date(), "\%Y")):as.numeric(format(Sys.Date(), "\%Y")) -
+  year = c(as.numeric(format(Sys.Date(), "\%Y")):as.numeric(format(Sys.Date(), "\%Y")) -
     4)
 )
 }
 \arguments{
-\item{years}{a single numeric value or vector of values specifying the commodity years that should be used to construct the cause of loss data set}
+\item{year}{a single numeric value or vector of values specifying the commodity years that should be used to construct the cause of loss data set}
 }
 \value{
 returns a data frame with cause of loss data corresponding to the specified commodity years
 }
 \description{
-Builds a cause of loss dataset using data from the specified years
+Builds a cause of loss data set using data from the specified years
 }
 \examples{
 \dontrun{
-get_col_data(years = 2020)
-get_col_data(years = 2019:2021)
+get_col_data(year = 2020)
+get_col_data(year = 2019:2021)
 }
 }
