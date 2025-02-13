@@ -30,7 +30,7 @@ library(devtools)
 load_all()
 ```
 
-[![R-CMD-check](https://github.com/dylan-turner25/rfcip/workflows/R-CMD-check/badge.svg)](https://github.com/ropensci/rfcip/actions)
+[![R-CMD-check](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
