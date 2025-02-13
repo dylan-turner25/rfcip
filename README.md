@@ -12,10 +12,7 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 
 [![Lifecycle:
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
-[![Codecov test
-coverage](https://codecov.io/gh/dylan-turner25/rfcip/branch/main/graph/badge.svg)](https://codecov.io/gh/dylan-turner25/rfcip?branch=main)
-<!-- [![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/484_status.svg)](https://github.com/ropensci/software-review/issues/484) -->
-<!-- [![DOI](https://zenodo.org/badge/406498163.svg)](https://zenodo.org/badge/latestdoi/406498163) -->
+[![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=AK1LWU45BW)](https://codecov.io/gh/dylan-turner25/rfcip)
 
 ## Introduction
 
