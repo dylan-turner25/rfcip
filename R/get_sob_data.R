@@ -32,6 +32,7 @@
 
 
 get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NULL, delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", dest_file = NULL, group_by = NULL) {
+  
   # input checking
   stopifnot("`year` must be a numeric value or vector of numeric values." = is.numeric(year))
 

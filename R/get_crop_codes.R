@@ -15,32 +15,26 @@
 #' }
 #'
 #' @importFrom janitor clean_names
-#' @importFrom utils download.file
 #' @importFrom readxl read_excel
+#' @import httr 
 #'
 #' @source Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
 get_crop_codes <- function(year = as.numeric(format(Sys.Date(), "%Y")), comm = NULL) {
   # url for all commodities with commodity codes
   url <- paste0("https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?CY=", paste(year, collapse = ","), "&ORD=CY,CM&CC=S&VisibleColumns=CommodityYear,CommodityCode,CommodityName&SortField=&SortDir=")
 
-  # set temporary directory
-  dir <- tempdir()
+  # download the file
+  httr::GET(url, httr::write_disk(tf <- tempfile(fileext = ".xlsx")))
 
-  # create a file path for the crop codes file in the temporary directory
-  data_path <- paste0(dir, "/crop_codes.xlsx")
-
-
-  download.file(url, destfile = data_path, mode = "wb")
-
-  # load data
-  data <- suppressMessages(janitor::clean_names(readxl::read_excel(data_path)))
+  # load the data from the temporary file
+  data <- suppressMessages(janitor::clean_names(readxl::read_excel(tf)))
 
   # check for warnings that appear in the header, if so, need to skip one line
   if (colnames(data)[2] == "x2") {
     data <- suppressMessages(janitor::clean_names(readxl::read_excel(data_path, skip = 1)))
   }
 
-  # select neccesary columns
+  # select necessary columns
   data <- data[, c("commodity_year", "commodity_code", "commodity_name")]
 
 
