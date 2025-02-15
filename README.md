@@ -3,15 +3,17 @@ rfcip (R FCIP)
 
 - <a href="#introduction" id="toc-introduction">Introduction</a>
 - <a href="#installation" id="toc-installation">Installation</a>
-- <a href="#summary-of-business" id="toc-summary-of-business">Summary of
-  Business</a>
-- <a href="#cause-of-loss-files" id="toc-cause-of-loss-files">Cause of
-  Loss Files</a>
-- <a href="#price" id="toc-price">Price</a>
+- <a href="#supported-data-sources"
+  id="toc-supported-data-sources">Supported Data Sources</a>
+  - <a href="#summary-of-business" id="toc-summary-of-business">Summary of
+    Business</a>
+  - <a href="#cause-of-loss-files" id="toc-cause-of-loss-files">Cause of
+    Loss Files</a>
+  - <a href="#price" id="toc-price">Price</a>
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-[![R-CMD-check](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check/badge.svg)](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
@@ -22,21 +24,32 @@ stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://
 
 ## Introduction
 
-`rfcip` allows users to access publicly available data related to the
-Federal Crop Insurance Program. The package provides a set of functions
-to easily navigate and access data that is publicly available, but
-otherwise scattered across different urls and data portals. The package
-provides a set of functions to access data from the USDA Risk Management
-Agency’s summary of business files, cause of loss files, and price
-discovery data sets.
+`rfcip` provides a set of tools to allow users to access publicly
+available data related to the Federal Crop Insurance Program. The
+package provides a set of functions to easily navigate and access data
+that is publicly available, but otherwise scattered across different
+urls and data portals.
 
 ## Installation
 
-## Summary of Business
+<!-- remotes::install_github("") -->
+<!-- `install.packages("rfema", repos = "https://ropensci.r-universe.dev")` -->
 
-## Cause of Loss Files
+## Supported Data Sources
 
-## Price
+### Summary of Business
+
+[Summary of
+Business](https://www.rma.usda.gov/tools-reports/summary-of-business)
+interactive [report
+generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator)
+
+### Cause of Loss Files
+
+[Cause of loss
+files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss)
+
+### Price
 
 <!-- FCIP data is publicly available at the open [FEMA website](https://www.fema.gov/about/openfema/data-sets) and is available for bulk download, however, the files are sometimes very large (multiple gigabytes) and many times users do not need all records for a data series (for example: many users may only want records for a single state for several years). Using FEMA's API is a good option to circumvent working with the bulk data files, but can be inaccessible for those without prior API experience. This package contains a set of functions that allows users to easily identify and retrieve data from FEMA's API without needing any technical knowledge of APIs. Notably, the FEMA API does not require an API key meaning the package is extremely accessible regardless of if the user has ever interacted with an API.  -->
 <!-- The rest of this page explains the benefits of the package and demonstrates basic usage of the package. For those looking for more in depth examples of how to use the package in your workflow, consider reading the [Getting Started](https://github.com/dylan-turner25/rfema/blob/main/vignettes/getting_started.md) vignette. -->
