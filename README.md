@@ -9,7 +9,6 @@ rfcip (R FCIP)
     Business</a>
   - <a href="#cause-of-loss-files" id="toc-cause-of-loss-files">Cause of
     Loss Files</a>
-  - <a href="#price" id="toc-price">Price</a>
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -32,16 +31,129 @@ urls and data portals.
 
 ## Installation
 
-<!-- remotes::install_github("") -->
-<!-- `install.packages("rfema", repos = "https://ropensci.r-universe.dev")` -->
+`rfcip` can be installed directly from github using
+`remotes::install_github("https://github.com/dylan-turner25/rfcip")`
 
 ## Supported Data Sources
 
 ### Summary of Business
 
-[Summary of
+The [Summary of
 Business](https://www.rma.usda.gov/tools-reports/summary-of-business)
-interactive [report
+file produced by the USDA Risk Management Agency contains crop insurance
+participation measures and outcomes by state, county, crop, and
+insurance policy choices. Insured acres, collected premiums, disbursed
+subsides, liabilities, number of policies sold, number of indemnified
+policies, and loss ratios are all available from the summary of
+business.
+
+Accessing data from the summary of business can be done using the
+`get_sob_data`. With no arguments specified, the `get_sob_data` function
+will default to downloading data from [RMA’s summary of business report
+generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerato%22)
+for the current year, at the highest level aggregation.
+
+``` r
+library(rfcip)
+get_sob_data()
+#> Downloading data for 2025
+#> 
+#> # A tibble: 10 × 21
+#>    commodity_y…¹ polic…² polic…³ polic…⁴ units…⁵ units…⁶ quant…⁷ quant…⁸ compa…⁹
+#>    <chr>           <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl> <chr>     <dbl>
+#>  1 2025          2327208  215020    1815  780235    2932 3.34e 8 Acres   4499772
+#>  2 2025            48669   15253     612   45948     612 3.43e 7 Head          0
+#>  3 2025               82      71       0     114       0 1.74e 7 Vines         0
+#>  4 2025             2507    1986     358    3680     548 4.93e 7 Trees   7231690
+#>  5 2025             2412    1613     278    3544     100 0       Not Re…       0
+#>  6 2025               17       2       0       2       0 2   e 6 # of S… 2000000
+#>  7 2025             7775    6895       0   25511       0 3.68e 6 Coloni…       0
+#>  8 2025             1919    1919     582   12265     946 3.34e10 Pounds        0
+#>  9 2025               60      28       0      88       0 2.80e 8 # of C…       0
+#> 10 2025              726     278      56    2715      56 4.00e 7 Hundre…       0
+#> # … with 12 more variables: liabilities <dbl>, total_prem <dbl>, subsidy <dbl>,
+#> #   indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>,
+#> #   state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
+#> #   organic_certified_subsidy_amount <dbl>,
+#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
+#> #   loss_ratio <dbl>, and abbreviated variable names ¹​commodity_year,
+#> #   ²​policies_sold, ³​policies_earning_prem, ⁴​policies_indemnified, …
+```
+
+Most of the arguments for the `get_sob_data` function filter the
+returned data. For example, specifying the `year = 2022` and
+`crop = "corn"` will return data for corn in crop year 2022. For a
+description of all the arguments that can be supplied to `get_sob_data`
+see the help file for the function using `help(get_sob_data)`
+
+``` r
+library(rfcip)
+get_sob_data(year = 2022, crop = "corn")
+#> Downloading data for 2022
+#> 
+#> # A tibble: 1 × 23
+#>   commodity_year commo…¹ commo…² polic…³ polic…⁴ polic…⁵ units…⁶ units…⁷ quant…⁸
+#>   <chr>          <chr>   <chr>     <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
+#> 1 2022           0041    Corn     590771  387971  106749  733061  184921  8.15e7
+#> # … with 14 more variables: quantity_type <chr>,
+#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
+#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
+#> #   addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
+#> #   organic_certified_subsidy_amount <dbl>,
+#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
+#> #   loss_ratio <dbl>, and abbreviated variable names ¹​commodity_code, …
+```
+
+One exception is the `group_by` argument which does not filter the data
+being returnd, but instead alters the level of aggregation. Taking the
+above example that returns data for corn in 2022 and setting
+`group_by = "county"` will return the same underlying as above, but
+decomposed by county.
+
+``` r
+library(rfcip)
+get_sob_data(year = 2022, crop = "corn", group_by = "county")
+#> Downloading data for 2022
+#> 
+#> # A tibble: 213 × 25
+#>    commodity_y…¹ commo…² commo…³ count…⁴ count…⁵ polic…⁶ polic…⁷ polic…⁸ units…⁹
+#>    <chr>         <chr>   <chr>   <chr>   <lgl>     <dbl>   <dbl>   <dbl>   <dbl>
+#>  1 2022          0041    Corn    269     NA           33       8       5      14
+#>  2 2022          0041    Corn    317     NA            1       1       1      11
+#>  3 2022          0041    Corn    151     NA         4935    3468     944    7492
+#>  4 2022          0041    Corn    167     NA         4888    3502    1146    6701
+#>  5 2022          0041    Corn    383     NA            2       2       1       2
+#>  6 2022          0041    Corn    179     NA         3942    2863    1134    6359
+#>  7 2022          0041    Corn    439     NA            5       2       1       2
+#>  8 2022          0041    Corn    045     NA         7463    5449    1162    8881
+#>  9 2022          0041    Corn    375     NA           18       1       0       1
+#> 10 2022          0041    Corn    147     NA         7052    4908     864    8534
+#> # … with 203 more rows, 16 more variables: units_indemnified <dbl>,
+#> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
+#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
+#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
+#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
+#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
+#> #   loss_ratio <dbl>, and abbreviated variable names ¹​commodity_year, …
+```
+
+We can confirm `get_sob_data(year = 2022, crop = "corn")` and
+`get_sob_data(year = 2022, crop = "corn", group_by = "county")` return
+the same underlying data by summing up one of individual columns in the
+county level data.
+
+``` r
+library(rfcip)
+national_data <- get_sob_data(year = 2022, crop = "corn")
+print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
+#> [1] "Liabilities from national data:  67659918691"
+
+county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
+print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
+#> [1] "Liabilities from county data:    67659918691"
+```
+
+[report
 generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator)
 
 ### Cause of Loss Files
@@ -49,8 +161,7 @@ generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerat
 [Cause of loss
 files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss)
 
-### Price
-
+<!-- ### Price  -->
 <!-- FCIP data is publicly available at the open [FEMA website](https://www.fema.gov/about/openfema/data-sets) and is available for bulk download, however, the files are sometimes very large (multiple gigabytes) and many times users do not need all records for a data series (for example: many users may only want records for a single state for several years). Using FEMA's API is a good option to circumvent working with the bulk data files, but can be inaccessible for those without prior API experience. This package contains a set of functions that allows users to easily identify and retrieve data from FEMA's API without needing any technical knowledge of APIs. Notably, the FEMA API does not require an API key meaning the package is extremely accessible regardless of if the user has ever interacted with an API.  -->
 <!-- The rest of this page explains the benefits of the package and demonstrates basic usage of the package. For those looking for more in depth examples of how to use the package in your workflow, consider reading the [Getting Started](https://github.com/dylan-turner25/rfema/blob/main/vignettes/getting_started.md) vignette. -->
 <!-- In accordance with the Open Fema terms and conditions: This product uses the Federal Emergency Management Agency’s Open FEMA API, but is not endorsed by FEMA. The Federal Government or FEMA cannot vouch for the data or analyses derived from these data after the data have been retrieved from the Agency's website(s). Guidance on FEMA's preferred citation for Open FEMA data can be found at: https://www.fema.gov/about/openfema/terms-conditions. -->
