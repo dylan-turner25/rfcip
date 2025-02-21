@@ -56,28 +56,26 @@ for the current year, at the highest level aggregation.
 ``` r
 library(rfcip)
 get_sob_data()
-#> Downloading data for 2025
-#> 
 #> # A tibble: 10 × 21
-#>    commodity_y…¹ polic…² polic…³ polic…⁴ units…⁵ units…⁶ quant…⁷ quant…⁸ compa…⁹
-#>    <chr>           <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl> <chr>     <dbl>
-#>  1 2025          2327208  215020    1815  780235    2932 3.34e 8 Acres   4499772
-#>  2 2025            48669   15253     612   45948     612 3.43e 7 Head          0
-#>  3 2025               82      71       0     114       0 1.74e 7 Vines         0
-#>  4 2025             2507    1986     358    3680     548 4.93e 7 Trees   7231690
-#>  5 2025             2412    1613     278    3544     100 0       Not Re…       0
-#>  6 2025               17       2       0       2       0 2   e 6 # of S… 2000000
-#>  7 2025             7775    6895       0   25511       0 3.68e 6 Coloni…       0
-#>  8 2025             1919    1919     582   12265     946 3.34e10 Pounds        0
-#>  9 2025               60      28       0      88       0 2.80e 8 # of C…       0
-#> 10 2025              726     278      56    2715      56 4.00e 7 Hundre…       0
-#> # … with 12 more variables: liabilities <dbl>, total_prem <dbl>, subsidy <dbl>,
-#> #   indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>,
-#> #   state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
-#> #   organic_certified_subsidy_amount <dbl>,
+#>    commodity_year policies_sold policies_earning_prem policies_indemnified
+#>             <dbl>         <dbl>                 <dbl>                <dbl>
+#>  1           2025         48669                 15253                  612
+#>  2           2025            60                    28                    0
+#>  3           2025           726                   278                   56
+#>  4           2025            82                    71                    0
+#>  5           2025       2327208                215020                 1815
+#>  6           2025          2507                  1986                  358
+#>  7           2025          2412                  1613                  278
+#>  8           2025            17                     2                    0
+#>  9           2025          7775                  6895                    0
+#> 10           2025          1919                  1919                  582
+#> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
+#> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
+#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
+#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
+#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
 #> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
-#> #   loss_ratio <dbl>, and abbreviated variable names ¹​commodity_year,
-#> #   ²​policies_sold, ³​policies_earning_prem, ⁴​policies_indemnified, …
+#> #   loss_ratio <dbl>
 ```
 
 Most of the arguments for the `get_sob_data` function filter the
@@ -89,19 +87,17 @@ see the help file for the function using `help(get_sob_data)`
 ``` r
 library(rfcip)
 get_sob_data(year = 2022, crop = "corn")
-#> Downloading data for 2022
-#> 
 #> # A tibble: 1 × 23
-#>   commodity_year commo…¹ commo…² polic…³ polic…⁴ polic…⁵ units…⁶ units…⁷ quant…⁸
-#>   <chr>          <chr>   <chr>     <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
-#> 1 2022           0041    Corn     590771  387971  106749  733061  184921  8.15e7
-#> # … with 14 more variables: quantity_type <chr>,
-#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
-#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
+#>   commodity_year commodity_code commodity_name policies_sold
+#>            <dbl> <chr>          <chr>                  <dbl>
+#> 1           2022 0041           Corn                  590771
+#> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
+#> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
+#> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
+#> #   total_prem <dbl>, subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
 #> #   addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
 #> #   organic_certified_subsidy_amount <dbl>,
-#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
-#> #   loss_ratio <dbl>, and abbreviated variable names ¹​commodity_code, …
+#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>, …
 ```
 
 One exception is the `group_by` argument which does not filter the data
@@ -113,28 +109,26 @@ decomposed by county.
 ``` r
 library(rfcip)
 get_sob_data(year = 2022, crop = "corn", group_by = "county")
-#> Downloading data for 2022
-#> 
 #> # A tibble: 213 × 25
-#>    commodity_y…¹ commo…² commo…³ count…⁴ count…⁵ polic…⁶ polic…⁷ polic…⁸ units…⁹
-#>    <chr>         <chr>   <chr>   <chr>   <lgl>     <dbl>   <dbl>   <dbl>   <dbl>
-#>  1 2022          0041    Corn    269     NA           33       8       5      14
-#>  2 2022          0041    Corn    317     NA            1       1       1      11
-#>  3 2022          0041    Corn    151     NA         4935    3468     944    7492
-#>  4 2022          0041    Corn    167     NA         4888    3502    1146    6701
-#>  5 2022          0041    Corn    383     NA            2       2       1       2
-#>  6 2022          0041    Corn    179     NA         3942    2863    1134    6359
-#>  7 2022          0041    Corn    439     NA            5       2       1       2
-#>  8 2022          0041    Corn    045     NA         7463    5449    1162    8881
-#>  9 2022          0041    Corn    375     NA           18       1       0       1
-#> 10 2022          0041    Corn    147     NA         7052    4908     864    8534
-#> # … with 203 more rows, 16 more variables: units_indemnified <dbl>,
-#> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
-#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
-#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
-#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
-#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
-#> #   loss_ratio <dbl>, and abbreviated variable names ¹​commodity_year, …
+#>    commodity_year commodity_code commodity_name county_code county_name
+#>             <dbl> <chr>          <chr>          <chr>       <lgl>      
+#>  1           2022 0041           Corn           127         NA         
+#>  2           2022 0041           Corn           285         NA         
+#>  3           2022 0041           Corn           153         NA         
+#>  4           2022 0041           Corn           141         NA         
+#>  5           2022 0041           Corn           065         NA         
+#>  6           2022 0041           Corn           177         NA         
+#>  7           2022 0041           Corn           439         NA         
+#>  8           2022 0041           Corn           045         NA         
+#>  9           2022 0041           Corn           375         NA         
+#> 10           2022 0041           Corn           147         NA         
+#> # ℹ 203 more rows
+#> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
+#> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
+#> #   units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>,
+#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
+#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
+#> #   addnl_subsidy <dbl>, state_subsidy <dbl>, …
 ```
 
 We can confirm `get_sob_data(year = 2022, crop = "corn")` and
@@ -153,8 +147,52 @@ print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
 #> [1] "Liabilities from county data:    67659918691"
 ```
 
-[report
-generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator)
+A unique property of the summary of business data set is that its
+continuously updated (one per week) as new information is reported to
+USDA by [approved insurance
+providers](https://cropinsuranceinamerica.org/who-are-approved-insurance-providers-aips/).
+This means that analysis using the summary of business can quickly
+become outdated. One advantage of the the `rfcip` package is that it
+allows the raw data source to be directly integrated into the analysis.
+For example, the chart below plots indemnities for each crop year from
+2015 up to the current year. The plot will automatically update with the
+latest data every time the plot is regenerated. Note that functions in
+`rfcip` are [memoised](https://en.wikipedia.org/wiki/Memoization) for
+the duration of the R session. This means that calling the same function
+with the same arguments will return a previously cached data set. In
+other words, in the below example, the data would not update if the code
+was run multiple times in the same R session, regaurdless of if the
+underlying data source changed.
+
+``` r
+library(rfcip)
+library(dplyr)
+library(ggplot2)
+
+get_sob_data(year = 2015:as.numeric(format(Sys.Date(), "%Y"))) %>%
+select(commodity_year, indemnity) %>%
+group_by(commodity_year) %>%
+summarize(indemnity = sum(indemnity)) %>%
+mutate(indemnity = indemnity/1000000000) %>%
+  ggplot(., aes(y = indemnity, x = commodity_year)) +
+  geom_bar(stat = "identity", fill = "firebrick4") +
+  xlab("") + ylab("USD (Billions)") +
+  ggtitle(paste0("FCIP Indemnities by Year: 2015 - ",format(Sys.Date(), "%Y"))) +
+  scale_y_continuous(labels = scales::dollar) +
+  theme_minimal()
+#> Downloading summary of business data for specified crop years ■■■■■■
+#> …Downloading summary of business data for specified crop years ■■■■■■■■■
+#> …Downloading summary of business data for specified crop years ■■■■■■■■■■■■
+#> …Downloading summary of business data for specified crop years ■■■■■■■■■■■■■■■
+#> …Downloading summary of business data for specified crop years
+#> ■■■■■■■■■■■■■■■■■…Downloading summary of business data for specified crop years
+#> ■■■■■■■■■■■■■■■■■…Downloading summary of business data for specified crop years
+#> ■■■■■■■■■■■■■■■■■…Downloading summary of business data for specified crop years
+#> ■■■■■■■■■■■■■■■■■…Downloading summary of business data for specified crop years
+#> ■■■■■■■■■■■■■■■■■…
+```
+
+<img src="man/figures/sob-method-chaining-1.png" width="100%" />
 
 ### Cause of Loss Files
 

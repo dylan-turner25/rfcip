@@ -22,6 +22,7 @@
 #' @importFrom writexl write_xlsx
 #' @importFrom utils download.file
 #' @importFrom readxl read_excel
+#' @import cli
 #' @examples
 #' \dontrun{
 #' get_sob_data(year = 2023)
@@ -38,11 +39,15 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NUL
 
   # initialize
   full_data <- NULL
+  
+  # initialize progress bar
+  cli::cli_progress_bar("Downloading summary of business data for specified crop years", total = length(year))
+  
 
   # loop over years to avoid server timeout issues.
   for (y in year) {
-    message(cat("Downloading data for", y))
-
+    cli::cli_progress_update()
+    
     url <- get_url(
       year = y,
       crop = crop,
@@ -69,6 +74,13 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NUL
 
     full_data <- dplyr::bind_rows(full_data, data)
   }
+  
+  # close progress bar
+  cli::cli_progress_done()
+  
+  # enforce data types
+  full_data$commodity_year <- as.numeric(full_data$commodity_year)
+  
 
   if (is.null(dest_file)) {
     return(full_data)
