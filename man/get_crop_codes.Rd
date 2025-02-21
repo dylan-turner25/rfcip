@@ -7,12 +7,12 @@
 Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
 }
 \usage{
-get_crop_codes(year = as.numeric(format(Sys.Date(), "\%Y")), comm = NULL)
+get_crop_codes(year = as.numeric(format(Sys.Date(), "\%Y")), crop = NULL)
 }
 \arguments{
 \item{year}{A single numeric value, or vector of numeric values, indicating what years of the summary of business should be used to get crop names and crop codes. Defaults to the current year.}
 
-\item{comm}{A vector of either character strings with commodity names (not case sensitive) or a vector with numeric crop codes. Can be left NULL to return crop codes for all commodities.}
+\item{crop}{A vector of either character strings with commodity names (not case sensitive) or a vector with numeric crop codes. Can be left NULL to return crop codes for all commodities.}
 }
 \value{
 Returns a tibble containing the relevant commodity year, commodity codes and commodity names.
@@ -24,8 +24,8 @@ Lookup crop codes for FCIP commodities
 \dontrun{
 get_crop_codes(year = 2023, comm = "corn")
 get_crop_codes(year = 2024, comm = 41)
-get_crop_codes(comm = c("corn", "SOYbEaNs"))
-get_crop_codes(comm = c(41, 81))
+get_crop_codes(crop = c("corn", "SOYbEaNs"))
+get_crop_codes(crop = c(41, 81))
 get_crop_codes()
 }
 

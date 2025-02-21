@@ -77,7 +77,7 @@ get_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery
 
   # clean crop entry
   if (!is.null(crop)) {
-    crop <- data.frame(get_crop_codes(comm = crop))[, "commodity_code"]
+    crop <- data.frame(get_crop_codes(crop = crop))[, "commodity_code"]
   }
 
   # clean insurance plan entry
