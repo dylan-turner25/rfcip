@@ -5,4 +5,16 @@ test_that("get_insurance_plan_codes filters work", {
   expect_equal("RP" %in% obj$insurance_plan_abbrv,T)
   expect_equal("YP" %in% obj$insurance_plan_abbrv,T)
   expect_equal("APH" %in% obj$insurance_plan_abbrv,F)
+  
+  obj <- get_insurance_plan_codes(year = 2024, plan = c("Revenue Protection"))
+  expect_equal(as.numeric(unique(obj$commodity_year)),2024)
+  expect_equal(nrow(obj),1)
+  expect_equal("RP" %in% obj$insurance_plan_abbrv,T)
+  expect_equal("YP" %in% obj$insurance_plan_abbrv,F)
+
+  obj <- get_insurance_plan_codes(year = 2024, plan = 2)
+  expect_equal(as.numeric(unique(obj$commodity_year)),2024)
+  expect_equal(nrow(obj),1)
+  expect_equal("RP" %in% obj$insurance_plan_abbrv,T)
+  expect_equal("YP" %in% obj$insurance_plan_abbrv,F)
 })
