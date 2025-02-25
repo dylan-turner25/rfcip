@@ -23,7 +23,9 @@ Imports:
     purrr,
     stringr,
     cli,
-    httr
+    httr,
+    XML,
+    tidyr
 Depends: 
     R (>= 2.10)
 LazyData: true
