@@ -26,4 +26,5 @@ Download RMA projected and harvest prices used for revenue protection insurance 
 }
 \examples{
 \dontrun{get_price_data(2024,"corn")}
+\dontrun{get_price_data(year = 2022:2024, state = "VA")}
 }

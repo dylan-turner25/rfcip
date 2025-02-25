@@ -9,6 +9,7 @@ rfcip (R FCIP)
     Business</a>
   - <a href="#cause-of-loss-files" id="toc-cause-of-loss-files">Cause of
     Loss Files</a>
+  - <a href="#price" id="toc-price">Price</a>
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -27,7 +28,10 @@ stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://
 available data related to the Federal Crop Insurance Program. The
 package provides a set of functions to easily navigate and access data
 that is publicly available, but otherwise scattered across different
-urls and data portals.
+urls, files, and data portals. Although no official API exists for
+Federal Crop Insurance Data, much of the data can be located with a
+structured url meaning the `rfcip` package effectively functions like a
+defactor API wrapper.
 
 ## Installation
 
@@ -59,16 +63,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025         48669                 15253                  612
-#>  2           2025       2327208                215020                 1815
-#>  3           2025          2507                  1986                  358
-#>  4           2025            60                    28                    0
-#>  5           2025           726                   278                   56
-#>  6           2025            82                    71                    0
-#>  7           2025          2412                  1613                  278
-#>  8           2025            17                     2                    0
-#>  9           2025          7775                  6895                    0
-#> 10           2025          1919                  1919                  582
+#>  1           2025         48876                 15415                  626
+#>  2           2025            60                    28                    0
+#>  3           2025           733                   281                   56
+#>  4           2025            82                    71                    0
+#>  5           2025          2507                  1990                  359
+#>  6           2025       2332233                217285                 1966
+#>  7           2025          2476                  1651                  289
+#>  8           2025            17                     4                    0
+#>  9           2025          1922                  1922                  616
+#> 10           2025          7774                  6892                    0
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -214,16 +218,16 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 213 × 25
 #>    commodity_year commodity_code commodity_name county_code county_name
 #>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           007         NA         
-#>  2           2022 0041           Corn           137         NA         
-#>  3           2022 0041           Corn           145         NA         
-#>  4           2022 0041           Corn           289         NA         
-#>  5           2022 0041           Corn           183         NA         
-#>  6           2022 0041           Corn           437         NA         
-#>  7           2022 0041           Corn           439         NA         
-#>  8           2022 0041           Corn           045         NA         
-#>  9           2022 0041           Corn           375         NA         
-#> 10           2022 0041           Corn           147         NA         
+#>  1           2022 0041           Corn           269         NA         
+#>  2           2022 0041           Corn           317         NA         
+#>  3           2022 0041           Corn           151         NA         
+#>  4           2022 0041           Corn           167         NA         
+#>  5           2022 0041           Corn           383         NA         
+#>  6           2022 0041           Corn           179         NA         
+#>  7           2022 0041           Corn           201         NA         
+#>  8           2022 0041           Corn           075         NA         
+#>  9           2022 0041           Corn           311         NA         
+#> 10           2022 0041           Corn           073         NA         
 #> # ℹ 203 more rows
 #> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
@@ -241,11 +245,11 @@ county level data.
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67659918691"
+#> [1] "Liabilities from national data:  67661305651"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67659918691"
+#> [1] "Liabilities from county data:    67661305651"
 ```
 
 A unique property of the summary of business data set is that its
@@ -381,7 +385,12 @@ head(col_data)
 #> 6        14.0000000000   439.0000000000        .43
 ```
 
-<!-- ### Price  -->
+### Price
+
+For revenue protection insurance products,
+
+[price discovery
+application](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/)
 
 Please note that `rfcip` is released with a [Contributor Code of
 Conduct](https://ropensci.org/code-of-conduct/#:~:text=rOpenSci%20is%20committed%20to%20providing,understand%E2%80%9D%20or%20%E2%80%9CWhy%E2%80%9D.).
