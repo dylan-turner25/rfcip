@@ -62,12 +62,25 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
 }
 
 
+#' adds & separator to url if necessary
+#'
+#' @param url a url 
+#' @noRd
+#' @keywords internal
+include_and <- function(url){
+  if(!substr(url,nchar(url),nchar(url)) == "?"){
+    return(paste0(url,"&"))
+  } else{
+    return(url)
+  }
+}
+
 #' Generates a URL corresponding to a query on RMA's summary of business Web App
 #' @noRd
 #' @keywords internal
 #' @importFrom usmap fips
 #'
-get_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", group_by = NULL) {
+get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", group_by = NULL) {
   # define the prefix and suffix of the URL string (i.e. these are constant)
   prefix <- "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?"
 
@@ -120,7 +133,7 @@ get_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery
   # state
   if (!is.null(state)) {
     parameter_string <- paste0(parameter_string, "ST=", paste(state, collapse = ","), "&")
-    ORD <- append(ORD, "sT")
+    ORD <- append(ORD, "ST")
   }
 
   # delivery type
@@ -170,26 +183,6 @@ get_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery
 
     ORD <- paste0(ORD, ",", paste0(names(group_by_codes[which(group_by_codes %in% group_by)]), collapse = ","))
   }
-
-  #   parameter_string <- paste0("CY=",ifelse(is.null(year),"",paste(year,collapse = ",")),           # crop year
-  #                              "&CM=",ifelse(is.null(crop),"",paste(crop,collapse=",")),            # commodity
-  #                              "&ST=",ifelse(is.null(state),"",paste(state,collapse = ",")),         # state
-  #                              "&DT=",ifelse(is.null(delivery_type),"",paste(delivery_type,collapse = ",")),  # delivery type
-  #                              "&IP=",ifelse(is.null(insurance_plan),"",paste(insurance_plan,collapse = ",")),# insurance plan
-  #                              "&CT=",ifelse(is.null(county),"",paste(county, collapse = ",")),       # county
-  #                              "&CVL=",ifelse(is.null(cov_lvl),"",paste(cov_lvl,collapse = ",")),     # coverage level
-  #                              "CC=",ifelse(is.null(comm_cat),"",toupper(comm_cat)))                    # commodity category
-  #
-  #
-  # #TODO: rearrange if else statements so that if NULL the parameter doesn't show up, also need to add the ORD parameter'
-  #   parameter_string <- paste0("CY=",ifelse(is.null(year),"",paste(year,collapse = ",")),           # crop year
-  #                             "&CM=",ifelse(is.null(crop),"",paste(crop,collapse=",")),            # commodity
-  #                             "&ST=",ifelse(is.null(state),"",paste(state,collapse = ",")),         # state
-  #                             "&DT=",ifelse(is.null(delivery_type),"",paste(delivery_type,collapse = ",")),  # delivery type
-  #                             "&IP=",ifelse(is.null(insurance_plan),"",paste(insurance_plan,collapse = ",")),# insurance plan
-  #                             "&CT=",ifelse(is.null(county),"",paste(county, collapse = ",")),       # county
-  #                             "&CVL=",ifelse(is.null(cov_lvl),"",paste(cov_lvl,collapse = ",")),     # coverage level
-  #                             "CC=",ifelse(is.null(comm_cat),"",toupper(comm_cat)))                    # commodity category
 
   return(paste0(prefix, parameter_string, ORD, suffix))
 }

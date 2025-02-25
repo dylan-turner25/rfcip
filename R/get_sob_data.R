@@ -48,7 +48,7 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NUL
   for (y in year) {
     cli::cli_progress_update()
     
-    url <- get_url(
+    url <- get_sob_url(
       year = y,
       crop = crop,
       delivery_type = delivery_type,
