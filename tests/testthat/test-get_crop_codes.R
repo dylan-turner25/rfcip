@@ -4,3 +4,13 @@ test_that("get_crop_codes filters work", {
   expect_equal(nrow(obj),2)
   expect_equal(length(unique(obj$commodity_name)),2)
 })
+
+test_that("get_crop_codes returns all data when invalid crop is entered", {
+  
+  obj <- get_crop_codes(year = 2020,crop = 99999999)
+  expect_equal(nrow(obj) > 1, TRUE)
+
+  obj <- get_crop_codes(year = 2020,crop = "not a crop")
+  expect_equal(nrow(obj) > 1, TRUE)
+})
+
