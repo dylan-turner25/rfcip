@@ -4,9 +4,9 @@
 \name{rfcip-package}
 \alias{rfcip}
 \alias{rfcip-package}
-\title{rfcip: What the Package Does (One Line, Title Case)}
+\title{rfcip: Tools for accessing crop insurance data}
 \description{
-This package is a wrapper for RMA's summary of business app. The package helps users get data on the Federal Crop Insurance Program in an easy to use format.
+This package provides a set of tools to access public data on the Federal Crop Insurance Program.
 }
 \author{
 \strong{Maintainer}: Dylan Turner \email{dylan.turner3@outlook.com} (\href{https://orcid.org/0000-0002-0915-7384}{ORCID})
