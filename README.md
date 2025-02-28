@@ -64,14 +64,14 @@ get_sob_data()
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
 #>  1           2025         48876                 15415                  626
-#>  2           2025            60                    28                    0
-#>  3           2025           733                   281                   56
-#>  4           2025            82                    71                    0
-#>  5           2025          2507                  1990                  359
-#>  6           2025       2332233                217285                 1966
-#>  7           2025          2476                  1651                  289
-#>  8           2025            17                     4                    0
-#>  9           2025          1922                  1922                  616
+#>  2           2025       2332233                217285                 1966
+#>  3           2025          2507                  1990                  359
+#>  4           2025          1922                  1922                  616
+#>  5           2025            60                    28                    0
+#>  6           2025           733                   281                   56
+#>  7           2025            82                    71                    0
+#>  8           2025          2476                  1651                  289
+#>  9           2025            17                     4                    0
 #> 10           2025          7774                  6892                    0
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
@@ -218,12 +218,12 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 213 × 25
 #>    commodity_year commodity_code commodity_name county_code county_name
 #>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           269         NA         
-#>  2           2022 0041           Corn           317         NA         
-#>  3           2022 0041           Corn           151         NA         
-#>  4           2022 0041           Corn           167         NA         
-#>  5           2022 0041           Corn           383         NA         
-#>  6           2022 0041           Corn           179         NA         
+#>  1           2022 0041           Corn           263         NA         
+#>  2           2022 0041           Corn           023         NA         
+#>  3           2022 0041           Corn           471         NA         
+#>  4           2022 0041           Corn           025         NA         
+#>  5           2022 0041           Corn           049         NA         
+#>  6           2022 0041           Corn           427         NA         
 #>  7           2022 0041           Corn           201         NA         
 #>  8           2022 0041           Corn           075         NA         
 #>  9           2022 0041           Corn           311         NA         
@@ -387,10 +387,38 @@ head(col_data)
 
 ### Price
 
-For revenue protection insurance products,
+Insurance guarantees and indemnities for revenue protection plans are
+base, in part, on projected commodity prices and harvest commodity
+prices. These are available via RMA’s [price discovery
+application](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/), but
+can also be obtained using the `get_price_data` function which supports
+arguments for `year`, `crop`, and `state`. For example, prices for corn
+in Illinois from 2020-2024 can be obtained with the following code.
 
-[price discovery
-application](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/)
+``` r
+price_data <- get_price_data(year = 2020:2024,
+                             crop = "corn",
+                             state = "IL")
+#> ℹ Downloading data
+
+head(price_data)
+#> # A tibble: 6 × 38
+#>   CommodityYear CommodityCode CommodityName TypeCode TypeName       PracticeCode
+#>           <int>         <int> <chr>            <int> <chr>                 <int>
+#> 1          2020            41 Corn                16 High Amylose              2
+#> 2          2020            41 Corn                16 High Amylose              3
+#> 3          2020            41 Corn                17 All (Non-High…            2
+#> 4          2020            41 Corn                17 All (Non-High…            3
+#> 5          2021            41 Corn                16 High Amylose              2
+#> 6          2021            41 Corn                16 High Amylose              3
+#> # ℹ 32 more variables: PracticeName <chr>, StateCode <int>, StateName <chr>,
+#> #   PriceMultiplicativeFactor <dbl>, PriceAdditiveFactor <dbl>,
+#> #   ProjectedPriceExchangeCode <chr>, ProjectedPriceMarketSymbolCode <chr>,
+#> #   ProjectedPricePreviousMarketSymbolCode <chr>,
+#> #   ProjectedPriceCurrencyMarketSymbolCode <lgl>,
+#> #   ProjectedPriceBeginDate <dttm>, ProjectedPriceEndDate <dttm>,
+#> #   ProjectedPriceDateRange <chr>, ProjectedPrice <dbl>, …
+```
 
 Please note that `rfcip` is released with a [Contributor Code of
 Conduct](https://ropensci.org/code-of-conduct/#:~:text=rOpenSci%20is%20committed%20to%20providing,understand%E2%80%9D%20or%20%E2%80%9CWhy%E2%80%9D.).

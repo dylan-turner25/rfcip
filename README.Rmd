@@ -142,9 +142,14 @@ head(col_data)
 
 
 ### Price
-For revenue protection insurance products, 
+Insurance guarantees and indemnities for revenue protection plans are base, in part, on projected commodity prices and harvest commodity prices. These are available via RMA's [price discovery application](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/), but can also be obtained using the `get_price_data` function which supports arguments for `year`, `crop`, and `state`. For example, prices for corn in Illinois from 2020-2024 can be obtained with the following code. 
 
-[price discovery application](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/)
+```{r price-basic, include=T}
+price_data <- get_price_data(year = 2020:2024,
+                             crop = "corn",
+                             state = "IL")
 
+head(price_data)
+```
 
 Please note that `rfcip` is released with a [Contributor Code of Conduct](https://ropensci.org/code-of-conduct/#:~:text=rOpenSci%20is%20committed%20to%20providing,understand%E2%80%9D%20or%20%E2%80%9CWhy%E2%80%9D.). By contributing to the package you agree to abide by its terms.
