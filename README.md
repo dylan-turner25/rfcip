@@ -27,11 +27,11 @@ stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://
 `rfcip` provides a set of tools to allow users to access publicly
 available data related to the Federal Crop Insurance Program. The
 package provides a set of functions to easily navigate and access data
-that is publicly available but otherwise scattered across different
+that is publicly available, but otherwise scattered across different
 urls, files, and data portals. Although no official API exists for
 Federal Crop Insurance Data, much of the data can be located with a
-structured URL, meaning the `rfcip` package effectively functions like a
-de-facto API wrapper.
+structured url meaning the `rfcip` package effectively functions like a
+defactor API wrapper.
 
 ## Installation
 
@@ -63,16 +63,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025         48876                 15415                  626
-#>  2           2025       2332233                217285                 1966
-#>  3           2025          2507                  1990                  359
-#>  4           2025          1922                  1922                  616
-#>  5           2025            60                    28                    0
-#>  6           2025           733                   281                   56
-#>  7           2025            82                    71                    0
-#>  8           2025          2476                  1651                  289
-#>  9           2025            17                     4                    0
-#> 10           2025          7774                  6892                    0
+#>  1           2025            60                    29                    0
+#>  2           2025           747                   294                   58
+#>  3           2025            82                    72                    0
+#>  4           2025          2586                  1706                  292
+#>  5           2025            16                     4                    0
+#>  6           2025          7779                  6918                    0
+#>  7           2025          1935                  1935                  636
+#>  8           2025         49404                 16125                  636
+#>  9           2025       2347189                219516                 2061
+#> 10           2025          2511                  1995                  364
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -93,7 +93,7 @@ get_sob_data(year = 2022, crop = "corn")
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl> <chr>          <chr>                  <dbl>
-#> 1           2022 0041           Corn                  590771
+#> 1           2022 0041           Corn                  590770
 #> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
 #> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
 #> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
@@ -218,16 +218,16 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 213 × 25
 #>    commodity_year commodity_code commodity_name county_code county_name
 #>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           263         NA         
-#>  2           2022 0041           Corn           023         NA         
-#>  3           2022 0041           Corn           471         NA         
-#>  4           2022 0041           Corn           025         NA         
-#>  5           2022 0041           Corn           049         NA         
-#>  6           2022 0041           Corn           427         NA         
-#>  7           2022 0041           Corn           201         NA         
-#>  8           2022 0041           Corn           075         NA         
-#>  9           2022 0041           Corn           311         NA         
-#> 10           2022 0041           Corn           073         NA         
+#>  1           2022 0041           Corn           269         NA         
+#>  2           2022 0041           Corn           317         NA         
+#>  3           2022 0041           Corn           151         NA         
+#>  4           2022 0041           Corn           167         NA         
+#>  5           2022 0041           Corn           383         NA         
+#>  6           2022 0041           Corn           179         NA         
+#>  7           2022 0041           Corn           439         NA         
+#>  8           2022 0041           Corn           045         NA         
+#>  9           2022 0041           Corn           375         NA         
+#> 10           2022 0041           Corn           147         NA         
 #> # ℹ 203 more rows
 #> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
@@ -245,11 +245,11 @@ county level data.
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67661305651"
+#> [1] "Liabilities from national data:  67660560227"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67661305651"
+#> [1] "Liabilities from county data:    67660560227"
 ```
 
 A unique property of the summary of business data set is that its
@@ -401,7 +401,7 @@ price_data <- get_price_data(year = 2020:2024,
                              state = "IL")
 #> ℹ Downloading data
 
-head(price_data)
+head(price_data) 
 #> # A tibble: 6 × 38
 #>   CommodityYear CommodityCode CommodityName TypeCode TypeName       PracticeCode
 #>           <int>         <int> <chr>            <int> <chr>                 <int>
