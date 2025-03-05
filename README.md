@@ -27,11 +27,11 @@ stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://
 `rfcip` provides a set of tools to allow users to access publicly
 available data related to the Federal Crop Insurance Program. The
 package provides a set of functions to easily navigate and access data
-that is publicly available, but otherwise scattered across different
+that is publicly available but otherwise scattered across different
 urls, files, and data portals. Although no official API exists for
 Federal Crop Insurance Data, much of the data can be located with a
-structured url meaning the `rfcip` package effectively functions like a
-defactor API wrapper.
+structured URL, meaning the `rfcip` package effectively functions like a
+de-facto API wrapper.
 
 ## Installation
 
