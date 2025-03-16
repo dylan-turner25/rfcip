@@ -30,7 +30,10 @@ that is publicly available, but otherwise scattered across different
 urls, files, and data portals. Although no official API exists for
 Federal Crop Insurance Data, much of the data can be located with a
 structured url meaning the `rfcip` package effectively functions like a
-defactor API wrapper.
+defacto API wrapper.
+
+**Disclaimer:** This product uses data provided by the USDA, but is not
+endorsed by or affiliated with USDA or the Federal Government.
 
 ## Installation
 
@@ -65,9 +68,9 @@ get_sob_data()
 #>  1           2025         49958                 16750                  641
 #>  2           2025       2369265                220766                 2288
 #>  3           2025          2511                  2003                  373
-#>  4           2025            60                    29                    0
-#>  5           2025           756                   305                   59
-#>  6           2025            82                    72                    0
+#>  4           2025            82                    72                    0
+#>  5           2025            60                    29                    0
+#>  6           2025           756                   305                   59
 #>  7           2025          2736                  1827                  294
 #>  8           2025            16                     4                    0
 #>  9           2025          7778                  6927                    0
@@ -223,10 +226,10 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #>  4           2022 0041           Corn           393         NA         
 #>  5           2022 0041           Corn           069         NA         
 #>  6           2022 0041           Corn           219         NA         
-#>  7           2022 0041           Corn           439         NA         
-#>  8           2022 0041           Corn           045         NA         
-#>  9           2022 0041           Corn           375         NA         
-#> 10           2022 0041           Corn           147         NA         
+#>  7           2022 0041           Corn           413         NA         
+#>  8           2022 0041           Corn           275         NA         
+#>  9           2022 0041           Corn           331         NA         
+#> 10           2022 0041           Corn           473         NA         
 #> # ℹ 203 more rows
 #> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
