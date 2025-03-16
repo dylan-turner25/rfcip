@@ -17,10 +17,9 @@ rfcip (R FCIP)
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-
 [![Lifecycle:
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
-[![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=AK1LWU45BW)](https://codecov.io/gh/dylan-turner25/rfcip)
+[![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=6sJUenko4X)](https://codecov.io/gh/dylan-turner25/rfcip)
 
 ## Introduction
 
@@ -63,16 +62,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025            60                    29                    0
-#>  2           2025           747                   294                   58
-#>  3           2025            82                    72                    0
-#>  4           2025          2586                  1706                  292
-#>  5           2025            16                     4                    0
-#>  6           2025          7779                  6918                    0
-#>  7           2025          1935                  1935                  636
-#>  8           2025         49404                 16125                  636
-#>  9           2025       2347189                219516                 2061
-#> 10           2025          2511                  1995                  364
+#>  1           2025         49958                 16750                  641
+#>  2           2025       2369265                220766                 2288
+#>  3           2025          2511                  2003                  373
+#>  4           2025            60                    29                    0
+#>  5           2025           756                   305                   59
+#>  6           2025            82                    72                    0
+#>  7           2025          2736                  1827                  294
+#>  8           2025            16                     4                    0
+#>  9           2025          7778                  6927                    0
+#> 10           2025          1950                  1950                  642
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -93,7 +92,7 @@ get_sob_data(year = 2022, crop = "corn")
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl> <chr>          <chr>                  <dbl>
-#> 1           2022 0041           Corn                  590770
+#> 1           2022 0041           Corn                  590772
 #> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
 #> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
 #> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
@@ -218,12 +217,12 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 213 × 25
 #>    commodity_year commodity_code commodity_name county_code county_name
 #>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           269         NA         
-#>  2           2022 0041           Corn           317         NA         
-#>  3           2022 0041           Corn           151         NA         
-#>  4           2022 0041           Corn           167         NA         
-#>  5           2022 0041           Corn           383         NA         
-#>  6           2022 0041           Corn           179         NA         
+#>  1           2022 0041           Corn           161         NA         
+#>  2           2022 0041           Corn           421         NA         
+#>  3           2022 0041           Corn           267         NA         
+#>  4           2022 0041           Corn           393         NA         
+#>  5           2022 0041           Corn           069         NA         
+#>  6           2022 0041           Corn           219         NA         
 #>  7           2022 0041           Corn           439         NA         
 #>  8           2022 0041           Corn           045         NA         
 #>  9           2022 0041           Corn           375         NA         
@@ -245,11 +244,11 @@ county level data.
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67660560227"
+#> [1] "Liabilities from national data:  67660866940"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67660560227"
+#> [1] "Liabilities from county data:    67660866940"
 ```
 
 A unique property of the summary of business data set is that its
