@@ -13,7 +13,8 @@
 #' @importFrom utils unzip
 #' @importFrom utils read.delim
 #' @importFrom dplyr bind_rows
-#' @importFrom purrr  map_dfr
+#' @importFrom purrr map_dfr
+#' @importFrom readr type_convert
 #' @import cli
 get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeric(format(Sys.Date(), "%Y")) - 4)) {
   # input checking
@@ -76,9 +77,15 @@ get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeri
       "indem_amount", "loss_ratio"
     )
 
-    # handling type inconsistencies
+    # convert data types
+    data <- suppressMessages(readr::type_convert(data)) 
+    
+    # handling type inconsistencies that `type_convert` doesn't catch
     data$col_code <- suppressWarnings(as.numeric(data$col_code))
-
+    
+    # make sure cause of loss names don't have extra whitespace
+    data$col_name <- trimws(data$col_name)
+    
     # save as a rds file
     saveRDS(data, file = paste0(col_data_files, "/col_", y, ".rds"))
   }

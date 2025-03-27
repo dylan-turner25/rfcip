@@ -25,7 +25,8 @@ Imports:
     cli,
     httr,
     XML,
-    tidyr
+    tidyr,
+    readr
 Depends: 
     R (>= 2.10)
 LazyData: true
