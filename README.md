@@ -1,15 +1,13 @@
 rfcip (R FCIP)
 ================
 
-- <a href="#introduction" id="toc-introduction">Introduction</a>
-- <a href="#installation" id="toc-installation">Installation</a>
-- <a href="#supported-data-sources"
-  id="toc-supported-data-sources">Supported Data Sources</a>
-  - <a href="#summary-of-business" id="toc-summary-of-business">Summary of
-    Business</a>
-  - <a href="#cause-of-loss-files" id="toc-cause-of-loss-files">Cause of
-    Loss Files</a>
-  - <a href="#price" id="toc-price">Price</a>
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Supported Data Sources](#supported-data-sources)
+  - [Summary of Business](#summary-of-business)
+  - [Cause of Loss Files](#cause-of-loss-files)
+  - [Price](#price)
+  - [Standard Reinsurance Agreement](#standard-reinsurance-agreement)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -65,16 +63,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025         49958                 16750                  641
-#>  2           2025       2369265                220766                 2288
-#>  3           2025          2511                  2003                  373
-#>  4           2025            82                    72                    0
-#>  5           2025            60                    29                    0
-#>  6           2025           756                   305                   59
-#>  7           2025          2736                  1827                  294
-#>  8           2025            16                     4                    0
-#>  9           2025          7778                  6927                    0
-#> 10           2025          1950                  1950                  642
+#>  1           2025       2479625                223189                 2512
+#>  2           2025          2511                  2025                  374
+#>  3           2025            60                    28                    0
+#>  4           2025           764                   323                   62
+#>  5           2025            82                    73                    0
+#>  6           2025          3250                  2199                  300
+#>  7           2025            16                     6                    0
+#>  8           2025          7739                  6762                    0
+#>  9           2025          1972                  1972                  655
+#> 10           2025         51552                 18632                  653
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -95,7 +93,7 @@ get_sob_data(year = 2022, crop = "corn")
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl> <chr>          <chr>                  <dbl>
-#> 1           2022 0041           Corn                  590772
+#> 1           2022 0041           Corn                  590769
 #> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
 #> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
 #> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
@@ -224,8 +222,8 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #>  2           2022 0041           Corn           421         NA         
 #>  3           2022 0041           Corn           267         NA         
 #>  4           2022 0041           Corn           393         NA         
-#>  5           2022 0041           Corn           069         NA         
-#>  6           2022 0041           Corn           219         NA         
+#>  5           2022 0041           Corn           219         NA         
+#>  6           2022 0041           Corn           069         NA         
 #>  7           2022 0041           Corn           413         NA         
 #>  8           2022 0041           Corn           275         NA         
 #>  9           2022 0041           Corn           331         NA         
@@ -247,11 +245,11 @@ county level data.
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67660866940"
+#> [1] "Liabilities from national data:  67669630177"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67660866940"
+#> [1] "Liabilities from county data:    67669630177"
 ```
 
 A unique property of the summary of business data set is that its
@@ -329,62 +327,55 @@ col_data <- get_col_data(year = 2020:2022)
 #> ✔ Download links located.
 #> Downloading cause of loss files for specified crop years ■■■■■■■■■■■■■■■■■■■■■ …                                                                                 ℹ Merging cause of loss files for all specified crop years
 head(col_data)
-#>   commodity_year state_code state_abbrv county_code
-#> 1           2020          1          AL           1
-#> 2           2020          1          AL           1
-#> 3           2020          1          AL           1
-#> 4           2020          1          AL           1
-#> 5           2020          1          AL           1
-#> 6           2020          1          AL           1
-#>                      county_name commodity_code                 commodity_name
-#> 1 Autauga                                    21 Cotton                        
-#> 2 Autauga                                    21 Cotton                        
-#> 3 Autauga                                    21 Cotton                        
-#> 4 Autauga                                    41 Corn                          
-#> 5 Autauga                                    41 Corn                          
-#> 6 Autauga                                    41 Corn                          
-#>   insurance_plan_code insurance_plan_abbrv delivery_type stage_code col_code
-#> 1                   2           RP                     A         H        31
-#> 2                   2           RP                     A         H        92
-#> 3                   2           RP                     A         H        92
-#> 4                   2           RP                     A         H         1
-#> 5                   2           RP                     A         H        11
-#> 6                   2           RP                     A         R        93
-#>                             col_name month_of_loss_code month_of_loss_name
-#> 1 Excess Moisture/Precipitation/Rain                  9                SEP
-#> 2      Hurricane/Tropical Depression                 10                OCT
-#> 3      Hurricane/Tropical Depression                  9                SEP
-#> 4                   Decline in Price                  9                SEP
-#> 5                            Drought                  7                JUL
-#> 6                           Wildlife                  5                MAY
-#>   year_of_loss policies_earning_prem policies_indemnified net_planted_qty
-#> 1         2020                     1                    1   38.9250000000
-#> 2         2020                     3                    3  992.4250000000
-#> 3         2020                     3                    3  392.6000000000
-#> 4         2020                     1                    1   12.9000000000
-#> 5         2020                     1                    1    8.1000000000
-#> 6         2020                     1                    1   30.0000000000
-#>   net_endorsed_acres         liability    total_premium producer_paid_premium
-#> 1        .0000000000  11519.0000000000  1389.0000000000        570.0000000000
-#> 2        .0000000000 495420.0000000000 38585.5000000000       8457.5000000000
-#> 3        .0000000000 220061.0000000000 17815.5000000000       4157.5000000000
-#> 4        .0000000000   2543.6650000000   437.0950000000        196.7250000000
-#> 5        .0000000000   1597.1850000000   274.4550000000        123.5250000000
-#> 6        .0000000000   5915.5000000000  1016.5000000000        457.5000000000
-#>            subsidy state_subsidy addnl_subsidy efa_prem_discount
-#> 1   819.0000000000   .0000000000   .0000000000       .0000000000
-#> 2 30128.0000000000   .0000000000   .0000000000       .0000000000
-#> 3 13658.0000000000   .0000000000   .0000000000       .0000000000
-#> 4   240.3700000000   .0000000000   .0000000000       .0000000000
-#> 5   150.9300000000   .0000000000   .0000000000       .0000000000
-#> 6   559.0000000000   .0000000000   .0000000000       .0000000000
-#>   indemnified_quantity     indem_amount loss_ratio
-#> 1        38.9250000000  1938.0000000000       1.40
-#> 2       992.4250000000 95015.0000000000       2.46
-#> 3       392.6000000000 18962.0000000000       1.06
-#> 4        25.8000000000  1602.1800000000       3.67
-#> 5        16.2000000000  1006.0200000000       3.67
-#> 6        14.0000000000   439.0000000000        .43
+#>   commodity_year state_code state_abbrv county_code county_name commodity_code
+#> 1           2020          1          AL           1     Autauga             21
+#> 2           2020          1          AL           1     Autauga             21
+#> 3           2020          1          AL           1     Autauga             21
+#> 4           2020          1          AL           1     Autauga             41
+#> 5           2020          1          AL           1     Autauga             41
+#> 6           2020          1          AL           1     Autauga             41
+#>   commodity_name insurance_plan_code insurance_plan_abbrv delivery_type
+#> 1         Cotton                   2                   RP             A
+#> 2         Cotton                   2                   RP             A
+#> 3         Cotton                   2                   RP             A
+#> 4           Corn                   2                   RP             A
+#> 5           Corn                   2                   RP             A
+#> 6           Corn                   2                   RP             A
+#>   stage_code col_code                           col_name month_of_loss_code
+#> 1          H       31 Excess Moisture/Precipitation/Rain                  9
+#> 2          H       92      Hurricane/Tropical Depression                 10
+#> 3          H       92      Hurricane/Tropical Depression                  9
+#> 4          H        1                   Decline in Price                  9
+#> 5          H       11                            Drought                  7
+#> 6          R       93                           Wildlife                  5
+#>   month_of_loss_name year_of_loss policies_earning_prem policies_indemnified
+#> 1                SEP         2020                     1                    1
+#> 2                OCT         2020                     3                    3
+#> 3                SEP         2020                     3                    3
+#> 4                SEP         2020                     1                    1
+#> 5                JUL         2020                     1                    1
+#> 6                MAY         2020                     1                    1
+#>   net_planted_qty net_endorsed_acres  liability total_premium
+#> 1          38.925                  0  11519.000      1389.000
+#> 2         992.425                  0 495420.000     38585.500
+#> 3         392.600                  0 220061.000     17815.500
+#> 4          12.900                  0   2543.665       437.095
+#> 5           8.100                  0   1597.185       274.455
+#> 6          30.000                  0   5915.500      1016.500
+#>   producer_paid_premium  subsidy state_subsidy addnl_subsidy efa_prem_discount
+#> 1               570.000   819.00             0             0                 0
+#> 2              8457.500 30128.00             0             0                 0
+#> 3              4157.500 13658.00             0             0                 0
+#> 4               196.725   240.37             0             0                 0
+#> 5               123.525   150.93             0             0                 0
+#> 6               457.500   559.00             0             0                 0
+#>   indemnified_quantity indem_amount loss_ratio
+#> 1               38.925      1938.00       1.40
+#> 2              992.425     95015.00       2.46
+#> 3              392.600     18962.00       1.06
+#> 4               25.800      1602.18       3.67
+#> 5               16.200      1006.02       3.67
+#> 6               14.000       439.00       0.43
 ```
 
 ### Price
@@ -420,6 +411,37 @@ head(price_data)
 #> #   ProjectedPriceCurrencyMarketSymbolCode <lgl>,
 #> #   ProjectedPriceBeginDate <dttm>, ProjectedPriceEndDate <dttm>,
 #> #   ProjectedPriceDateRange <chr>, ProjectedPrice <dbl>, …
+```
+
+### Standard Reinsurance Agreement
+
+Data related to the Standard Reinsurance Agreement (including retained
+liabilities, premiums, indemnities, and net underwriting gains and
+losses) is included as a static internal data set. To load the national
+level data set, use `data(nationalSRA)`. This data set is based on data
+from .
+
+``` r
+# load the national SRA data set
+data(nationalSRA)
+
+head(nationalSRA)
+#> # A tibble: 6 × 11
+#>   fund_abb reinsurance_year report_geography value_type         dollars   
+#>   <chr>               <dbl> <chr>            <chr>              <chr>     
+#> 1 AR                   1998 NationalFund     gross_liability    3286742595
+#> 2 AR                   1998 NationalFund     gross_premium      313517141 
+#> 3 AR                   1998 NationalFund     gross_indemnity    463493075 
+#> 4 AR                   1998 NationalFund     retained_liability 597494229 
+#> 5 AR                   1998 NationalFund     retained_premium   58503706  
+#> 6 AR                   1998 NationalFund     retained_indemnity 51840753  
+#> # ℹ 6 more variables: data_release_month <chr>, data_release_year <chr>,
+#> #   data_release_day <chr>, data_release_date <date>, fund_name <chr>,
+#> #   report_type <chr>
+
+# pull up the data sets documentation file.
+?nationalSRA
+#> ℹ Rendering development documentation for "nationalSRA"
 ```
 
 Please note that `rfcip` is released with a [Contributor Code of
