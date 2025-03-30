@@ -63,16 +63,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025            82                    73                    0
-#>  2           2025            60                    28                    0
-#>  3           2025           764                   323                   62
-#>  4           2025          3250                  2199                  300
-#>  5           2025            16                     6                    0
-#>  6           2025          7739                  6762                    0
-#>  7           2025          1972                  1972                  655
-#>  8           2025         51552                 18632                  653
-#>  9           2025       2479625                223189                 2512
-#> 10           2025          2511                  2025                  374
+#>  1           2025         51552                 18632                  653
+#>  2           2025       2479625                223189                 2512
+#>  3           2025          2511                  2025                  374
+#>  4           2025          1972                  1972                  655
+#>  5           2025            82                    73                    0
+#>  6           2025          3250                  2199                  300
+#>  7           2025            16                     6                    0
+#>  8           2025          7739                  6762                    0
+#>  9           2025            60                    28                    0
+#> 10           2025           764                   323                   62
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -218,16 +218,16 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 213 × 25
 #>    commodity_year commodity_code commodity_name county_code county_name
 #>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           269         NA         
-#>  2           2022 0041           Corn           317         NA         
-#>  3           2022 0041           Corn           151         NA         
-#>  4           2022 0041           Corn           167         NA         
-#>  5           2022 0041           Corn           383         NA         
-#>  6           2022 0041           Corn           179         NA         
-#>  7           2022 0041           Corn           201         NA         
-#>  8           2022 0041           Corn           075         NA         
-#>  9           2022 0041           Corn           311         NA         
-#> 10           2022 0041           Corn           009         NA         
+#>  1           2022 0041           Corn           161         NA         
+#>  2           2022 0041           Corn           421         NA         
+#>  3           2022 0041           Corn           267         NA         
+#>  4           2022 0041           Corn           393         NA         
+#>  5           2022 0041           Corn           219         NA         
+#>  6           2022 0041           Corn           069         NA         
+#>  7           2022 0041           Corn           439         NA         
+#>  8           2022 0041           Corn           045         NA         
+#>  9           2022 0041           Corn           375         NA         
+#> 10           2022 0041           Corn           147         NA         
 #> # ℹ 203 more rows
 #> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
@@ -421,7 +421,8 @@ Data related to the Standard Reinsurance Agreement (including retained
 liabilities, premiums, indemnities, and net underwriting gains and
 losses) is included as a static internal data set. To load the national
 level data set, use `data(nationalSRA)`. This data set is based on data
-from .
+from RMA’s [reinsurance
+reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports).
 
 ``` r
 # load the national SRA data set
@@ -452,7 +453,8 @@ Data related to the Livestock Price Reinsurance Agreement (including
 retained liabilities, premiums, indemnities, and net underwriting gains
 and losses) is included as a static internal data set. To load the
 national level data set, use `data(nationalLPRA)`. This data set is
-based on data from .
+based on data from [reinsurance
+reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports).
 
 ``` r
 # load the national SRA data set

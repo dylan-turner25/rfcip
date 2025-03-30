@@ -158,7 +158,7 @@ head(price_data)
 ### Reinsurance Agreements
 
 #### Standard Reinsurance Agreement
-Data related to the Standard Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalSRA)`. This data set is based on data from \url{https://www.rma.usda.gov/tools-reports/reinsurance-reports}. 
+Data related to the Standard Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalSRA)`. This data set is based on data from RMA's [reinsurance reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports). 
 ```{r national-sra, include=T}
 # load the national SRA data set
 data(nationalSRA)
@@ -172,7 +172,7 @@ head(nationalSRA)
 ```
 
 #### Livestock Price Reinsurance Agreement
-Data related to the Livestock Price Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalLPRA)`. This data set is based on data from \url{https://www.rma.usda.gov/tools-reports/reinsurance-reports}. 
+Data related to the Livestock Price Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalLPRA)`. This data set is based on data from [reinsurance reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports). 
 ```{r national-lpra, include=T}
 # load the national SRA data set
 data(nationalLPRA)
