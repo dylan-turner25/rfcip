@@ -63,16 +63,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025         51552                 18632                  653
-#>  2           2025       2479625                223189                 2512
-#>  3           2025          2511                  2025                  374
-#>  4           2025          1972                  1972                  655
-#>  5           2025            82                    73                    0
-#>  6           2025          3250                  2199                  300
-#>  7           2025            16                     6                    0
-#>  8           2025          7739                  6762                    0
-#>  9           2025            60                    28                    0
-#> 10           2025           764                   323                   62
+#>  1           2025            60                    28                    0
+#>  2           2025           764                   323                   62
+#>  3           2025          3250                  2199                  300
+#>  4           2025            16                     6                    0
+#>  5           2025          7739                  6762                    0
+#>  6           2025          1972                  1972                  655
+#>  7           2025         51552                 18632                  653
+#>  8           2025       2479625                223189                 2512
+#>  9           2025          2511                  2025                  374
+#> 10           2025            82                    73                    0
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -224,10 +224,10 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #>  4           2022 0041           Corn           393         NA         
 #>  5           2022 0041           Corn           219         NA         
 #>  6           2022 0041           Corn           069         NA         
-#>  7           2022 0041           Corn           439         NA         
-#>  8           2022 0041           Corn           045         NA         
-#>  9           2022 0041           Corn           375         NA         
-#> 10           2022 0041           Corn           147         NA         
+#>  7           2022 0041           Corn           413         NA         
+#>  8           2022 0041           Corn           275         NA         
+#>  9           2022 0041           Corn           331         NA         
+#> 10           2022 0041           Corn           473         NA         
 #> # ℹ 203 more rows
 #> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
@@ -445,6 +445,32 @@ head(nationalSRA)
 # pull up the data sets documentation file.
 ?nationalSRA
 #> ℹ Rendering development documentation for "nationalSRA"
+```
+
+Similarly, a state level version of the SRA data set is also available.
+To load the state level data set, use `data(stateSRA)`.
+
+``` r
+# load the state SRA data set
+data(stateSRA)
+
+head(stateSRA)
+#> # A tibble: 6 × 12
+#>   state          fund_abb reinsurance_year report_geography value_type   dollars
+#>   <chr>          <chr>               <int> <chr>            <chr>        <chr>  
+#> 1 "AL          " AR                   1998 StateFund        gross_liabi… 635455…
+#> 2 "AL          " AR                   1998 StateFund        gross_premi… 7153137
+#> 3 "AL          " AR                   1998 StateFund        gross_indem… 164448…
+#> 4 "AL          " AR                   1998 StateFund        retained_li… 127091…
+#> 5 "AL          " AR                   1998 StateFund        retained_pr… 1430627
+#> 6 "AL          " AR                   1998 StateFund        retained_in… 1507266
+#> # ℹ 6 more variables: data_release_month <chr>, data_release_year <chr>,
+#> #   data_release_day <chr>, data_release_date <date>, fund_name <chr>,
+#> #   report_type <chr>
+
+# pull up the data sets documentation file.
+?stateSRA
+#> ℹ Rendering development documentation for "stateSRA"
 ```
 
 #### Livestock Price Reinsurance Agreement

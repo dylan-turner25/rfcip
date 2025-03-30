@@ -171,6 +171,19 @@ head(nationalSRA)
 
 ```
 
+Similarly, a state level version of the SRA data set is also available. To load the state level data set, use `data(stateSRA)`.
+```{r state-sra, include=T}
+# load the state SRA data set
+data(stateSRA)
+
+head(stateSRA)
+
+# pull up the data sets documentation file.
+?stateSRA
+
+```
+
+
 #### Livestock Price Reinsurance Agreement
 Data related to the Livestock Price Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalLPRA)`. This data set is based on data from [reinsurance reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports). 
 ```{r national-lpra, include=T}

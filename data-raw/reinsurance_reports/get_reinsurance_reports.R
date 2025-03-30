@@ -282,6 +282,7 @@ mapply(FUN = download_reinsurance_reports,
        year = 1998:as.numeric(format(Sys.Date(),"%Y")), 
        MoreArgs = list(geography = "state", type = "standard"))
 
+download_reinsurance_reports(2020, geography = "state", type = "standard")
 # download and save national reinsurance reports for livestock reinsurance agreement
 
 # links for the livestock reinsurance report excel files. Must be periodically updated if new data is available (typically once per year).
@@ -331,6 +332,46 @@ usethis::use_data(nationalSRA, overwrite = TRUE)
 
 
 # clean the downloaded state reinsurance reports for the standard reinsurance agreement ---------------
+state_reinsurance_reports <- list.files(path = "./data-raw/reinsurance_reports/standard/StateFund", 
+                                           pattern = "*.rds", full.names = TRUE) %>% 
+  purrr::map(readRDS) %>%
+  dplyr::bind_rows() %>%
+  rename(fund_abb = fund)
+
+
+
+# clean date using parse_data_release_date function
+state_reinsurance_reports <- parse_data_release_date(state_reinsurance_reports) %>%
+  select(-data_date)
+
+# add a column with the full fund type name
+state_reinsurance_reports <- convert_fund_types(df = state_reinsurance_reports, 
+                                                   abb_col = "fund_abb", name_col = "fund_name")
+
+# add a column indicating the type of reinsurance report
+state_reinsurance_reports$report_type <- "Standard Resinsurance Agreement"
+
+# remove in values in the state column containing "Footnote"
+state_reinsurance_reports <- state_reinsurance_reports %>% 
+  filter(!grepl("Footnote",state),
+         !grepl("Footnote",dollars))
+
+# trim ws on state column
+state_reinsurance_reports$state <- trimws(state_reinsurance_reports$state)
+
+# replace any state abbreviations containing "All Other" with "All Other States"
+state_reinsurance_reports$state <- gsub("All Other","All Other States",state_reinsurance_reports$state)
+
+# remove "*" from the state column
+state_reinsurance_reports$state <- gsub("\\*","",state_reinsurance_reports$state)
+
+# remove any rows that have NA in the dollars columns
+state_reinsurance_reports <- state_reinsurance_reports %>% 
+  filter(!is.na(dollars))
+
+# export as a data set
+stateSRA = state_reinsurance_reports
+usethis::use_data(stateSRA, overwrite = TRUE)
 
 # clean the downloaded national reinsurance reports for the livestock reinsurance agreement -----------
 livestock_reinsurance_reports <- list.files(path = "./data-raw/reinsurance_reports/livestock", 
