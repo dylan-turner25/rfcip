@@ -7,7 +7,7 @@ rfcip (R FCIP)
   - [Summary of Business](#summary-of-business)
   - [Cause of Loss Files](#cause-of-loss-files)
   - [Price](#price)
-  - [Standard Reinsurance Agreement](#standard-reinsurance-agreement)
+  - [Reinsurance Agreements](#reinsurance-agreements)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -63,16 +63,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025       2479625                223189                 2512
-#>  2           2025          2511                  2025                  374
-#>  3           2025            60                    28                    0
-#>  4           2025           764                   323                   62
-#>  5           2025            82                    73                    0
-#>  6           2025          3250                  2199                  300
-#>  7           2025            16                     6                    0
-#>  8           2025          7739                  6762                    0
-#>  9           2025          1972                  1972                  655
-#> 10           2025         51552                 18632                  653
+#>  1           2025            82                    73                    0
+#>  2           2025            60                    28                    0
+#>  3           2025           764                   323                   62
+#>  4           2025          3250                  2199                  300
+#>  5           2025            16                     6                    0
+#>  6           2025          7739                  6762                    0
+#>  7           2025          1972                  1972                  655
+#>  8           2025         51552                 18632                  653
+#>  9           2025       2479625                223189                 2512
+#> 10           2025          2511                  2025                  374
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -218,16 +218,16 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 213 × 25
 #>    commodity_year commodity_code commodity_name county_code county_name
 #>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           161         NA         
-#>  2           2022 0041           Corn           421         NA         
-#>  3           2022 0041           Corn           267         NA         
-#>  4           2022 0041           Corn           393         NA         
-#>  5           2022 0041           Corn           219         NA         
-#>  6           2022 0041           Corn           069         NA         
-#>  7           2022 0041           Corn           413         NA         
-#>  8           2022 0041           Corn           275         NA         
-#>  9           2022 0041           Corn           331         NA         
-#> 10           2022 0041           Corn           473         NA         
+#>  1           2022 0041           Corn           269         NA         
+#>  2           2022 0041           Corn           317         NA         
+#>  3           2022 0041           Corn           151         NA         
+#>  4           2022 0041           Corn           167         NA         
+#>  5           2022 0041           Corn           383         NA         
+#>  6           2022 0041           Corn           179         NA         
+#>  7           2022 0041           Corn           201         NA         
+#>  8           2022 0041           Corn           075         NA         
+#>  9           2022 0041           Corn           311         NA         
+#> 10           2022 0041           Corn           009         NA         
 #> # ℹ 203 more rows
 #> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
@@ -413,7 +413,9 @@ head(price_data)
 #> #   ProjectedPriceDateRange <chr>, ProjectedPrice <dbl>, …
 ```
 
-### Standard Reinsurance Agreement
+### Reinsurance Agreements
+
+#### Standard Reinsurance Agreement
 
 Data related to the Standard Reinsurance Agreement (including retained
 liabilities, premiums, indemnities, and net underwriting gains and
@@ -442,6 +444,36 @@ head(nationalSRA)
 # pull up the data sets documentation file.
 ?nationalSRA
 #> ℹ Rendering development documentation for "nationalSRA"
+```
+
+#### Livestock Price Reinsurance Agreement
+
+Data related to the Livestock Price Reinsurance Agreement (including
+retained liabilities, premiums, indemnities, and net underwriting gains
+and losses) is included as a static internal data set. To load the
+national level data set, use `data(nationalLPRA)`. This data set is
+based on data from .
+
+``` r
+# load the national SRA data set
+data(nationalLPRA)
+
+head(nationalLPRA)
+#> # A tibble: 6 × 10
+#>   reinsurance_year report_geography footnote                  value_type dollars
+#>              <dbl> <chr>            <chr>                     <chr>      <chr>  
+#> 1             2014 NationalFund     "Footnote: Amounts shown… gross_lia… 104119…
+#> 2             2014 NationalFund     "Footnote: Amounts shown… gross_pre… 228037…
+#> 3             2014 NationalFund     "Footnote: Amounts shown… gross_ind… 105091…
+#> 4             2014 NationalFund     "Footnote: Amounts shown… retained_… 402727…
+#> 5             2014 NationalFund     "Footnote: Amounts shown… retained_… 8638934
+#> 6             2014 NationalFund     "Footnote: Amounts shown… retained_… 3689633
+#> # ℹ 5 more variables: data_release_month <chr>, data_release_year <chr>,
+#> #   data_release_day <chr>, data_release_date <date>, report_type <chr>
+
+# pull up the data sets documentation file.
+?nationalLPRA
+#> ℹ Rendering development documentation for "nationalLPRA"
 ```
 
 Please note that `rfcip` is released with a [Contributor Code of
