@@ -66,7 +66,7 @@ download_reinsurance_reports <- function(year,geography,type = "standard",livest
     }
     data_date <- gsub("As of ","",data[as_of_row,i])
     
-    
+ 
     # locate first content line
     first_content_line <- NULL
     i = 0
@@ -91,6 +91,8 @@ download_reinsurance_reports <- function(year,geography,type = "standard",livest
     # clean column names using janitor::clean_names
     data <- janitor::clean_names(data)
     
+  
+    
     # add some additional columns
     data$reinsurance_year <- year
     data$report_geography  <- geography
@@ -108,6 +110,15 @@ download_reinsurance_reports <- function(year,geography,type = "standard",livest
         tidyr::pivot_longer(cols = -c(fund,reinsurance_year,report_geography,data_date,state), 
                             names_to = "value_type", 
                             values_to = "dollars")
+    }
+    
+    # geography specific cleaning operations
+    if(geography == "StateFund"){
+      # make sure dollars is numeric
+      data$dollars <- as.numeric(gsub(",","",data$dollars))
+      
+      # trim ws on state column
+      data$state <- trimws(data$state)
     }
     
 
