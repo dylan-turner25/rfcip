@@ -5,9 +5,14 @@ rfcip (R FCIP)
 - [Installation](#installation)
 - [Supported Data Sources](#supported-data-sources)
   - [Summary of Business](#summary-of-business)
+    - [Summary of Business by Type, Practice, and Unit
+      Structure](#summary-of-business-by-type-practice-and-unit-structure)
   - [Cause of Loss Files](#cause-of-loss-files)
   - [Price](#price)
   - [Reinsurance Agreements](#reinsurance-agreements)
+    - [Standard Reinsurance Agreement](#standard-reinsurance-agreement)
+    - [Livestock Price Reinsurance
+      Agreement](#livestock-price-reinsurance-agreement)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -19,7 +24,7 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
 [![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=6sJUenko4X)](https://codecov.io/gh/dylan-turner25/rfcip)
 
-## Introduction
+# Introduction
 
 `rfcip` provides a set of tools to allow users to access publicly
 available data related to the Federal Crop Insurance Program. The
@@ -33,14 +38,14 @@ defacto API wrapper.
 **Disclaimer:** This product uses data provided by the USDA, but is not
 endorsed by or affiliated with USDA or the Federal Government.
 
-## Installation
+# Installation
 
 `rfcip` can be installed directly from github using
 `remotes::install_github("https://github.com/dylan-turner25/rfcip")`
 
-## Supported Data Sources
+# Supported Data Sources
 
-### Summary of Business
+## Summary of Business
 
 The [Summary of
 Business](https://www.rma.usda.gov/tools-reports/summary-of-business)
@@ -54,7 +59,7 @@ of business.
 Accessing data from the summary of business can be done using the
 `get_sob_data`. With no arguments specified, the `get_sob_data` function
 will default to downloading data from [RMA’s summary of business report
-generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerato%22)
+generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator)
 for the current year, at the highest level aggregation.
 
 ``` r
@@ -63,16 +68,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025            60                    28                    0
-#>  2           2025           764                   323                   62
-#>  3           2025          3250                  2199                  300
-#>  4           2025            16                     6                    0
-#>  5           2025          7739                  6762                    0
-#>  6           2025          1972                  1972                  655
-#>  7           2025         51552                 18632                  653
-#>  8           2025       2479625                223189                 2512
-#>  9           2025          2511                  2025                  374
-#> 10           2025            82                    73                    0
+#>  1           2025            82                    73                    0
+#>  2           2025            60                    28                    0
+#>  3           2025           772                   344                   64
+#>  4           2025          3594                  2678                  300
+#>  5           2025            16                     6                    0
+#>  6           2025          7730                  6751                    0
+#>  7           2025          1986                  1986                  655
+#>  8           2025         52660                 19841                  661
+#>  9           2025       2532163                225698                 6464
+#> 10           2025          2512                  2031                  382
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -93,7 +98,7 @@ get_sob_data(year = 2022, crop = "corn")
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl> <chr>          <chr>                  <dbl>
-#> 1           2022 0041           Corn                  590769
+#> 1           2022 0041           Corn                  590768
 #> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
 #> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
 #> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
@@ -218,16 +223,16 @@ get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 213 × 25
 #>    commodity_year commodity_code commodity_name county_code county_name
 #>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           161         NA         
-#>  2           2022 0041           Corn           421         NA         
-#>  3           2022 0041           Corn           267         NA         
-#>  4           2022 0041           Corn           393         NA         
-#>  5           2022 0041           Corn           219         NA         
-#>  6           2022 0041           Corn           069         NA         
-#>  7           2022 0041           Corn           413         NA         
-#>  8           2022 0041           Corn           275         NA         
-#>  9           2022 0041           Corn           331         NA         
-#> 10           2022 0041           Corn           473         NA         
+#>  1           2022 0041           Corn           415         NA         
+#>  2           2022 0041           Corn           115         NA         
+#>  3           2022 0041           Corn           469         NA         
+#>  4           2022 0041           Corn           397         NA         
+#>  5           2022 0041           Corn           243         NA         
+#>  6           2022 0041           Corn           035         NA         
+#>  7           2022 0041           Corn           201         NA         
+#>  8           2022 0041           Corn           075         NA         
+#>  9           2022 0041           Corn           311         NA         
+#> 10           2022 0041           Corn           009         NA         
 #> # ℹ 203 more rows
 #> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
@@ -245,11 +250,11 @@ county level data.
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67669630177"
+#> [1] "Liabilities from national data:  67670230981"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67669630177"
+#> [1] "Liabilities from county data:    67670230981"
 ```
 
 A unique property of the summary of business data set is that its
@@ -299,7 +304,92 @@ mutate(indemnity = indemnity/1000000000) %>%
 
 <img src="man/figures/sob-method-chaining-1.png" width="100%" />
 
-### Cause of Loss Files
+### Summary of Business by Type, Practice, and Unit Structure
+
+The default behavior of the `get_sob_data()`function is to pull data
+from [RMA’s summary of business report
+generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator).
+Although this allows for server side filtering of data before it gets to
+your local machine it does not allow access to the most granular version
+of the data know as the [Summary of Business by Type, Practice, and Unit
+Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business).
+By setting the optional parameter `sob_version = "sobtpu"` the behavior
+of the `get_sob_data()` function will change to pull data from the
+[Summary of Business by Type, Practice, and Unit
+Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business).
+Note that when `sob_version = "sobtpu"`, the arguments `delivery_type`,
+`comm_cat`, and `group_by` are not applicable and will be ignored.
+Otherwise, the function behaves the same as when `sob_version = "sob"`
+(the default).
+
+``` r
+# get the summary of business by type, practice, and unit structure
+data <- get_sob_data(year = 2022, crop = "corn", sob_version = "sobtpu")
+#> ℹ Locating Summary of Business download links on RMA's website.
+#> ✔ Download links located.
+#> ℹ Merging Summary of Business files for all specified crop years
+
+head(data)
+#>   commodity_year state_code state_name state_abbreviation county_code
+#> 1           2022          1    Alabama                 AL           1
+#> 2           2022          1    Alabama                 AL           1
+#> 3           2022          1    Alabama                 AL           1
+#> 4           2022          1    Alabama                 AL           1
+#> 5           2022          1    Alabama                 AL           1
+#> 6           2022          1    Alabama                 AL           1
+#>   county_name commodity_code commodity_name insurance_plan_code
+#> 1     Autauga             41           Corn                   1
+#> 2     Autauga             41           Corn                   2
+#> 3     Autauga             41           Corn                   2
+#> 4     Autauga             41           Corn                   2
+#> 5     Autauga             41           Corn                   2
+#> 6     Autauga             41           Corn                   2
+#>   insurance_plan_abbreviation coverage_type_code coverage_level_percent
+#> 1                          YP                  C                   0.50
+#> 2                          RP                  A                   0.60
+#> 3                          RP                  A                   0.65
+#> 4                          RP                  A                   0.70
+#> 5                          RP                  A                   0.70
+#> 6                          RP                  A                   0.70
+#>   delivery_id type_code         type_name practice_code         practice_name
+#> 1           R         0 No Type Specified             0 No Practice Specified
+#> 2           R        16             Grain             3         Non-Irrigated
+#> 3           R         0 No Type Specified             0 No Practice Specified
+#> 4           R         0 No Type Specified             0 No Practice Specified
+#> 5           R        16             Grain             2             Irrigated
+#> 6           R        16             Grain             3         Non-Irrigated
+#>   unit_structure_code unit_structure_name net_reporting_level_amount
+#> 1                  OU       Optional Unit                          0
+#> 2                  BU          Basic Unit                         76
+#> 3                  OU       Optional Unit                          0
+#> 4                  OU       Optional Unit                          0
+#> 5                  OU       Optional Unit                        355
+#> 6                  OU       Optional Unit                         51
+#>   reporting_level_type liability_amount total_premium_amount subsidy_amount
+#> 1                Acres                0                    0              0
+#> 2                Acres            33327                 3520           2253
+#> 3                Acres                0                    0              0
+#> 4                Acres                0                    0              0
+#> 5                Acres           319499                22646          13361
+#> 6                Acres            21822                 4094           2416
+#>   indemnity_amount loss_ratio endorsed_commodity_reporting_level_amount
+#> 1                0       0.00                                         0
+#> 2                0       0.00                                         0
+#> 3                0       0.00                                         0
+#> 4                0       0.00                                         0
+#> 5            81213       3.59                                         0
+#> 6            11644       2.84                                         0
+```
+
+Once consideration when using `sob_version = "sobtpu"` is that the data
+is only accessible via bulk download by year. This means there will be
+little to no performance advantage from filtering data via the function
+arguments since the full data set must be downloaded before the filters
+are applied. However, the function does apply the filters to each
+year-specific file as they are read in to minimize memory usage to the
+extent possible.
+
+## Cause of Loss Files
 
 Although RMA’s [Summary of
 Business](https://www.rma.usda.gov/tools-reports/summary-of-business)
@@ -378,7 +468,7 @@ head(col_data)
 #> 6               14.000       439.00       0.43
 ```
 
-### Price
+## Price
 
 Insurance guarantees and indemnities for revenue protection plans are
 base, in part, on projected commodity prices and harvest commodity
@@ -413,9 +503,9 @@ head(price_data)
 #> #   ProjectedPriceDateRange <chr>, ProjectedPrice <dbl>, …
 ```
 
-### Reinsurance Agreements
+## Reinsurance Agreements
 
-#### Standard Reinsurance Agreement
+### Standard Reinsurance Agreement
 
 Data related to the Standard Reinsurance Agreement (including retained
 liabilities, premiums, indemnities, and net underwriting gains and
@@ -456,14 +546,14 @@ data(stateSRA)
 
 head(stateSRA)
 #> # A tibble: 6 × 12
-#>   state          fund_abb reinsurance_year report_geography value_type   dollars
-#>   <chr>          <chr>               <int> <chr>            <chr>        <chr>  
-#> 1 "AL          " AR                   1998 StateFund        gross_liabi… 635455…
-#> 2 "AL          " AR                   1998 StateFund        gross_premi… 7153137
-#> 3 "AL          " AR                   1998 StateFund        gross_indem… 164448…
-#> 4 "AL          " AR                   1998 StateFund        retained_li… 127091…
-#> 5 "AL          " AR                   1998 StateFund        retained_pr… 1430627
-#> 6 "AL          " AR                   1998 StateFund        retained_in… 1507266
+#>   state fund_abb reinsurance_year report_geography value_type          dollars
+#>   <chr> <chr>               <int> <chr>            <chr>                 <dbl>
+#> 1 AL    AR                   1998 StateFund        gross_liability    63545502
+#> 2 AL    AR                   1998 StateFund        gross_premium       7153137
+#> 3 AL    AR                   1998 StateFund        gross_indemnity    16444842
+#> 4 AL    AR                   1998 StateFund        retained_liability 12709100
+#> 5 AL    AR                   1998 StateFund        retained_premium    1430627
+#> 6 AL    AR                   1998 StateFund        retained_indemnity  1507266
 #> # ℹ 6 more variables: data_release_month <chr>, data_release_year <chr>,
 #> #   data_release_day <chr>, data_release_date <date>, fund_name <chr>,
 #> #   report_type <chr>
@@ -473,7 +563,7 @@ head(stateSRA)
 #> ℹ Rendering development documentation for "stateSRA"
 ```
 
-#### Livestock Price Reinsurance Agreement
+### Livestock Price Reinsurance Agreement
 
 Data related to the Livestock Price Reinsurance Agreement (including
 retained liabilities, premiums, indemnities, and net underwriting gains

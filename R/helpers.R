@@ -1,3 +1,204 @@
+#' Get summary of business data by type, practice, and unit structure.
+#' 
+#' This function is a helper function for `get_sob_data()` that gets activated when a user sets `sob_version = "sobtpu"` in `get_sob_data()`. 
+#' All of the arguments in `get_sobtpu_data` are inherited from `get_sob_data()`. The function can be used as a standalone function however,
+#' but is not exported, meaning it must be called via `rfcip:::get_sobtpu_data()`.
+#'
+#' @param year a numeric value (either single value or a vector of values) that indicate the crop year (ex: `2024` or `c(2022,2023,2024)`)
+#' @param crop can be either a character string indicating a crop (i.e. `corn`) or a numeric value indicating the crop code (i.e. `41`). Inputting a vector with multiple values will return data for multiple crops. To get a data frame containing all the available crops and crop codes use `get_crop_codes()`.
+#' @param insurance_plan can be either a character string indicating an insurance plan (ex: `yp` and `yield protection` are both valid) or a numeric value indicating the insurance plan code (i.e. `1`). Inputting a vector with multiple values will return data for multiple insurance plans. To get a data frame containing all the available insurance plans and insurance plan codes use `get_insurance_plan_codes()`.
+#' @param state can be a character string indicating the state abbreviation or state name. Numeric values corresponding to state FIPS codes can also be supplied.
+#' @param county either a character string with a county name or 5-digit FIPS code corresponding to a county. when the county is specified using the name of the county, the state parameter must also be specified.
+#' @param fips a numeric value corresponding to a 5-digit FIPS code of a U.S. county.
+#' @param cov_lvl a numeric value indicating the coverage level. Valid coverage levels are `c(0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95)`
+#'
+#' @importFrom dplyr %>%
+#' @importFrom purrr map_dfr
+#' @importFrom usmap fips
+#' @import cli
+#' 
+#'
+#' @returns A tibble containing the summary of business data by type, practice, and unit structure.
+#'
+get_sobtpu_data <- function(year = NULL,
+                            crop = NULL, 
+                            insurance_plan = NULL, 
+                            state = NULL, 
+                            county = NULL, 
+                            fips = NULL, 
+                            cov_lvl = NULL) {
+  
+  
+  # clean function arguments
+  
+  # clean crop entry
+  if (!is.null(crop)) {
+    crop <- as.numeric(data.frame(get_crop_codes(crop = crop))[, "commodity_code"])
+  }
+  
+  # clean insurance plan entry
+  if (!is.null(insurance_plan)) {
+    insurance_plan <- as.numeric(data.frame(get_insurance_plan_codes(plan = insurance_plan))[, "insurance_plan_code"])
+  }
+  
+  # clean state county and fips code
+  if (is.null(state) & !is.null(county) & !is.null(fips)) {
+    stop("county parameter value entered without a state parameter value. Both state and county parameters must be defined to return county level data. Alternatively, the fips parameter can be filled in with a 5-digit FIPS code to return county level data.")
+  }
+  
+  if (!is.null(state) & !is.null(county)) {
+    county <- usmap::fips(state = valid_state(state), county = county)
+  }
+  
+  if (!is.null(state)) {
+    state <- as.numeric(usmap::fips(state = valid_state(state)))
+  }
+  
+  if (!is.null(fips)) {
+    fips <- clean_fips(fips = fips)
+    state <- as.numeric(substr(fips, 1, 2))
+    county <- as.numeric(substr(fips, 3, 5))
+  }
+  
+  
+  # input checking
+  stopifnot("`year` must be a vector of numeric values." = is.numeric(year))
+  
+  # get the current location of the col files
+  cli::cli_alert_info("Locating Summary of Business download links on RMA's website.")
+  sob_urls <- locate_sobtpu_links()
+  cli::cli_alert_success("Download links located.")
+  
+  # set up a temporary directory
+  sobtpu_data_files <- tempdir()
+  
+  # initialize progress bar
+  cli::cli_progress_bar("Downloading Summary of Business files for specified crop years", total = length(year))
+  
+  # loop over years
+  for (y in year) {
+    cli::cli_progress_update()
+    
+    
+    # locate url corresponding to the crop year
+    url <- sob_urls$url[which(sob_urls$year == y)]
+    
+    data <- NULL
+    try({
+      # set a temporary zip file
+      temp_zip <- tempfile(fileext = ".zip")
+      
+      # download the zip file
+      utils::download.file(url, destfile = temp_zip, mode = "wb", quiet = T)
+      
+      # set a temporary txt file
+      temp_txt <- tempfile()
+      
+      # unzip the file
+      utils::unzip(zipfile = temp_zip, exdir = temp_txt)
+      
+      # load the text file
+      data <- utils::read.delim2(
+        file = list.files(temp_txt, full.names = T),
+        sep = "|", header = F, skipNul = T
+      )
+      
+      # remove the temporary files
+      unlink(temp_zip)
+      unlink(temp_txt, recursive = T)
+      
+      
+    })
+    
+    
+    colnames(data) <- c(
+      "commodity_year",
+      "state_code",
+      "state_name",
+      "state_abbreviation",
+      "county_code",
+      "county_name",
+      "commodity_code",
+      "commodity_name",
+      "insurance_plan_code",
+      "insurance_plan_abbreviation",
+      "coverage_type_code",
+      "coverage_level_percent",
+      "delivery_id",
+      "type_code",
+      "type_name",
+      "practice_code",
+      "practice_name",
+      "unit_structure_code",
+      "unit_structure_name",
+      "net_reporting_level_amount",
+      "reporting_level_type",
+      "liability_amount",
+      "total_premium_amount",
+      "subsidy_amount",
+      "indemnity_amount",
+      "loss_ratio",
+      "endorsed_commodity_reporting_level_amount"
+    )
+    
+    # convert data types
+    data <- suppressMessages(readr::type_convert(data)) 
+    
+    # apply any filters specified by the function arguments
+    
+    # filter by crop
+    if (!is.null(crop)) {
+      data <- data[data$commodity_code %in% crop, ]
+    }
+    
+    # filter by insurance plan
+    if (!is.null(insurance_plan)) {
+      data <- data[data$insurance_plan_code %in% insurance_plan, ]
+    }
+    
+    # filter by state
+    if (!is.null(state)) {
+      data <- data[data$state_code %in% as.numeric(state), ]
+    }
+    
+    # filter by county
+    if (!is.null(county)) {
+      data <- data[data$county_code %in% as.numeric(county), ]
+    }
+    
+  
+    # filter by coverage level
+    if (!is.null(cov_lvl)) {
+      data <- data[data$coverage_level_percent %in% cov_lvl, ]
+    }
+    
+    # save as a rds file
+    saveRDS(data, file = paste0(sobtpu_data_files, "/sobtpu_", y, ".rds"))
+    
+  }
+  
+  # close progress bar
+  cli::cli_progress_done()
+  
+  # indicate merging of files is taking place
+  cli::cli_alert_info("Merging Summary of Business files for all specified crop years")
+  
+  # list all files in the temporary directory matching the file naming convention
+  files_to_load <- list.files(sobtpu_data_files, full.names = T, pattern = "sobtpu_\\d+.rds")
+  
+  # remove any files that aren't the specified years
+  files_to_load <- files_to_load[grepl(paste0(year, collapse = "|"), files_to_load)]
+  
+  # load all the `files_to_load` and aggregate them into a single data frame
+  sobtpu <- files_to_load %>%
+    purrr::map_dfr(readRDS) %>%
+    dplyr::bind_rows()
+  
+  return(sobtpu)
+  
+  
+}
+
 #' Generates a data frame of urls and years corresponding to where each cause of loss file is hosted on RMA's website
 #' @noRd
 #' @keywords internal
@@ -57,6 +258,67 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
   # add url prefix to links
   links$url <- paste0("https://www.rma.usda.gov", links$url)
 
+  # return data frame of correct urls
+  return(links)
+}
+
+#' Generates a data frame of urls and years corresponding to where each summary of business by type, practive, 
+#' and unit structure file is hosted on RMA's website
+#' @noRd
+#' @keywords internal
+#' @importFrom stringr str_match_all
+#'
+locate_sobtpu_links <- function(url = "https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business") {
+  # read the html
+  html <- paste0(readLines(url), collapse = "\n")
+  
+  # get all links
+  links <- as.character(data.frame(stringr::str_match_all(html, "href=\"(.*?)\""))[, 1])
+  
+  # filter to links containing "sobtpu"
+  links <- links[grepl("sobtpu", links)]
+  
+  # remove any links that have ".pdf" or ".docx" in them
+  links <- links[!grepl("\\.pdf|\\.docx", links)]
+  
+  # put links in a data frame
+  links <- data.frame(links)
+  names(links) <- "url"
+  
+  # add a row to indicate the year
+  links$year <- NA
+  years <- 1989:format(Sys.Date(), "%Y")
+  for (y in years) {
+    links$year[grepl(y, links$url)] <- y
+  }
+  
+  # remove unneccesary characters from url
+  links$url <- gsub("href=\"", "", links$url)
+  links$url <- gsub('"', "", links$url)
+  
+  # locate rows where actual file download link is on another page
+  urls_needed <- links$url[!grepl("zip", links$url)]
+  for (u in urls_needed) {
+    # read the html
+    html <- paste0(readLines(paste0("https://www.rma.usda.gov", u)), collapse = "\n")
+    
+    # get all links
+    sublinks <- as.character(data.frame(stringr::str_match_all(html, "href=\"(.*?)\""))[, 1])
+    
+    # locate .zip links
+    sublinks <- sublinks[grepl(".zip", sublinks)]
+    
+    # remove unncessesary characters
+    sublinks <- gsub("href=\"", "", sublinks)
+    sublinks <- gsub('"', "", sublinks)
+    
+    # add sublink to the links data frame
+    links$url[which(links$url == u)] <- sublinks
+  }
+  
+  # add url prefix to links
+  links$url <- paste0("https://www.rma.usda.gov", links$url)
+  
   # return data frame of correct urls
   return(links)
 }

@@ -26,8 +26,7 @@ get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y"))
   data_path <- paste0(dir, "/plan_codes.xlsx")
 
   # download the file to the temporary directory
-  download.file(url, destfile = data_path, mode = "wb")
-
+  download.file(url, destfile = data_path, mode = "wb", quiet = TRUE)
 
   # load data
   data <- suppressMessages(janitor::clean_names(readxl::read_excel(data_path)))
@@ -40,6 +39,9 @@ get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y"))
   # filter to desired columns
   data <- data[, c("commodity_year", "insurance_plan_code", "insurance_plan", "insurance_plan_abbrv")]
 
+  # remove temporary file
+  unlink(data_path)
+  
   # if no plan is entered, return all plans
   if (is.null(plan)) {
     return(data)

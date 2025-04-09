@@ -10,6 +10,7 @@
 #' @param cov_lvl a numeric value indicating the coverage level. Valid coverage levels are `c(0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95)`
 #' @param comm_cat a character vector of either "S" for standard, "L" for livestock, or "B" for both (the default).
 #' @param dest_file an optional character string specifying a .xlsx file path. When specified, the function will export the data to the supplied file path instead of returning a the data as tibble.
+#' @param sob_version a character string indicating the version of the summary of business to use. The default is "sob" which uses the summary of business app. The alternative is "sobtpu" which downloads the summary of business by type, practice, and unit structure.
 #' @param group_by an optional character where any of the other parameter names
 #' can be entered to further disagregate the data. When left empty, the function
 #' returns data the level of dissagregation associated with the specified parameters.
@@ -30,9 +31,18 @@
 #' get_sob_data(year = 2022, crop = c(41, 81), group_by = "state")
 #' }
 #' @source Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
-
-
-get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NULL, delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", dest_file = NULL, group_by = NULL) {
+get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), 
+                         crop = NULL, 
+                         delivery_type = NULL,
+                         insurance_plan = NULL, 
+                         state = NULL, 
+                         county = NULL, 
+                         fips = NULL, 
+                         cov_lvl = NULL, 
+                         comm_cat = "B", 
+                         dest_file = NULL, 
+                         group_by = NULL,
+                         sob_version = "sob") {
   
   # input checking
   stopifnot("`year` must be a numeric value or vector of numeric values." = is.numeric(year))
@@ -40,43 +50,75 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = NUL
   # initialize
   full_data <- NULL
   
+
+  # if sob_version is "sob", pull data from the application
+  if(sob_version == "sob"){
+  
   # initialize progress bar
   cli::cli_progress_bar("Downloading summary of business data for specified crop years", total = length(year))
   
-
   # loop over years to avoid server timeout issues.
   for (y in year) {
+    
     cli::cli_progress_update()
     
-    url <- get_sob_url(
-      year = y,
+    # if sob_version is "sob", pull data from the application
+    
+      url <- get_sob_url(
+        year = y,
+        crop = crop,
+        delivery_type = delivery_type,
+        insurance_plan = insurance_plan,
+        state = state,
+        county = county,
+        fips = fips,
+        cov_lvl = cov_lvl,
+        comm_cat = comm_cat,
+        group_by = group_by
+      )
+  
+  
+      temp_data <- tempfile(fileext = ".xlsx")
+  
+      utils::download.file(url, destfile = temp_data, mode = "wb", quiet = T)
+  
+      data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data)))
+  
+      if (colnames(data)[2] == "x2") {
+        data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data, skip = 1)))
+      }
+      
+      # remove the temporary file
+      unlink(temp_data)
+      
+      full_data <- dplyr::bind_rows(full_data, data)
+  }
+    
+  # close progress bar
+  cli::cli_progress_done()
+    
+  }
+  
+  # is sob_version is "sobtpu", pull data from bulk files
+  if(sob_version == "sobtpu"){
+    
+    # use the helper function get_sobtpu_data
+    full_data <- get_sobtpu_data(
+      year = year,
       crop = crop,
-      delivery_type = delivery_type,
       insurance_plan = insurance_plan,
       state = state,
       county = county,
       fips = fips,
-      cov_lvl = cov_lvl,
-      comm_cat = comm_cat,
-      group_by = group_by
+      cov_lvl = cov_lvl
     )
-
-
-    temp_data <- tempfile(fileext = ".xlsx")
-
-    utils::download.file(url, destfile = temp_data, mode = "wb", quiet = T)
-
-    data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data)))
-
-    if (colnames(data)[2] == "x2") {
-      data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data, skip = 1)))
-    }
-
-    full_data <- dplyr::bind_rows(full_data, data)
+    
+    
+  
+    
   }
   
-  # close progress bar
-  cli::cli_progress_done()
+  
   
   # enforce data types
   full_data$commodity_year <- as.numeric(full_data$commodity_year)

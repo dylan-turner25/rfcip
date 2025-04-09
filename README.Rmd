@@ -35,20 +35,20 @@ load_all()
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
 [![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=6sJUenko4X)](https://codecov.io/gh/dylan-turner25/rfcip)
 
-## Introduction
+# Introduction
 `rfcip` provides a set of tools to allow users to access publicly available data related to the Federal Crop Insurance Program. The package provides a set of functions to easily navigate and access data that is publicly available, but otherwise scattered across different urls, files, and data portals. Although no official API exists for Federal Crop Insurance Data, much of the data can be located with a structured url meaning the `rfcip` package effectively functions like a defacto API wrapper.
 
 **Disclaimer:** This product uses data provided by the USDA, but is not endorsed by or affiliated with USDA or the Federal Government.
 
-## Installation
+# Installation
 `rfcip` can be installed directly from github using `remotes::install_github("https://github.com/dylan-turner25/rfcip")`
 
-## Supported Data Sources
+# Supported Data Sources
 
-### Summary of Business
+## Summary of Business
 The [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) files produced by the USDA Risk Management Agency contains crop insurance participation measures and outcomes by state, county, crop, and insurance policy choices. Insured acres, collected premiums, disbursed subsides, liabilities, number of policies sold, number of indemnified policies, and loss ratios are all available from the summary of business. 
 
-Accessing data from the summary of business can be done using the `get_sob_data`. With no arguments specified, the `get_sob_data` function will default to downloading data from [RMA's summary of business report generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerato") for the current year, at the highest level aggregation. 
+Accessing data from the summary of business can be done using the `get_sob_data`. With no arguments specified, the `get_sob_data` function will default to downloading data from [RMA's summary of business report generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator) for the current year, at the highest level aggregation. 
 
 ```{r sob-basic, include=T}
 library(rfcip)
@@ -109,6 +109,8 @@ print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
 
 ```
 
+
+
 A unique property of the summary of business data set is that its continuously updated (one per week) as new information is reported to USDA by [approved insurance providers](https://cropinsuranceinamerica.org/who-are-approved-insurance-providers-aips/). This means that analysis using the summary of business can quickly become outdated. One advantage of the the `rfcip` package is that it allows the raw data source to be directly integrated into the analysis. For example, the chart below plots indemnities for each crop year from 2015 up to the current year. The plot will automatically update with the latest data every time the plot is regenerated. Note that functions in `rfcip` are [memoised](https://en.wikipedia.org/wiki/Memoization) for the duration of the R session. This means that calling the same function with the same arguments will return a previously cached data set. In other words, in the below example, the data would not update if the code was run multiple times in the same R session, regaurdless of if the underlying data source changed. 
 
 ```{r sob-method-chaining, include=T}
@@ -132,8 +134,21 @@ mutate(indemnity = indemnity/1000000000) %>%
 
 ```
 
+### Summary of Business by Type, Practice, and Unit Structure
+The default behavior of the `get_sob_data()`function is to pull data from [RMA's summary of business report generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator). Although this allows for server side filtering of data before it gets to your local machine it does not allow access to the most granular version of the data know as the [Summary of Business by Type, Practice, and Unit Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business). By setting the optional parameter `sob_version = "sobtpu"` the behavior of the `get_sob_data()` function will change to pull data from the [Summary of Business by Type, Practice, and Unit Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business). Note that when `sob_version = "sobtpu"`, the arguments `delivery_type`, `comm_cat`, and `group_by` are not applicable and will be ignored. Otherwise, the function behaves the same as when `sob_version = "sob"` (the default). 
 
-### Cause of Loss Files
+```{r sobtpu-basic, include=T}
+# get the summary of business by type, practice, and unit structure
+data <- get_sob_data(year = 2022, crop = "corn", sob_version = "sobtpu")
+
+head(data)
+```
+
+Once consideration when using `sob_version = "sobtpu"` is that the data is only accessible via bulk download by year. This means there will be little to no performance advantage from filtering data via the function arguments since the full data set must be downloaded before the filters are applied. However, the function does apply the filters to each year-specific file as they are read in to minimize memory usage to the extent possible.
+
+
+
+## Cause of Loss Files
 Although RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) files do report indemnities, they don't report the cause of loss associated with the indemnities which is often relevant. To obtain indemnities with the associated cause of loss that generated those indemnities, accessing the [cause of loss files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) is necessary. Unlike data contained in the [summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business), the [cause of loss files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) can only be accessed by bulk downloading all data for a particular year. Because of this, the cause of loss data cannot be filtered prior to loading it into local memory meaning there is no advantage to offering any within-function filtering options. To download [cause of loss files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) for a year or series of years, use the `get_col_data` function. The function will automatically download all the relevant cause of loss files and merge them into a single data frame that will be returned. 
 
 
@@ -144,7 +159,7 @@ head(col_data)
 ```
 
 
-### Price
+## Price
 Insurance guarantees and indemnities for revenue protection plans are base, in part, on projected commodity prices and harvest commodity prices. These are available via RMA's [price discovery application](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/), but can also be obtained using the `get_price_data` function which supports arguments for `year`, `crop`, and `state`. For example, prices for corn in Illinois from 2020-2024 can be obtained with the following code. 
 
 ```{r price-basic, include=T}
@@ -155,9 +170,9 @@ price_data <- get_price_data(year = 2020:2024,
 head(price_data) 
 ```
 
-### Reinsurance Agreements
+## Reinsurance Agreements
 
-#### Standard Reinsurance Agreement
+### Standard Reinsurance Agreement
 Data related to the Standard Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalSRA)`. This data set is based on data from RMA's [reinsurance reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports). 
 ```{r national-sra, include=T}
 # load the national SRA data set
@@ -184,7 +199,7 @@ head(stateSRA)
 ```
 
 
-#### Livestock Price Reinsurance Agreement
+### Livestock Price Reinsurance Agreement
 Data related to the Livestock Price Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalLPRA)`. This data set is based on data from [reinsurance reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports). 
 ```{r national-lpra, include=T}
 # load the national SRA data set

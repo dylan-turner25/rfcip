@@ -18,7 +18,8 @@ get_sob_data(
   cov_lvl = NULL,
   comm_cat = "B",
   dest_file = NULL,
-  group_by = NULL
+  group_by = NULL,
+  sob_version = "sob"
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ For example, \code{get_sob_data(year = 2023:2024)} will return data for 2023 and
 dis-aggregated by year only where. The function call
 \code{get_sob_data(year = 2023:2024, group_by = c("insurance_plan","cov_lvl"))} will
 return the same data, but further dissagregated by insurance plan and coverage level}
+
+\item{sob_version}{a character string indicating the version of the summary of business to use. The default is "sob" which uses the summary of business app. The alternative is "sobtpu" which downloads the summary of business by type, practice, and unit structure.}
 }
 \value{
 Returns a tibble

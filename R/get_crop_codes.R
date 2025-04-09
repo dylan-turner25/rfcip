@@ -31,7 +31,7 @@ get_crop_codes <- function(year = as.numeric(format(Sys.Date(), "%Y")), crop = N
 
   # check for warnings that appear in the header, if so, need to skip one line
   if (colnames(data)[2] == "x2") {
-    data <- suppressMessages(janitor::clean_names(readxl::read_excel(data_path, skip = 1)))
+    data <- suppressMessages(janitor::clean_names(readxl::read_excel(tf, skip = 1)))
   }
 
   # select necessary columns
