@@ -434,6 +434,13 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
 
   # add additional grouping parameters if specified
   if (!is.null(group_by)) {
+    
+    # if group by includes county, ensure state is also included
+    if("county" %in% group_by & ("state" %in% group_by == F)){
+      group_by <- c(group_by,"state")
+    }
+    
+
     group_by_codes <- c(
       "CY" = "year",
       "CM" = "crop",
