@@ -17,3 +17,11 @@ test_that("valid_state returns expected output",{
   expect_error(valid_state("XX"),"Parameter value for state not valid.")
 })
 
+test_that("get_sob_url also returns state when group_by county is selected", {
+  expect_equal(grepl("ST=17",get_sob_url(year = 2023, 
+                                         crop = "corn",
+                                         insurance_plan = 1,
+                                         state = "IL", 
+                                         group_by = "county")), TRUE)
+})
+
