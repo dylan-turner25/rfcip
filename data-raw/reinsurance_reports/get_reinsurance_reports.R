@@ -336,6 +336,12 @@ national_reinsurance_reports <- convert_fund_types(df = national_reinsurance_rep
 # add a column indicating the type of reinsurance report
 national_reinsurance_reports$report_type <- "Standard Resinsurance Agreement"
 
+# convert dollars, data_release_month, data_release_year, and data_release_day to numeric
+national_reinsurance_reports$dollars <- as.numeric(gsub(",","",national_reinsurance_reports$dollars))
+national_reinsurance_reports$data_release_month <- as.numeric(national_reinsurance_reports$data_release_month)
+national_reinsurance_reports$data_release_year <- as.numeric(national_reinsurance_reports$data_release_year)
+national_reinsurance_reports$data_release_day <- as.numeric(national_reinsurance_reports$data_release_day)
+
 
 # export as a data set
 nationalSRA = national_reinsurance_reports
@@ -380,6 +386,13 @@ state_reinsurance_reports$state <- gsub("\\*","",state_reinsurance_reports$state
 state_reinsurance_reports <- state_reinsurance_reports %>% 
   filter(!is.na(dollars))
 
+# type check
+state_reinsurance_reports$dollars <- as.numeric(gsub(",","",state_reinsurance_reports$dollars))
+state_reinsurance_reports$data_release_month <- as.numeric(state_reinsurance_reports$data_release_month)
+state_reinsurance_reports$data_release_year <- as.numeric(state_reinsurance_reports$data_release_year)
+state_reinsurance_reports$data_release_day <- as.numeric(state_reinsurance_reports$data_release_day)
+
+
 # export as a data set
 stateSRA = state_reinsurance_reports
 usethis::use_data(stateSRA, overwrite = TRUE)
@@ -397,6 +410,12 @@ livestock_reinsurance_reports<- parse_data_release_date(livestock_reinsurance_re
 
 # add a column indicating the type of reinsurance report
 livestock_reinsurance_reports$report_type <- "Livestock Price Reinsurance Agreement"
+
+# type check
+livestock_reinsurance_reports$dollars <- as.numeric(gsub(",","",livestock_reinsurance_reports$dollars))
+livestock_reinsurance_reports$data_release_month <- as.numeric(livestock_reinsurance_reports$data_release_month)
+livestock_reinsurance_reports$data_release_year <- as.numeric(livestock_reinsurance_reports$data_release_year)
+livestock_reinsurance_reports$data_release_day <- as.numeric(livestock_reinsurance_reports$data_release_day)
 
 
 # export as a data set
