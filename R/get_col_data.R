@@ -45,7 +45,7 @@ get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeri
       temp_zip <- tempfile(fileext = ".zip")
 
       # download the zip file
-      utils::download.file(url, destfile = temp_zip, mode = "wb", quiet = T)
+      download_and_verify(url, temp_zip, method = "curl")
 
       # set a temporary txt file
       temp_txt <- tempfile()
@@ -77,14 +77,9 @@ get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeri
       "indem_amount", "loss_ratio"
     )
 
-    # convert data types
-    data <- suppressMessages(readr::type_convert(data)) 
-    
-    # handling type inconsistencies that `type_convert` doesn't catch
-    data$col_code <- suppressWarnings(as.numeric(data$col_code))
-    
-    # make sure cause of loss names don't have extra whitespace
-    data$col_name <- trimws(data$col_name)
+    # convert the whole data frame to character (to ensure merging works later)
+    data <- data |>
+      dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
     
     # save as a rds file
     saveRDS(data, file = paste0(col_data_files, "/col_", y, ".rds"))
@@ -106,6 +101,34 @@ get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeri
   col <- files_to_load %>%
     purrr::map_dfr(readRDS) %>%
     dplyr::bind_rows()
+  
+  # manually type check each column
+  col <- suppressWarnings(col |>
+    dplyr::mutate(
+      dplyr::across(
+        c("commodity_year", "state_code", "county_code",
+          "commodity_code", "insurance_plan_code", 
+          "col_code", "month_of_loss_code", "year_of_loss", 
+          "policies_earning_prem", "policies_indemnified", 
+          "net_planted_qty", "net_endorsed_acres", "liability", 
+          "total_premium", "producer_paid_premium", "subsidy", 
+          "state_subsidy", "addnl_subsidy", "efa_prem_discount", 
+          "indemnified_quantity", "indem_amount","loss_ratio"),
+        as.numeric
+      )
+    ))
+  
+  # trim white space on all character columns
+  col <- col |>
+    dplyr::mutate(
+      dplyr::across(
+        c("state_abbrv", "county_name", "commodity_name", 
+          "insurance_plan_abbrv", "delivery_type", "stage_code", 
+          "col_name", "month_of_loss_name"),
+        trimws
+      )
+    )
+  
 
   return(col)
 }
