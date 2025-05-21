@@ -186,35 +186,36 @@ get_sobtpu_data <- function(year = NULL,
       "endorsed_commodity_reporting_level_amount"
     )
     
-    # convert data types
-    data <- suppressMessages(readr::type_convert(data)) 
+    # convert all columns to character values
+    data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
+    
     
     # apply any filters specified by the function arguments
     
     # filter by crop
     if (!is.null(crop)) {
-      data <- data[data$commodity_code %in% crop, ]
+      data <- data[data$commodity_code %in% as.character(crop), ]
     }
     
     # filter by insurance plan
     if (!is.null(insurance_plan)) {
-      data <- data[data$insurance_plan_code %in% insurance_plan, ]
+      data <- data[data$insurance_plan_code %in% as.character(insurance_plan), ]
     }
     
     # filter by state
     if (!is.null(state)) {
-      data <- data[data$state_code %in% as.numeric(state), ]
+      data <- data[data$state_code %in% as.character(state), ]
     }
     
     # filter by county
     if (!is.null(county)) {
-      data <- data[data$county_code %in% as.numeric(county), ]
+      data <- data[data$county_code %in% as.character(county), ]
     }
     
   
     # filter by coverage level
     if (!is.null(cov_lvl)) {
-      data <- data[data$coverage_level_percent %in% cov_lvl, ]
+      data <- data[as.numeric(data$coverage_level_percent) %in% as.numeric(cov_lvl), ]
     }
     
     # save as a rds file
@@ -239,6 +240,8 @@ get_sobtpu_data <- function(year = NULL,
     purrr::map_dfr(readRDS) %>%
     dplyr::bind_rows()
   
+  
+
   return(sobtpu)
   
   

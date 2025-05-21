@@ -91,6 +91,10 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
       # remove the temporary file
       unlink(temp_data)
       
+      # convert all columns to character values
+      data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
+      
+      # bind temp data to full data
       full_data <- dplyr::bind_rows(full_data, data)
   }
     
@@ -118,11 +122,16 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
     
   }
   
-  
-  
-  # enforce data types
-  full_data$commodity_year <- as.numeric(full_data$commodity_year)
-  
+  # perform any type checking and converting here
+  full_data <- suppressMessages(
+    readr::type_convert(
+      full_data,
+      col_types = readr::cols(
+        commodity_code = readr::col_integer(),
+        insurance_plan_code = readr::col_integer()
+      )
+    )
+  )
 
   if (is.null(dest_file)) {
     return(full_data)
