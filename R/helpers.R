@@ -252,7 +252,8 @@ get_sobtpu_data <- function(year = NULL,
 #' @keywords internal
 #' @importFrom stringr str_match_all
 #'
-locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summary-business/cause-loss") {
+locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summary-of-business/cause-loss") {
+
   # read the html
   html <- paste0(readLines(url), collapse = "\n")
 
@@ -277,7 +278,7 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
   links <- links[-which(is.na(links$year)), ]
 
   # remove url with .doc suffix
-  links <- links[-grepl("\\.doc", links$url), ]
+  #links <- links[-grepl("\\.doc", links$url), ]
 
   # remove unneccesary characters from url
   links$url <- gsub("href=\"", "", links$url)
@@ -304,7 +305,7 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
   }
 
   # add url prefix to links
-  links$url <- paste0("https://www.rma.usda.gov", links$url)
+  #links$url <- paste0("https://www.rma.usda.gov", links$url)
 
   # return data frame of correct urls
   return(links)
@@ -364,8 +365,8 @@ locate_sobtpu_links <- function(url = "https://www.rma.usda.gov/tools-reports/su
     links$url[which(links$url == u)] <- sublinks
   }
   
-  # add url prefix to links
-  links$url <- paste0("https://www.rma.usda.gov", links$url)
+  # add url prefix to links 
+  #links$url <- paste0("https://www.rma.usda.gov", links$url)
   
   # return data frame of correct urls
   return(links)
