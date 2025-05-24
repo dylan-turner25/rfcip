@@ -128,7 +128,9 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
       full_data,
       col_types = readr::cols(
         commodity_code = readr::col_integer(),
-        insurance_plan_code = readr::col_integer()
+        insurance_plan_code = readr::col_integer(),
+        cov_level_percent = readr::col_double()
+        
       )
     )
   )
