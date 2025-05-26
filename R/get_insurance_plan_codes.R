@@ -17,8 +17,7 @@
 #' @source Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
 get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y")), plan = NULL) {
   # url for all commodities with commodity codes
-  url <- paste0("https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?CY=", paste(year, collapse = ","), "&ORD=CY,IP&CC=S&VisibleColumns=CommodityYear,InsurancePlanCode,InsurancePlanName,InsurancePlanAbbreviation&SortField=&SortDir=")
-
+  url <- paste0("https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?CY=", paste(year, collapse = ","), "&ORD=CY,IP&CC=B&VisibleColumns=CommodityYear,InsurancePlanCode,InsurancePlanName,InsurancePlanAbbreviation&SortField=&SortDir=")
   # set temporary directory
   dir <- tempdir()
 
@@ -41,6 +40,9 @@ get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y"))
 
   # remove temporary file
   unlink(data_path)
+  
+  # remove any duplicate entries
+  data <- dplyr::distinct(data)
   
   # if no plan is entered, return all plans
   if (is.null(plan)) {
