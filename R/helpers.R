@@ -481,7 +481,23 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
   # paste ORD parameter together
   ORD <- paste0("ORD=", paste(ORD, collapse = ","))
 
-  # add additional grouping parameters if specified
+  
+  # remove any group_by variables that already have filters specified
+  # (data will already be grouped by these)
+  for(g in group_by){
+    
+    # check if the group_by variable is not NULL
+    if(!is.null(eval(parse(text = g)))){
+      group_by <- group_by[-which(group_by == g)]
+    }
+    
+    # if all group_by variables are removed, set group_by to NULL
+    if(length(group_by) == 0){
+      group_by = NULL
+    }
+  }
+  
+  # add additional grouping parameters if specified 
   if (!is.null(group_by)) {
     
     # if group by includes county, ensure state is also included
