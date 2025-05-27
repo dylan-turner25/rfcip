@@ -13,6 +13,8 @@ rfcip (R FCIP)
     - [Standard Reinsurance Agreement](#standard-reinsurance-agreement)
     - [Livestock Price Reinsurance
       Agreement](#livestock-price-reinsurance-agreement)
+  - [Livestock and Dairy Participation
+    Reports](#livestock-and-dairy-participation-reports)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -68,16 +70,16 @@ get_sob_data()
 #> # A tibble: 10 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025            82                    73                    0
-#>  2           2025            60                    28                    0
-#>  3           2025           772                   344                   64
-#>  4           2025          3594                  2678                  300
-#>  5           2025            16                     6                    0
-#>  6           2025          7730                  6751                    0
-#>  7           2025          1986                  1986                  655
-#>  8           2025         52660                 19841                  661
-#>  9           2025       2532163                225698                 6464
-#> 10           2025          2512                  2031                  382
+#>  1           2025       2526176                270896                59739
+#>  2           2025          2513                  2051                  424
+#>  3           2025            60                    27                    5
+#>  4           2025           804                   359                  159
+#>  5           2025            82                    75                    0
+#>  6           2025          3917                  3261                  346
+#>  7           2025            16                    11                    0
+#>  8           2025         55482                 22663                  860
+#>  9           2025          7701                  6956                 5079
+#> 10           2025          2023                  2023                 1004
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -97,8 +99,8 @@ see the help file for the function using `help(get_sob_data)`
 get_sob_data(year = 2022, crop = "corn")
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
-#>            <dbl> <chr>          <chr>                  <dbl>
-#> 1           2022 0041           Corn                  590768
+#>            <dbl>          <int> <chr>                  <dbl>
+#> 1           2022             41 Corn                  590773
 #> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
 #> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
 #> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
@@ -171,7 +173,7 @@ plans.
 ``` r
 # return all insurance plans avaliable in 2024
 get_insurance_plan_codes(year = 2024)
-#> # A tibble: 40 × 4
+#> # A tibble: 35 × 4
 #>    commodity_year insurance_plan_code insurance_plan        insurance_plan_abbrv
 #>    <chr>          <chr>               <chr>                 <chr>               
 #>  1 2024           90                  APH                   APH                 
@@ -182,9 +184,9 @@ get_insurance_plan_codes(year = 2024)
 #>  6 2024           06                  Area Revenue Protect… ARP - HPE           
 #>  7 2024           04                  Area Yield Protection AYP                 
 #>  8 2024           50                  Dollar Amount Of Ins… DO                  
-#>  9 2024           50                  Dollar Amount Of Ins… DO                  
-#> 10 2024           50                  Dollar Amount Of Ins… DO                  
-#> # ℹ 30 more rows
+#>  9 2024           83                  Dairy Revenue Protec… DRP                 
+#> 10 2024           88                  Enhanced Cov Opt - R… ECO-RP              
+#> # ℹ 25 more rows
 
 # return the insurance plan code for the revenue projection plan
 get_insurance_plan_codes(year = 2024, plan = "revenue protection")
@@ -220,26 +222,26 @@ return the same underlying as above, but decomposed by county.
 
 ``` r
 get_sob_data(year = 2022, crop = "corn", group_by = "county")
-#> # A tibble: 213 × 25
-#>    commodity_year commodity_code commodity_name county_code county_name
-#>             <dbl> <chr>          <chr>          <chr>       <lgl>      
-#>  1           2022 0041           Corn           415         NA         
-#>  2           2022 0041           Corn           115         NA         
-#>  3           2022 0041           Corn           469         NA         
-#>  4           2022 0041           Corn           397         NA         
-#>  5           2022 0041           Corn           243         NA         
-#>  6           2022 0041           Corn           035         NA         
-#>  7           2022 0041           Corn           201         NA         
-#>  8           2022 0041           Corn           075         NA         
-#>  9           2022 0041           Corn           311         NA         
-#> 10           2022 0041           Corn           009         NA         
-#> # ℹ 203 more rows
-#> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
+#> # A tibble: 2,405 × 27
+#>    commodity_year commodity_code commodity_name        state_code state_abbrv
+#>             <dbl>          <int> <chr>                 <chr>      <chr>      
+#>  1           2022           9999 All Other Commodities 01         AL         
+#>  2           2022           9999 All Other Commodities 01         AL         
+#>  3           2022           9999 All Other Commodities 01         AL         
+#>  4           2022           9999 All Other Commodities 01         AL         
+#>  5           2022           9999 All Other Commodities 01         AL         
+#>  6           2022           9999 All Other Commodities 01         AL         
+#>  7           2022           9999 All Other Commodities 01         AL         
+#>  8           2022           9999 All Other Commodities 01         AL         
+#>  9           2022           9999 All Other Commodities 01         AL         
+#> 10           2022           9999 All Other Commodities 01         AL         
+#> # ℹ 2,395 more rows
+#> # ℹ 22 more variables: county_code <chr>, county_name <chr>,
+#> #   policies_sold <dbl>, policies_earning_prem <dbl>,
 #> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
 #> #   units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>,
 #> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
-#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
-#> #   addnl_subsidy <dbl>, state_subsidy <dbl>, …
+#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, …
 ```
 
 We can confirm `get_sob_data(year = 2022, crop = "corn")` and
@@ -250,11 +252,11 @@ county level data.
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67670230981"
+#> [1] "Liabilities from national data:  67671651665"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67670230981"
+#> [1] "Liabilities from county data:    67671651665"
 ```
 
 A unique property of the summary of business data set is that its
@@ -520,16 +522,16 @@ data(nationalSRA)
 
 head(nationalSRA)
 #> # A tibble: 6 × 11
-#>   fund_abb reinsurance_year report_geography value_type         dollars   
-#>   <chr>               <dbl> <chr>            <chr>              <chr>     
+#>   fund_abb reinsurance_year report_geography value_type            dollars
+#>   <chr>               <dbl> <chr>            <chr>                   <dbl>
 #> 1 AR                   1998 NationalFund     gross_liability    3286742595
-#> 2 AR                   1998 NationalFund     gross_premium      313517141 
-#> 3 AR                   1998 NationalFund     gross_indemnity    463493075 
-#> 4 AR                   1998 NationalFund     retained_liability 597494229 
-#> 5 AR                   1998 NationalFund     retained_premium   58503706  
-#> 6 AR                   1998 NationalFund     retained_indemnity 51840753  
-#> # ℹ 6 more variables: data_release_month <chr>, data_release_year <chr>,
-#> #   data_release_day <chr>, data_release_date <date>, fund_name <chr>,
+#> 2 AR                   1998 NationalFund     gross_premium       313517141
+#> 3 AR                   1998 NationalFund     gross_indemnity     463493075
+#> 4 AR                   1998 NationalFund     retained_liability  597494229
+#> 5 AR                   1998 NationalFund     retained_premium     58503706
+#> 6 AR                   1998 NationalFund     retained_indemnity   51840753
+#> # ℹ 6 more variables: data_release_month <dbl>, data_release_year <dbl>,
+#> #   data_release_day <dbl>, data_release_date <date>, fund_name <chr>,
 #> #   report_type <chr>
 
 # pull up the data sets documentation file.
@@ -554,8 +556,8 @@ head(stateSRA)
 #> 4 AL    AR                   1998 StateFund        retained_liability 12709100
 #> 5 AL    AR                   1998 StateFund        retained_premium    1430627
 #> 6 AL    AR                   1998 StateFund        retained_indemnity  1507266
-#> # ℹ 6 more variables: data_release_month <chr>, data_release_year <chr>,
-#> #   data_release_day <chr>, data_release_date <date>, fund_name <chr>,
+#> # ℹ 6 more variables: data_release_month <dbl>, data_release_year <dbl>,
+#> #   data_release_day <dbl>, data_release_date <date>, fund_name <chr>,
 #> #   report_type <chr>
 
 # pull up the data sets documentation file.
@@ -579,15 +581,15 @@ data(nationalLPRA)
 head(nationalLPRA)
 #> # A tibble: 6 × 10
 #>   reinsurance_year report_geography footnote                  value_type dollars
-#>              <dbl> <chr>            <chr>                     <chr>      <chr>  
-#> 1             2014 NationalFund     "Footnote: Amounts shown… gross_lia… 104119…
-#> 2             2014 NationalFund     "Footnote: Amounts shown… gross_pre… 228037…
-#> 3             2014 NationalFund     "Footnote: Amounts shown… gross_ind… 105091…
-#> 4             2014 NationalFund     "Footnote: Amounts shown… retained_… 402727…
-#> 5             2014 NationalFund     "Footnote: Amounts shown… retained_… 8638934
-#> 6             2014 NationalFund     "Footnote: Amounts shown… retained_… 3689633
-#> # ℹ 5 more variables: data_release_month <chr>, data_release_year <chr>,
-#> #   data_release_day <chr>, data_release_date <date>, report_type <chr>
+#>              <dbl> <chr>            <chr>                     <chr>        <dbl>
+#> 1             2014 NationalFund     "Footnote: Amounts shown… gross_lia…  1.04e9
+#> 2             2014 NationalFund     "Footnote: Amounts shown… gross_pre…  2.28e7
+#> 3             2014 NationalFund     "Footnote: Amounts shown… gross_ind…  1.05e7
+#> 4             2014 NationalFund     "Footnote: Amounts shown… retained_…  4.03e8
+#> 5             2014 NationalFund     "Footnote: Amounts shown… retained_…  8.64e6
+#> 6             2014 NationalFund     "Footnote: Amounts shown… retained_…  3.69e6
+#> # ℹ 5 more variables: data_release_month <dbl>, data_release_year <dbl>,
+#> #   data_release_day <dbl>, data_release_date <date>, report_type <chr>
 
 # pull up the data sets documentation file.
 ?nationalLPRA
@@ -597,3 +599,33 @@ head(nationalLPRA)
 Please note that `rfcip` is released with a [Contributor Code of
 Conduct](https://ropensci.org/code-of-conduct/#:~:text=rOpenSci%20is%20committed%20to%20providing,understand%E2%80%9D%20or%20%E2%80%9CWhy%E2%80%9D.).
 By contributing to the package you agree to abide by its terms.
+
+## Livestock and Dairy Participation Reports
+
+Some data on participation in livestock insurance plans can be retrieved
+using the `get_sob_data` function, however, more detailed information is
+available from the [Livestock and Dairy
+Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation)
+reports. The `get_ldp_data` function can be used to download the most
+recent versions of the data contained there.
+
+``` r
+
+# get data on the livestock risk protection plan from 2020 to 2022
+lrp_data <- get_livestock_data(year = 2020:2022, program = "LRP")
+#> ℹ Locating livestock download links on RMA's website.
+#> ✔ Download links located.
+#> ℹ Merging livestock files for all specified crop years
+
+# get data on the  dairy revenue protection plan from 2020 to 2022
+drp_data <- get_livestock_data(year = 2020:2022, program = "DRP")
+#> ℹ Locating livestock download links on RMA's website.
+#> ✔ Download links located.
+#> ℹ Merging livestock files for all specified crop years
+
+# get data on the livestock gross margin plan from 2020 to 2022
+lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
+#> ℹ Locating livestock download links on RMA's website.
+#> ✔ Download links located.
+#> ℹ Merging livestock files for all specified crop years
+```

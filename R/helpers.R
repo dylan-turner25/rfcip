@@ -374,6 +374,54 @@ locate_sobtpu_links <- function(url = "https://www.rma.usda.gov/tools-reports/su
 
 
 
+#' Generates a data frame of urls and years corresponding to livestock and dairy insurance programs
+#' @noRd
+#' @keywords internal
+#' @importFrom stringr str_match_all
+#'
+#' @param url URL of the RMA livestock and dairy participation page
+#' @return A data frame with columns for url, program, and year
+locate_livestock_links <- function(url = "https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation") {
+  # read the html
+  html <- paste0(readLines(url), collapse = "\n")
+  
+  # get all links
+  links <- as.character(data.frame(stringr::str_match_all(html, "href=\"(.*?)\""))[, 1])
+  
+  # filter to links containing the relevant patterns for livestock/dairy programs
+  links <- links[grepl("drp_|lgm_|lrp_", links)]
+  
+  # filter out links to documentation (.doc, .pdf, etc.)
+  links <- links[grepl("\\.zip", links)]
+  
+  # put links in a data frame
+  links <- data.frame(links)
+  names(links) <- "url"
+  
+  # extract program type (drp, lgm, lrp)
+  links$program <- NA
+  links$program[grepl("drp_", links$url)] <- "DRP"
+  links$program[grepl("lgm_", links$url)] <- "LGM"
+  links$program[grepl("lrp_", links$url)] <- "LRP"
+  
+  # add a row to indicate the year
+  links$year <- NA
+  years <- 1989:format(Sys.Date(), "%Y")
+  for (y in years) {
+    links$year[grepl(paste0("_", y, "\\.zip|_", y, "_"), links$url)] <- y
+  }
+  
+  # remove unneccesary characters from url
+  links$url <- gsub("href=\"", "", links$url)
+  links$url <- gsub('"', "", links$url)
+  
+  # return data frame of correct urls
+  return(links)
+}
+
+
+
+
 #' adds & separator to url if necessary
 #'
 #' @param url a url 

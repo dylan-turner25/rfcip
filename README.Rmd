@@ -215,3 +215,20 @@ head(nationalLPRA)
 
 
 Please note that `rfcip` is released with a [Contributor Code of Conduct](https://ropensci.org/code-of-conduct/#:~:text=rOpenSci%20is%20committed%20to%20providing,understand%E2%80%9D%20or%20%E2%80%9CWhy%E2%80%9D.). By contributing to the package you agree to abide by its terms.
+
+## Livestock and Dairy Participation Reports
+Some data on participation in livestock insurance plans can be retrieved using the `get_sob_data` function, however, more detailed information is available from the [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports. The `get_ldp_data` function can be used to download the most recent versions of the data contained there. 
+
+```{r ldp-basic, include=T}
+
+# get data on the livestock risk protection plan from 2020 to 2022
+lrp_data <- get_livestock_data(year = 2020:2022, program = "LRP")
+
+# get data on the  dairy revenue protection plan from 2020 to 2022
+drp_data <- get_livestock_data(year = 2020:2022, program = "DRP")
+
+# get data on the livestock gross margin plan from 2020 to 2022
+lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
+
+```
+

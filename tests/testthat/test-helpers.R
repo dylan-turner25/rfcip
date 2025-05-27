@@ -25,3 +25,14 @@ test_that("get_sob_url also returns state when group_by county is selected", {
                                          group_by = "county")), TRUE)
 })
 
+
+test_that("locate_livestock_links returns expected structure", {
+  result <- locate_livestock_links()
+  expect_s3_class(result, "data.frame")
+  expect_true(all(c("url", "program", "year") %in% names(result)))
+  
+  expect_true("DRP" %in% result$program)
+  expect_true("LGM" %in% result$program)
+  expect_true("LRP" %in% result$program)
+  
+})

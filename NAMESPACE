@@ -3,6 +3,7 @@
 export(get_col_data)
 export(get_crop_codes)
 export(get_insurance_plan_codes)
+export(get_livestock_data)
 export(get_price_data)
 export(get_sob_data)
 import(XML)
