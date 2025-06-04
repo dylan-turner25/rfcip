@@ -240,17 +240,6 @@ get_sobtpu_data <- function(year = NULL,
     purrr::map_dfr(readRDS) %>%
     dplyr::bind_rows()
   
-  # fill in any missing unit structure codes
-  sobtpu <- sobtpu %>%
-    dplyr::mutate(
-      unit_structure_code = dplyr::case_when(
-        unit_structure_name == "Basic Unit"      ~ "BU",
-        unit_structure_name == "Optional Unit"   ~ "OU",
-        unit_structure_name == "Enterprise Unit" ~ "EU",
-        unit_structure_name == "Whole Farm Unit" ~ "WU",
-        TRUE                                      ~ unit_structure_code
-      )
-    )
   
   return(sobtpu)
   
