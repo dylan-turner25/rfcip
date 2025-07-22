@@ -251,7 +251,7 @@ get_sobtpu_data <- function(year = NULL,
 #' @keywords internal
 #' @importFrom stringr str_match_all
 #'
-locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summary-of-business/cause-loss") {
+locate_col_links <- function(url = "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/index.html") {
 
   # read the html
   html <- paste0(readLines(url), collapse = "\n")
@@ -274,7 +274,7 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
   }
 
   # remove na rows
-  links <- links[-which(is.na(links$year)), ]
+  #links <- links[-which(is.na(links$year)), ]
 
   # remove url with .doc suffix
   #links <- links[-grepl("\\.doc", links$url), ]
@@ -282,7 +282,8 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
   # remove unneccesary characters from url
   links$url <- gsub("href=\"", "", links$url)
   links$url <- gsub('"', "", links$url)
-
+  links$url <- gsub("\\./", "/", links$url)
+  
   # locate rows where actual file download link is on another page
   urls_needed <- links$url[!grepl("zip", links$url)]
   for (u in urls_needed) {
@@ -304,7 +305,7 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
   }
 
   # add url prefix to links
-  #links$url <- paste0("https://www.rma.usda.gov", links$url)
+  links$url <- paste0("https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss", links$url)
 
   # return data frame of correct urls
   return(links)
@@ -316,7 +317,7 @@ locate_col_links <- function(url = "https://www.rma.usda.gov/tools-reports/summa
 #' @keywords internal
 #' @importFrom stringr str_match_all
 #'
-locate_sobtpu_links <- function(url = "https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business") {
+locate_sobtpu_links <- function(url = "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/state_county_crop/index.html") {
   # read the html
   html <- paste0(readLines(url), collapse = "\n")
   
@@ -343,7 +344,8 @@ locate_sobtpu_links <- function(url = "https://www.rma.usda.gov/tools-reports/su
   # remove unneccesary characters from url
   links$url <- gsub("href=\"", "", links$url)
   links$url <- gsub('"', "", links$url)
-  
+  links$url <- gsub("\\./", "/", links$url)
+
   # locate rows where actual file download link is on another page
   urls_needed <- links$url[!grepl("zip", links$url)]
   for (u in urls_needed) {
@@ -365,7 +367,7 @@ locate_sobtpu_links <- function(url = "https://www.rma.usda.gov/tools-reports/su
   }
   
   # add url prefix to links 
-  #links$url <- paste0("https://www.rma.usda.gov", links$url)
+  links$url <- paste0("https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/state_county_crop", links$url)
   
   # return data frame of correct urls
   return(links)
