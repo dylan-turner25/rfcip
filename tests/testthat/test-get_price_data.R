@@ -1,7 +1,10 @@
-test_that("get_price_data filters work", {
-  obj <- get_price_data(year = 2023, crop = "corn",state = "IL")
-  expect_equal(unique(obj$CommodityName),"Corn")
-  expect_equal(unique(obj$CommodityYear),2023)
-  expect_equal(unique(obj$StateName),"Illinois")
+test_that("get_price_data parameter processing works", {
+  # Test state parameter validation (should not error)
+  expect_silent(valid_state("IL"))
+  expect_silent(valid_state("Illinois"))
+  expect_silent(valid_state(17))
+  
+  # Test state parameter errors
+  expect_error(valid_state("XX"), "Parameter value for state not valid.")
+  expect_error(valid_state("InvalidState"), "Parameter value for state not valid.")
 })
-

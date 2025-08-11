@@ -13,6 +13,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0),
+    vcr (>= 0.6.0),
+    webmockr (>= 0.8.0),
 Config/testthat/edition: 3
 Imports: 
     janitor,

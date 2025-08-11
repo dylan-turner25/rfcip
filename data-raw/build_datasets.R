@@ -43,9 +43,9 @@ download_adm(
 # upload cleaned files as a data release
 piggyback::pb_new_release(
   repo = "dylan-turner25/rfcip",
-  tag  = "v0.2.0",
+  tag  = "v0.1.0",
   name = "ADM data release",
-  body = "This release contains cleaned ADM files processed by the merged rfcip package."
+  body = "This release contains cleaned ADM files processed by  rfcip package."
 )
 
 #upload  .rds files into that release
@@ -56,7 +56,7 @@ files <- list.files("data-raw", "\\.parquet$",
 piggyback::pb_upload(
   files,
   repo = "dylan-turner25/rfcip",
-  tag  = "v0.2.0",
+  tag  = "v0.1.0",
   overwrite = F
 )
 
@@ -73,7 +73,7 @@ files <- list.files("data-raw", "county_yield_history.parquet$",
 piggyback::pb_upload(
   files,
   repo = "dylan-turner25/rfcip",
-  tag  = "v0.2.0",
+  tag  = "v0.1.0",
   overwrite = T
 )
 

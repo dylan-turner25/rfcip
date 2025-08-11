@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+# Ignore all contents of the data-raw directory recursively
+data-raw/**
+# But do NOT ignore .R files within data-raw directory (at any level)
+!data-raw/**/*.R

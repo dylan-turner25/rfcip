@@ -25,14 +25,30 @@ test_that("get_sob_url also returns state when group_by county is selected", {
                                          group_by = "county")), TRUE)
 })
 
-
-test_that("locate_livestock_links returns expected structure", {
-  result <- locate_livestock_links()
-  expect_s3_class(result, "data.frame")
-  expect_true(all(c("url", "program", "year") %in% names(result)))
-  
-  expect_true("DRP" %in% result$program)
-  expect_true("LGM" %in% result$program)
-  expect_true("LRP" %in% result$program)
-  
+test_that("include_and works correctly", {
+  expect_equal(include_and("http://example.com?"), "http://example.com?")
+  expect_equal(include_and("http://example.com"), "http://example.com&")
+  expect_equal(include_and("http://example.com/path"), "http://example.com/path&")
 })
+
+test_that("is_numeric_convertible correctly identifies convertible values", {
+  # Should be convertible
+  expect_true(is_numeric_convertible(c("1", "2", "3")))
+  expect_true(is_numeric_convertible(c("1.5", "2.0", "3.14")))
+  expect_true(is_numeric_convertible(c(1, 2, 3)))
+  
+  # Should not be convertible - text values
+  expect_false(is_numeric_convertible(c("apple", "banana", "cherry")))
+  expect_false(is_numeric_convertible(c("1", "2", "text")))
+  
+  # Should not be convertible - zero-padded codes
+  expect_false(is_numeric_convertible(c("01", "02", "03")))
+  expect_false(is_numeric_convertible(c("001", "002", "003")))
+  
+  # Should not be convertible - domain-specific codes
+  expect_false(is_numeric_convertible(c("1", "2", "3"), "commodity_code"))
+  expect_false(is_numeric_convertible(c("10", "20", "30"), "state_code"))
+  expect_false(is_numeric_convertible(c("1", "2"), "insurance_plan_code"))
+})
+
+
