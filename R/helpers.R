@@ -57,7 +57,6 @@ download_and_verify <- function(url, destfile, method = NULL, attempts = 3) {
 #' @param fips a numeric value corresponding to a 5-digit FIPS code of a U.S. county.
 #' @param cov_lvl a numeric value indicating the coverage level. Valid coverage levels are `c(0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95)`
 #'
-#' @importFrom dplyr %>%
 #' @importFrom purrr map_dfr
 #' @importFrom usmap fips
 #' @import cli
@@ -236,8 +235,8 @@ get_sobtpu_data <- function(year = NULL,
   files_to_load <- files_to_load[grepl(paste0(year, collapse = "|"), files_to_load)]
   
   # load all the `files_to_load` and aggregate them into a single data frame
-  sobtpu <- files_to_load %>%
-    purrr::map_dfr(readRDS) %>%
+  sobtpu <- files_to_load |>
+    purrr::map_dfr(readRDS) |>
     dplyr::bind_rows()
   
   
@@ -655,7 +654,6 @@ if(getRversion() >= "2.15.1") {
   ))
 }
 
-#' @importFrom magrittr %>%
 
 #' @title Locate data asset files by year and dataset
 #' @name locate_data_asset
@@ -736,7 +734,6 @@ locate_data_asset <- function(year, dataset){
 #' }
 #'
 #' @importFrom arrow read_parquet
-#' @importFrom piggyback pb_download
 #' @keywords internal
 get_cached_data <- function(name,
                            repo = "dylan-turner25/rmaADM",
@@ -749,6 +746,9 @@ get_cached_data <- function(name,
 
   # Download if not cached
   if (!file.exists(dest_file)) {
+    if (!requireNamespace("piggyback", quietly = TRUE)) {
+      stop("piggyback package needed for downloading cached data. Please install it: install.packages('piggyback')")
+    }
     piggyback::pb_download(
       file = name,
       repo = repo,
@@ -867,8 +867,10 @@ clear_rfcip_cache <- function(){
 #' \dontrun{
 #' files = list_data_assets()
 #' }
-#' @importFrom gh gh
 list_data_assets <- function(){
+  if (!requireNamespace("gh", quietly = TRUE)) {
+    stop("gh package needed for listing data assets. Please install it: install.packages('gh')")
+  }
   # 1. Fetch the release metadata (by tag, or "latest")
   release <- gh::gh(
     "/repos/{owner}/{repo}/releases/latest",
@@ -959,18 +961,18 @@ locate_adm_download_link <- function(year = 2012,
 
 
   # combine date and time into a single POSIXct column
-  file_info <- file_info %>%
+  file_info <- file_info |>
     mutate(
       datetime = as.POSIXct(paste(date, time), format = "%m/%d/%Y %I:%M %p", tz = "EST")
     )
 
   # filter the file info to only include the data and layout files
-  file_info <- file_info %>%
+  file_info <- file_info |>
     filter(grepl("ytd|layout", tolower(filename)))
 
 
   # add the base url and year to the file names
-  file_info <- file_info %>%
+  file_info <- file_info |>
     mutate(filename = paste0(url,year,"/",filename))
 
   # convert the links to a list and name them

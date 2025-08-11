@@ -20,7 +20,6 @@
 #'  return the same data, but further dissagregated by insurance plan and coverage level
 #' @return Returns a tibble
 #' @export
-#' @importFrom writexl write_xlsx
 #' @importFrom utils download.file
 #' @importFrom readxl read_excel
 #' @import cli
@@ -138,6 +137,9 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
   if (is.null(dest_file)) {
     return(full_data)
   } else {
+    if (!requireNamespace("writexl", quietly = TRUE)) {
+      stop("writexl package needed for Excel export. Please install it: install.packages('writexl')")
+    }
     writexl::write_xlsx(full_data, path = dest_file)
   }
 }

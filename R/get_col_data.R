@@ -98,8 +98,8 @@ get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeri
   files_to_load <- files_to_load[grepl(paste0(year, collapse = "|"), files_to_load)]
 
   # load all the `files_to_load` and aggregate them into a single data frame
-  col <- files_to_load %>%
-    purrr::map_dfr(readRDS) %>%
+  col <- files_to_load |>
+    purrr::map_dfr(readRDS) |>
     dplyr::bind_rows()
   
   # manually type check each column

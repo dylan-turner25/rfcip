@@ -1,0 +1,237 @@
+---
+title: "Introduction to rfcip"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to rfcip}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r setup}
+library(rfcip)
+```
+
+## Overview
+
+The `rfcip` package provides tools to access publicly available data related to the Federal Crop Insurance Program (FCIP). The package functions as an unofficial API wrapper, making it easy to retrieve and analyze crop insurance data that is otherwise scattered across different URLs, files, and data portals.
+
+**Important**: This package uses data provided by the USDA but is not endorsed by or affiliated with USDA or the Federal Government.
+
+## Key Data Sources
+
+### Summary of Business Data
+
+The Summary of Business files contain comprehensive crop insurance participation and outcome data by state, county, crop, and insurance policy choices. This includes:
+
+- Insured acres
+- Collected premiums  
+- Disbursed subsidies
+- Liabilities
+- Number of policies sold
+- Number of indemnified policies
+- Loss ratios
+
+#### Basic Usage
+
+Get current year data with default parameters:
+
+```{r}
+# Get current year summary data
+current_data <- get_sob_data()
+head(current_data)
+```
+
+#### Filtering Data
+
+Filter by specific criteria:
+
+```{r}
+# Get corn data for 2022
+corn_2022 <- get_sob_data(year = 2022, crop = "corn")
+
+# Get data for multiple years and crops
+multi_data <- get_sob_data(
+  year = 2020:2022, 
+  crop = c("corn", "soybeans"),
+  state = "IA"
+)
+```
+
+#### Discovering Available Options
+
+Use helper functions to find valid parameter values:
+
+```{r}
+# Get all available crops for 2024
+crops_2024 <- get_crop_codes(2024)
+head(crops_2024)
+
+# Get all available insurance plans
+plans <- get_insurance_plan_codes(2024)
+head(plans)
+
+# Check if a specific crop exists
+corn_check <- get_crop_codes(2024, crop = "corn")
+```
+
+### Detailed Data: Summary of Business by Type, Practice, and Unit Structure
+
+For more granular data, use the SOBTPU version:
+
+```{r}
+# Get detailed corn data for 2022
+detailed_data <- get_sob_data(
+  year = 2022, 
+  crop = "corn", 
+  sob_version = "sobtpu"
+)
+head(detailed_data)
+```
+
+### Cause of Loss Data
+
+Access indemnity data with associated causes of loss:
+
+```{r}
+# Get cause of loss data for multiple years
+col_data <- get_col_data(year = 2020:2022)
+head(col_data)
+```
+
+### Price Data
+
+Retrieve commodity price data used for insurance calculations:
+
+```{r}
+# Get price data for corn in Illinois
+price_data <- get_price_data(
+  year = 2020:2024,
+  crop = "corn", 
+  state = "IL"
+)
+head(price_data)
+```
+
+### Livestock Data
+
+Access livestock and dairy participation data:
+
+```{r}
+# Get Livestock Risk Protection data
+lrp_data <- get_livestock_data(year = 2020:2022, program = "LRP")
+
+# Get Dairy Revenue Protection data  
+drp_data <- get_livestock_data(year = 2020:2022, program = "DRP")
+
+# Get Livestock Gross Margin data
+lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
+```
+
+## Working with the Data
+
+### Data Aggregation Levels
+
+Control aggregation using the `group_by` parameter:
+
+```{r}
+# National level (default)
+national <- get_sob_data(year = 2022, crop = "corn")
+
+# County level detail
+county_level <- get_sob_data(
+  year = 2022, 
+  crop = "corn", 
+  group_by = "county"
+)
+
+# Multiple grouping variables
+detailed <- get_sob_data(
+  year = 2022:2024,
+  group_by = c("insurance_plan", "cov_lvl")
+)
+```
+
+### Exporting Data
+
+Export data directly to Excel:
+
+```{r}
+# Export to Excel file (requires writexl package)
+get_sob_data(
+  year = 2022, 
+  crop = "corn",
+  dest_file = "corn_2022.xlsx"
+)
+```
+
+## Performance Considerations
+
+- Functions use memoization to cache results during R sessions
+- For large datasets, consider filtering before downloading
+- SOBTPU data requires full file downloads before filtering
+- Progress bars show download status for long-running operations
+
+## Static Datasets
+
+The package includes pre-built datasets for reinsurance data:
+
+```{r}
+# National Standard Reinsurance Agreement data
+data(nationalSRA)
+head(nationalSRA)
+
+# State-level SRA data
+data(stateSRA)
+head(stateSRA)
+
+# National Livestock Price Reinsurance Agreement data
+data(nationalLPRA)
+head(nationalLPRA)
+```
+
+## Example Analysis
+
+Here's a complete example analyzing corn insurance trends:
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Get corn data for recent years
+corn_trends <- get_sob_data(
+  year = 2015:2024,
+  crop = "corn"
+) %>%
+  select(commodity_year, total_prem, indemnity, loss_ratio) %>%
+  mutate(
+    total_prem = total_prem / 1e9,  # Convert to billions
+    indemnity = indemnity / 1e9
+  )
+
+# Plot premium vs indemnity trends
+ggplot(corn_trends, aes(x = commodity_year)) +
+  geom_line(aes(y = total_prem, color = "Premium")) +
+  geom_line(aes(y = indemnity, color = "Indemnity")) +
+  labs(
+    title = "Corn Insurance: Premium vs Indemnity Trends",
+    x = "Year",
+    y = "Billions USD",
+    color = "Measure"
+  ) +
+  theme_minimal()
+```
+
+## Getting Help
+
+- Use `help(function_name)` for detailed function documentation
+- Check function examples with `example(function_name)`
+- Report issues on GitHub: https://github.com/dylan-turner25/rfcip
+- All data comes directly from USDA RMA sources - see function documentation for source URLs

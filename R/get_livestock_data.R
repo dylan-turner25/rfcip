@@ -284,7 +284,7 @@ get_livestock_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
   
   # convert data types
   livestock_data <- suppressWarnings(
-    livestock_data %>%
+    livestock_data |>
       dplyr::mutate(
         dplyr::across(
           dplyr::all_of(numeric_cols),
@@ -295,7 +295,7 @@ get_livestock_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
   
   # convert date columns to POSIXct
   livestock_data <- suppressWarnings(
-    livestock_data %>%
+    livestock_data |>
       dplyr::mutate(
         dplyr::across(
           dplyr::all_of(date_cols),
@@ -305,7 +305,7 @@ get_livestock_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
   )
   
   # trimwhite space on all character columns
-  livestock_data <- livestock_data %>%
+  livestock_data <- livestock_data |>
     dplyr::mutate(
       dplyr::across(
         dplyr::where(is.character),
