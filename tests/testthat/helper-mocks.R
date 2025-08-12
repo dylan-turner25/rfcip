@@ -98,3 +98,63 @@ cleanup_webmockr <- function() {
     webmockr::stub_registry_clear()
   }
 }
+
+# Create realistic mock crop codes data
+create_mock_crop_data <- function() {
+  data.frame(
+    commodity_year = c("2023", "2023", "2023", "2023", "2023"),
+    commodity_code = c("41", "81", "91", "28", "21"),
+    commodity_name = c("Corn", "Soybeans", "Sunflowers", "Almonds", "Cotton"),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Create mock crop data with x2 header (tests skip=1 logic)
+create_mock_crop_data_with_x2_header <- function() {
+  data.frame(
+    x1 = c("Header", "2023", "2023", "2023"),
+    x2 = c("Row", "41", "81", "91"), 
+    x3 = c("To", "Corn", "Soybeans", "Sunflowers"),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Setup webmockr for crop codes URL patterns
+setup_crop_codes_url_mock <- function(mock_data = create_mock_crop_data(), status_code = 200) {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  # Create temporary Excel file with mock data
+  mock_file <- create_mock_excel_file(mock_data)
+  mock_file_content <- readBin(mock_file, "raw", file.info(mock_file)$size)
+  
+  # Clean up temp file
+  unlink(mock_file)
+  
+  # Mock the crop codes URL pattern using same approach as SOB
+  stub <- webmockr::stub_request("get", "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel")
+  stub <- webmockr::wi_th(stub, query = list(.pattern = TRUE))
+  webmockr::to_return(stub,
+    status = status_code,
+    body = mock_file_content,
+    headers = list(
+      "content-type" = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "content-length" = as.character(length(mock_file_content))
+    )
+  )
+}
+
+# Setup webmockr for crop codes error scenarios
+setup_crop_codes_url_mock_error <- function(status_code = 500, error_message = "Server Error") {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  stub <- webmockr::stub_request("get", "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel")
+  stub <- webmockr::wi_th(stub, query = list(.pattern = TRUE))
+  webmockr::to_return(stub,
+    status = status_code,
+    body = error_message
+  )
+}
