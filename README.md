@@ -15,6 +15,8 @@ rfcip (R FCIP)
       Agreement](#livestock-price-reinsurance-agreement)
   - [Livestock and Dairy Participation
     Reports](#livestock-and-dairy-participation-reports)
+  - [Actuarial Data Master (ADM)](#actuarial-data-master-adm)
+    - [Available Datasets](#available-datasets)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -29,11 +31,12 @@ stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://
 # Introduction
 
 `rfcip` provides a set of tools to allow users to access publicly
-available data related to the Federal Crop Insurance Program. The
-package provides a set of functions to easily navigate and access data
-that is publicly available, but otherwise scattered across different
-urls, files, and data portals. Although no official API exists for
-Federal Crop Insurance Data, much of the data can be located with a
+available data related to the Federal Crop Insurance Program, including
+both Summary of Business data and Actuarial Data Master (ADM) datasets.
+The package provides a set of functions to easily navigate and access
+data that is publicly available, but otherwise scattered across
+different urls, files, and data portals. Although no official API exists
+for Federal Crop Insurance Data, much of the data can be located with a
 structured url meaning the `rfcip` package effectively functions like a
 defacto API wrapper.
 
@@ -67,19 +70,20 @@ for the current year, at the highest level aggregation.
 ``` r
 library(rfcip)
 get_sob_data()
-#> # A tibble: 10 × 21
+#> # A tibble: 11 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025       2526176                270896                59739
-#>  2           2025          2513                  2051                  424
-#>  3           2025            60                    27                    5
-#>  4           2025           804                   359                  159
-#>  5           2025            82                    75                    0
-#>  6           2025          3917                  3261                  346
-#>  7           2025            16                    11                    0
-#>  8           2025         55482                 22663                  860
-#>  9           2025          7701                  6956                 5079
-#> 10           2025          2023                  2023                 1004
+#>  1           2025           806                     0                    0
+#>  2           2025       2525186               1220168               115193
+#>  3           2025          2514                  2069                  448
+#>  4           2025            60                    28                    5
+#>  5           2025           795                   365                  249
+#>  6           2025         56924                 24178                 1041
+#>  7           2025            82                    79                    0
+#>  8           2025          3909                  3466                  368
+#>  9           2025            16                    14                    0
+#> 10           2025          7669                  6982                 5736
+#> 11           2025          2043                  2043                 1281
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -100,7 +104,7 @@ get_sob_data(year = 2022, crop = "corn")
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl>          <int> <chr>                  <dbl>
-#> 1           2022             41 Corn                  590773
+#> 1           2022             41 Corn                  590774
 #> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
 #> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
 #> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
@@ -252,11 +256,11 @@ county level data.
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67671651665"
+#> [1] "Liabilities from national data:  67671440421"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67671651665"
+#> [1] "Liabilities from county data:    67671440421"
 ```
 
 A unique property of the summary of business data set is that its
@@ -328,6 +332,8 @@ Otherwise, the function behaves the same as when `sob_version = "sob"`
 # get the summary of business by type, practice, and unit structure
 data <- get_sob_data(year = 2022, crop = "corn", sob_version = "sobtpu")
 #> ℹ Locating Summary of Business download links on RMA's website.
+#> Warning in readLines(url): incomplete final line found on
+#> 'https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/state_county_crop/index.html'
 #> ✔ Download links located.
 #> ℹ Merging Summary of Business files for all specified crop years
 
@@ -416,6 +422,8 @@ files and merge them into a single data frame that will be returned.
 ``` r
 col_data <- get_col_data(year = 2020:2022)
 #> ℹ Locating cause of loss download links on RMA's website.
+#> Warning in readLines(url): incomplete final line found on
+#> 'https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/index.html'
 #> ✔ Download links located.
 #> Downloading cause of loss files for specified crop years ■■■■■■■■■■■■■■■■■■■■■ …                                                                                 ℹ Merging cause of loss files for all specified crop years
 head(col_data)
@@ -606,8 +614,8 @@ Some data on participation in livestock insurance plans can be retrieved
 using the `get_sob_data` function, however, more detailed information is
 available from the [Livestock and Dairy
 Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation)
-reports. The `get_ldp_data` function can be used to download the most
-recent versions of the data contained there.
+reports. The `get_livestock_data` function can be used to download the
+most recent versions of the data contained there.
 
 ``` r
 
@@ -629,3 +637,89 @@ lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
 #> ✔ Download links located.
 #> ℹ Merging livestock files for all specified crop years
 ```
+
+## Actuarial Data Master (ADM)
+
+The Actuarial Data Master (ADM) contains the detailed actuarial data
+that underlies crop insurance rate-making and premium calculations. This
+data includes base rates, price discovery information, subsidy
+schedules, and reference information for all crops, counties, and
+insurance plans offered through the Federal Crop Insurance Program.
+
+The `get_adm_data()` function provides access to processed ADM datasets.
+The first time a dataset is called, it will be downloaded from the
+GitHub release [here](https://github.com/dylan-turner25/rfcip/releases)
+and then cached locally for future use. Subsequent calls for the same
+data will pull from the local cache. To clear the cache, use the
+`clear_adm_cache()` function, after which the data will be re-downloaded
+from the GitHub release if called again.
+
+``` r
+library(rfcip)
+
+# Get base rate data for 2020
+baserate_2020 <- get_adm_data(year = 2020, dataset = "baserate")
+
+# Get price data for 2018
+price_2018 <- get_adm_data(year = 2018, dataset = "price")
+
+# Get subsidy data for multiple years
+subsidy_multi <- get_adm_data(year = c(2018, 2019, 2020), dataset = "subsidypercent")
+```
+
+The function is case-insensitive for dataset names and can use either
+the descriptive name or the record code. All of the following return the
+same data:
+
+``` r
+# These all return the same BaseRate data for 2020
+get_adm_data(year = 2020, dataset = "BaseRate")
+get_adm_data(year = 2020, dataset = "base_RaTe")  
+get_adm_data(year = 2020, dataset = "A01010")
+get_adm_data(year = 2020, dataset = "a01010")
+```
+
+### Available Datasets
+
+The package provides access to multiple ADM datasets across years
+2011-2026. The datasets are organized into three categories:
+
+#### Core Actuarial Datasets
+
+- **BaseRate (A01010)**: Base rates for crop insurance premiums
+- **Price (A00810)**: Commodity prices (established, projected, harvest)
+- **SubsidyPercent (A00070)**: Premium subsidy percentages by coverage
+  level
+- **InsuranceOffer (A00030)**: Insurance offer information and coverage
+  details
+- **Beta (A01020)**: Beta risk adjustment factors for rate calculations
+- **ComboRevenueFactor (A01030)**: Combined revenue factors for revenue
+  insurance
+- **CoverageLevelDifferential (A01040)**: Coverage level rate
+  differentials
+- **HistoricalRevenueCapping (A01110)**: Historical revenue capping data
+- **HistoricalYieldTrend (A01115)**: Historical yield trend data (2016+)
+- **AreaCoverageLevel (A01130)**: Area coverage levels (2017+)
+- **AreaRate (A01135)**: Area rates for county-level coverage (2017+)
+- **AreaRiskRate (A01005)**: Area risk rates (2011-2016)
+- **UnitDiscount (A01090)**: Unit discount factors
+
+#### Reference Datasets
+
+- **Date (A00200)**: Important dates for crop insurance (sales closing,
+  etc.)
+- **Commodity (A00420)**: Commodity codes and descriptions
+- **CommodityType (A00430)**: Commodity type classifications
+- **County (A00440)**: County codes and names
+- **InsurancePlan (A00460)**: Insurance plan codes and descriptions
+- **IrrigationPractice (A00490)**: Irrigation practice codes
+- **OrganicPractice (A00500)**: Organic practice designations
+- **Practice (A00510)**: Practice codes and descriptions
+- **State (A00520)**: State codes and names
+- **Type (A00540)**: Crop type codes and descriptions
+
+#### Constructed Datasets
+
+- **county_yield_history**: A processed dataset combining
+  HistoricalYieldTrend and InsuranceOffer data for county-level yield
+  analysis
