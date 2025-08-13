@@ -45,21 +45,21 @@ Get current year data with default parameters:
 current_data <- get_sob_data()
 head(current_data)
 #> # A tibble: 6 × 21
-#>   commodity_year policies_sold policies_earning_prem
-#>            <dbl>         <dbl>                 <dbl>
-#> 1           2025            60                    28
-#> 2           2025           795                   365
-#> 3           2025            82                    79
-#> 4           2025          3909                  3466
-#> 5           2025            16                    14
-#> 6           2025          7669                  6982
-#> # ℹ 18 more variables: policies_indemnified <dbl>,
-#> #   units_earning_prem <dbl>, units_indemnified <dbl>,
-#> #   quantity <dbl>, quantity_type <chr>,
-#> #   companion_endorsed_acres <dbl>, liabilities <dbl>,
-#> #   total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
-#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>,
-#> #   state_subsidy <dbl>, pccp_state_matching_amount <dbl>, …
+#>   commodity_year policies_sold policies_earning_prem policies_indemnified
+#>            <dbl>         <dbl>                 <dbl>                <dbl>
+#> 1           2025          2514                  2069                  448
+#> 2           2025       2525186               1220168               115193
+#> 3           2025           806                     0                    0
+#> 4           2025          3909                  3466                  368
+#> 5           2025            16                    14                    0
+#> 6           2025          2043                  2043                 1281
+#> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
+#> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
+#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
+#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
+#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
+#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
+#> #   loss_ratio <dbl>
 ```
 
 #### Filtering Data
@@ -81,21 +81,21 @@ multi_data <- get_sob_data(
 )
 head(multi_data)
 #> # A tibble: 6 × 25
-#>   commodity_year commodity_code commodity_name state_code
-#>            <dbl>          <int> <chr>               <dbl>
-#> 1           2020             41 Corn                   19
-#> 2           2020             81 Soybeans               19
-#> 3           2021             41 Corn                   19
-#> 4           2021             81 Soybeans               19
-#> 5           2022             41 Corn                   19
-#> 6           2022             81 Soybeans               19
-#> # ℹ 21 more variables: state_abbrv <chr>, policies_sold <dbl>,
-#> #   policies_earning_prem <dbl>, policies_indemnified <dbl>,
-#> #   units_earning_prem <dbl>, units_indemnified <dbl>,
-#> #   quantity <dbl>, quantity_type <chr>,
-#> #   companion_endorsed_acres <dbl>, liabilities <dbl>,
-#> #   total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
-#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, …
+#>   commodity_year commodity_code commodity_name state_code state_abbrv
+#>            <dbl>          <int> <chr>               <dbl> <chr>      
+#> 1           2020             41 Corn                   19 IA         
+#> 2           2020             81 Soybeans               19 IA         
+#> 3           2021             41 Corn                   19 IA         
+#> 4           2021             81 Soybeans               19 IA         
+#> 5           2022             41 Corn                   19 IA         
+#> 6           2022             81 Soybeans               19 IA         
+#> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
+#> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
+#> #   units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>,
+#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
+#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
+#> #   addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
+#> #   organic_certified_subsidy_amount <dbl>, …
 ```
 
 #### Discovering Available Options
@@ -125,15 +125,14 @@ head(crops_2024, 10)
 plans <- get_insurance_plan_codes(2024)
 head(plans)
 #> # A tibble: 6 × 4
-#>   commodity_year insurance_plan_code insurance_plan                 
-#>   <chr>          <chr>               <chr>                          
-#> 1 2024           90                  APH                            
-#> 2 2024           91                  APH Price Component            
-#> 3 2024           43                  Aquaculture Dollar             
-#> 4 2024           47                  Actual Revenue History         
-#> 5 2024           05                  Area Revenue Protection        
-#> 6 2024           06                  Area Revenue Protection - Harv…
-#> # ℹ 1 more variable: insurance_plan_abbrv <chr>
+#>   commodity_year insurance_plan_code insurance_plan         insurance_plan_abbrv
+#>   <chr>          <chr>               <chr>                  <chr>               
+#> 1 2024           90                  APH                    APH                 
+#> 2 2024           91                  APH Price Component    APHPC               
+#> 3 2024           43                  Aquaculture Dollar     AQDOL               
+#> 4 2024           47                  Actual Revenue History ARH                 
+#> 5 2024           05                  Area Revenue Protecti… ARP                 
+#> 6 2024           06                  Area Revenue Protecti… ARP - HPE
 
 # Check if a specific crop exists
 corn_check <- get_crop_codes(2024, crop = "corn")
@@ -184,21 +183,21 @@ price_data <- get_price_data(
 )
 head(price_data)
 #> # A tibble: 6 × 38
-#>   CommodityYear CommodityCode CommodityName TypeCode TypeName       
-#>           <int>         <int> <chr>            <int> <chr>          
-#> 1          2022            41 Corn                16 High Amylose   
-#> 2          2022            41 Corn                16 High Amylose   
-#> 3          2022            41 Corn                17 All (Non-High …
-#> 4          2022            41 Corn                17 All (Non-High …
-#> 5          2023            41 Corn                16 High Amylose   
-#> 6          2023            41 Corn                16 High Amylose   
-#> # ℹ 33 more variables: PracticeCode <int>, PracticeName <chr>,
-#> #   StateCode <int>, StateName <chr>,
+#>   CommodityYear CommodityCode CommodityName TypeCode TypeName       PracticeCode
+#>           <int>         <int> <chr>            <int> <chr>                 <int>
+#> 1          2022            41 Corn                16 High Amylose              2
+#> 2          2022            41 Corn                16 High Amylose              3
+#> 3          2022            41 Corn                17 All (Non-High…            2
+#> 4          2022            41 Corn                17 All (Non-High…            3
+#> 5          2023            41 Corn                16 High Amylose              2
+#> 6          2023            41 Corn                16 High Amylose              3
+#> # ℹ 32 more variables: PracticeName <chr>, StateCode <int>, StateName <chr>,
 #> #   PriceMultiplicativeFactor <dbl>, PriceAdditiveFactor <dbl>,
-#> #   ProjectedPriceExchangeCode <chr>,
-#> #   ProjectedPriceMarketSymbolCode <chr>,
+#> #   ProjectedPriceExchangeCode <chr>, ProjectedPriceMarketSymbolCode <chr>,
 #> #   ProjectedPricePreviousMarketSymbolCode <chr>,
-#> #   ProjectedPriceCurrencyMarketSymbolCode <lgl>, …
+#> #   ProjectedPriceCurrencyMarketSymbolCode <lgl>,
+#> #   ProjectedPriceBeginDate <dttm>, ProjectedPriceEndDate <dttm>,
+#> #   ProjectedPriceDateRange <chr>, ProjectedPrice <dbl>, …
 ```
 
 ### Livestock Data
@@ -283,17 +282,17 @@ The package includes pre-built datasets for reinsurance data:
 data(nationalSRA)
 head(nationalSRA)
 #> # A tibble: 6 × 11
-#>   fund_abb reinsurance_year report_geography value_type      dollars
-#>   <chr>               <dbl> <chr>            <chr>             <dbl>
-#> 1 AR                   1998 NationalFund     gross_liability  3.29e9
-#> 2 AR                   1998 NationalFund     gross_premium    3.14e8
-#> 3 AR                   1998 NationalFund     gross_indemnity  4.63e8
-#> 4 AR                   1998 NationalFund     retained_liabi…  5.97e8
-#> 5 AR                   1998 NationalFund     retained_premi…  5.85e7
-#> 6 AR                   1998 NationalFund     retained_indem…  5.18e7
-#> # ℹ 6 more variables: data_release_month <dbl>,
-#> #   data_release_year <dbl>, data_release_day <dbl>,
-#> #   data_release_date <date>, fund_name <chr>, report_type <chr>
+#>   fund_abb reinsurance_year report_geography value_type            dollars
+#>   <chr>               <dbl> <chr>            <chr>                   <dbl>
+#> 1 AR                   1998 NationalFund     gross_liability    3286742595
+#> 2 AR                   1998 NationalFund     gross_premium       313517141
+#> 3 AR                   1998 NationalFund     gross_indemnity     463493075
+#> 4 AR                   1998 NationalFund     retained_liability  597494229
+#> 5 AR                   1998 NationalFund     retained_premium     58503706
+#> 6 AR                   1998 NationalFund     retained_indemnity   51840753
+#> # ℹ 6 more variables: data_release_month <dbl>, data_release_year <dbl>,
+#> #   data_release_day <dbl>, data_release_date <date>, fund_name <chr>,
+#> #   report_type <chr>
 print(paste("National SRA years:", min(nationalSRA$year), "to", max(nationalSRA$year)))
 #> [1] "National SRA years: Inf to -Inf"
 

@@ -7,8 +7,13 @@
 library(knitr)
 library(rmarkdown)
 
-# Set up knitr options for vignette processing
-opts_knit$set(root.dir = getwd())
+# Set up knitr options for vignette processing  
+# Ensure we're working from the package root directory
+if (basename(getwd()) == "vignettes") {
+  opts_knit$set(root.dir = dirname(getwd()))
+} else {
+  opts_knit$set(root.dir = getwd())
+}
 
 # Define vignette processing function
 precompile_vignette <- function(orig_file, output_file = NULL) {
@@ -66,13 +71,24 @@ precompile_vignette <- function(orig_file, output_file = NULL) {
   message("Successfully precompiled: ", basename(rmd_file))
 }
 
+# Determine paths based on current working directory
+if (basename(getwd()) == "vignettes") {
+  # Running from vignettes directory
+  figures_dir <- "figures"
+  vignettes_dir <- "."
+} else {
+  # Running from package root
+  figures_dir <- "vignettes/figures"
+  vignettes_dir <- "vignettes"
+}
+
 # Create figures directory if it doesn't exist
-if (!dir.exists("vignettes/figures")) {
-  dir.create("vignettes/figures", recursive = TRUE)
+if (!dir.exists(figures_dir)) {
+  dir.create(figures_dir, recursive = TRUE)
 }
 
 # Process all .Rmd.orig files in vignettes directory
-orig_files <- list.files("vignettes", pattern = "\\.Rmd\\.orig$", full.names = TRUE)
+orig_files <- list.files(vignettes_dir, pattern = "\\.Rmd\\.orig$", full.names = TRUE)
 
 if (length(orig_files) == 0) {
   message("No .Rmd.orig files found in vignettes directory")

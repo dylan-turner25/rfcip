@@ -4,7 +4,7 @@
 \name{rfcip-package}
 \alias{rfcip}
 \alias{rfcip-package}
-\title{rfcip: Tools for accessing crop insurance data}
+\title{rfcip: Tools for accessing U.S. crop insurance data}
 \description{
 This package provides a set of tools to access public data on the Federal Crop Insurance Program, including both Summary of Business data and Actuarial Data Master (ADM) datasets.
 }

@@ -14,7 +14,12 @@
 * checking package dependencies ... OK
 * checking if this is a source package ... OK
 * checking if there is a namespace ... OK
-* checking for executable files ... OK
+* checking for executable files ... WARNING
+Found the following executable files:
+  .git/objects/52/35ee5309ca2bd81fceb7ff84a034ec40d98237
+  .git/objects/ba/d1a834af017a315a81c06094723ab450a1c58e
+Source packages should not contain undeclared executable files.
+See section ‘Package structure’ in the ‘Writing R Extensions’ manual.
 * checking for hidden files and directories ... NOTE
 Found the following hidden files and directories:
   .Rhistory
@@ -70,8 +75,9 @@ Most likely, these were included erroneously.
 * checking data for ASCII and uncompressed saves ... OK
 * checking files in ‘vignettes’ ... WARNING
 Files in the 'vignettes' directory but no files in 'inst/doc':
-  ‘figures/rfcip-introduction/corn-analysis-1.png’
+  ‘figures/rfcip-introduction/corn-analysis-1.png’ ‘precompile.R’
   ‘rfcip-introduction.Rmd’ ‘rfcip-introduction.Rmd.orig’
+  ‘rfcip-introduction.md’
 * checking examples ... OK
 * checking for unstated dependencies in ‘tests’ ... OK
 * checking tests ... OK
@@ -83,4 +89,4 @@ Package vignette without corresponding single PDF/HTML:
   ‘rfcip-introduction.Rmd’
 * checking re-building of vignette outputs ... OK
 * DONE
-Status: 3 WARNINGs, 2 NOTEs
+Status: 4 WARNINGs, 2 NOTEs

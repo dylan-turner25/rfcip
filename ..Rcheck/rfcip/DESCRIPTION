@@ -20,4 +20,4 @@ Imports: janitor, memoise, readxl, usmap, utils, dplyr, purrr, stringr,
 Depends: R (>= 4.1.0)
 LazyData: true
 VignetteBuilder: knitr
-Built: R 4.5.1; ; 2025-08-13 13:47:32 UTC; unix
+Built: R 4.5.1; ; 2025-08-13 14:07:00 UTC; unix
