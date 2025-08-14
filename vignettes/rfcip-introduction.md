@@ -10,7 +10,6 @@ vignette: >
 
 
 
-
 ``` r
 library(rfcip)
 ```

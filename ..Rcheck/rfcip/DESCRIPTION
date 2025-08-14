@@ -11,36 +11,13 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Suggests: 
-    testthat (>= 3.0.0),
-    vcr (>= 0.6.0),
-    webmockr (>= 0.8.0),
-    mockery,
-    writexl,
-    piggyback,
-    gh,
-    knitr,
-    rmarkdown,
-    ggplot2,
-    curl (>= 6.4.0)
+Suggests: testthat (>= 3.0.0), vcr (>= 0.6.0), webmockr (>= 0.8.0),
+        mockery, writexl, piggyback, gh, knitr, rmarkdown, ggplot2,
+        curl (>= 6.4.0)
 Config/testthat/edition: 3
-Imports: 
-    janitor,
-    memoise,
-    readxl,
-    usmap,
-    utils,
-    dplyr,
-    purrr,
-    stringr,
-    cli,
-    httr,
-    XML,
-    tidyr,
-    readr,
-    data.table,
-    arrow
-Depends: 
-    R (>= 4.1.0)
+Imports: janitor, memoise, readxl, usmap, utils, dplyr, purrr, stringr,
+        cli, httr, XML, tidyr, readr, data.table, arrow
+Depends: R (>= 4.1.0)
 LazyData: true
 VignetteBuilder: knitr
+Built: R 4.5.1; ; 2025-08-13 13:47:32 UTC; unix

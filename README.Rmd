@@ -36,7 +36,7 @@ load_all()
 [![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=6sJUenko4X)](https://codecov.io/gh/dylan-turner25/rfcip)
 
 # Introduction
-`rfcip` provides a set of tools to allow users to access publicly available data related to the Federal Crop Insurance Program. The package provides a set of functions to easily navigate and access data that is publicly available, but otherwise scattered across different urls, files, and data portals. Although no official API exists for Federal Crop Insurance Data, much of the data can be located with a structured url meaning the `rfcip` package effectively functions like a defacto API wrapper.
+`rfcip` provides a set of tools to allow users to access publicly available data related to the Federal Crop Insurance Program, including both Summary of Business data and Actuarial Data Master (ADM) datasets. The package provides a set of functions to easily navigate and access data that is publicly available, but otherwise scattered across different urls, files, and data portals. Although no official API exists for Federal Crop Insurance Data, much of the data can be located with a structured url meaning the `rfcip` package effectively functions like a defacto API wrapper.
 
 **Disclaimer:** This product uses data provided by the USDA, but is not endorsed by or affiliated with USDA or the Federal Government.
 
@@ -217,7 +217,7 @@ head(nationalLPRA)
 Please note that `rfcip` is released with a [Contributor Code of Conduct](https://ropensci.org/code-of-conduct/#:~:text=rOpenSci%20is%20committed%20to%20providing,understand%E2%80%9D%20or%20%E2%80%9CWhy%E2%80%9D.). By contributing to the package you agree to abide by its terms.
 
 ## Livestock and Dairy Participation Reports
-Some data on participation in livestock insurance plans can be retrieved using the `get_sob_data` function, however, more detailed information is available from the [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports. The `get_ldp_data` function can be used to download the most recent versions of the data contained there. 
+Some data on participation in livestock insurance plans can be retrieved using the `get_sob_data` function, however, more detailed information is available from the [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports. The `get_livestock_data` function can be used to download the most recent versions of the data contained there. 
 
 ```{r ldp-basic, include=T}
 
@@ -231,4 +231,74 @@ drp_data <- get_livestock_data(year = 2020:2022, program = "DRP")
 lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
 
 ```
+## Actuarial Data Master (ADM)
+
+The Actuarial Data Master (ADM) contains the detailed actuarial data that underlies crop insurance rate-making and premium calculations. This data includes base rates, price discovery information, subsidy schedules, and reference information for all crops, counties, and insurance plans offered through the Federal Crop Insurance Program.
+
+The `get_adm_data()` function provides access to processed ADM datasets. The first time a dataset is called, it will be downloaded from the GitHub release [here](https://github.com/dylan-turner25/rfcip/releases) and then cached locally for future use. Subsequent calls for the same data will pull from the local cache. To clear the cache, use the `clear_adm_cache()` function, after which the data will be re-downloaded from the GitHub release if called again. 
+
+```{r adm-basic, eval=FALSE}
+library(rfcip)
+
+# Get base rate data for 2020
+baserate_2020 <- get_adm_data(year = 2020, dataset = "baserate")
+
+# Get price data for 2018
+price_2018 <- get_adm_data(year = 2018, dataset = "price")
+
+# Get subsidy data for multiple years
+subsidy_multi <- get_adm_data(year = c(2018, 2019, 2020), dataset = "subsidypercent")
+```
+
+The function is case-insensitive for dataset names and can use either the descriptive name or the record code. All of the following return the same data:
+
+```{r adm-case-insensitive, eval=FALSE}
+# These all return the same BaseRate data for 2020
+get_adm_data(year = 2020, dataset = "BaseRate")
+get_adm_data(year = 2020, dataset = "base_RaTe")  
+get_adm_data(year = 2020, dataset = "A01010")
+get_adm_data(year = 2020, dataset = "a01010")
+```
+
+### Available Datasets
+
+The package provides access to multiple ADM datasets across years 2011-2026. The datasets are organized into three categories:
+
+#### Core Actuarial Datasets
+
+- **BaseRate (A01010)**: Base rates for crop insurance premiums
+- **Price (A00810)**: Commodity prices (established, projected, harvest)
+- **SubsidyPercent (A00070)**: Premium subsidy percentages by coverage level
+- **InsuranceOffer (A00030)**: Insurance offer information and coverage details
+- **Beta (A01020)**: Beta risk adjustment factors for rate calculations
+- **ComboRevenueFactor (A01030)**: Combined revenue factors for revenue insurance
+- **CoverageLevelDifferential (A01040)**: Coverage level rate differentials
+- **HistoricalRevenueCapping (A01110)**: Historical revenue capping data
+- **HistoricalYieldTrend (A01115)**: Historical yield trend data (2016+)
+- **AreaCoverageLevel (A01130)**: Area coverage levels (2017+)
+- **AreaRate (A01135)**: Area rates for county-level coverage (2017+)
+- **AreaRiskRate (A01005)**: Area risk rates (2011-2016)
+- **UnitDiscount (A01090)**: Unit discount factors
+
+#### Reference Datasets
+
+- **Date (A00200)**: Important dates for crop insurance (sales closing, etc.)
+- **Commodity (A00420)**: Commodity codes and descriptions
+- **CommodityType (A00430)**: Commodity type classifications
+- **County (A00440)**: County codes and names
+- **InsurancePlan (A00460)**: Insurance plan codes and descriptions
+- **IrrigationPractice (A00490)**: Irrigation practice codes
+- **OrganicPractice (A00500)**: Organic practice designations
+- **Practice (A00510)**: Practice codes and descriptions
+- **State (A00520)**: State codes and names
+- **Type (A00540)**: Crop type codes and descriptions
+
+#### Constructed Datasets
+
+- **county_yield_history**: A processed dataset combining HistoricalYieldTrend and InsuranceOffer data for county-level yield analysis
+
+
+
+
+
 
