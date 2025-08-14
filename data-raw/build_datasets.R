@@ -52,6 +52,7 @@ piggyback::pb_new_release(
 files <- list.files("data-raw", "\\.parquet$",
                         full.names = TRUE, recursive = TRUE)
 
+options(piggyback.verbose = FALSE)
 
 piggyback::pb_upload(
   files,
