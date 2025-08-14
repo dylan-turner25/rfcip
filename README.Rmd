@@ -252,7 +252,7 @@ subsidy_multi <- get_adm_data(year = c(2018, 2019, 2020), dataset = "subsidyperc
 
 The function is case-insensitive for dataset names and can use either the descriptive name or the record code. All of the following return the same data:
 
-```{r adm-case-insensitive, eval=T}
+```{r adm-case-insensitive, eval=F}
 # These all return the same BaseRate data for 2020
 get_adm_data(year = 2020, dataset = "BaseRate")
 get_adm_data(year = 2020, dataset = "base_RaTe")  
