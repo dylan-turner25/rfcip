@@ -233,11 +233,11 @@ lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
 ```
 ## Actuarial Data Master (ADM)
 
-The Actuarial Data Master (ADM) contains the detailed actuarial data that underlies crop insurance rate-making and premium calculations. This data includes base rates, price discovery information, subsidy schedules, and reference information for all crops, counties, and insurance plans offered through the Federal Crop Insurance Program.
+RMA's [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) contains the detailed actuarial data that underlies crop insurance rate-making and premium calculations. This data includes base rates, price discovery information, subsidy schedules, and reference information for all crops, counties, and insurance plans offered through the Federal Crop Insurance Program. Although publicly available, the data is difficult to access primarily due to the size of the raw files which overwhelms the memory on typical hardware. The `rfcip` package addresses this by pre-procssing the ADM data into smaller, more manageable data sets and applying compression techniques to reduce to total file size. 
 
-The `get_adm_data()` function provides access to processed ADM datasets. The first time a dataset is called, it will be downloaded from the GitHub release [here](https://github.com/dylan-turner25/rfcip/releases) and then cached locally for future use. Subsequent calls for the same data will pull from the local cache. To clear the cache, use the `clear_adm_cache()` function, after which the data will be re-downloaded from the GitHub release if called again. 
+The `get_adm_data()` function provides access to these processed ADM datasets. The first time a dataset is called, it will be downloaded from this GitHub release [here](https://github.com/dylan-turner25/rfcip/releases) and then cached locally for future use. Subsequent calls for the same data will pull from the local cache. To clear the cache, use the `clear_adm_cache()` function, after which the data will be re-downloaded from the GitHub release if called again. 
 
-```{r adm-basic, eval=FALSE}
+```{r adm-basic, eval=T}
 library(rfcip)
 
 # Get base rate data for 2020
@@ -252,7 +252,7 @@ subsidy_multi <- get_adm_data(year = c(2018, 2019, 2020), dataset = "subsidyperc
 
 The function is case-insensitive for dataset names and can use either the descriptive name or the record code. All of the following return the same data:
 
-```{r adm-case-insensitive, eval=FALSE}
+```{r adm-case-insensitive, eval=T}
 # These all return the same BaseRate data for 2020
 get_adm_data(year = 2020, dataset = "BaseRate")
 get_adm_data(year = 2020, dataset = "base_RaTe")  
@@ -293,9 +293,7 @@ The package provides access to multiple ADM datasets across years 2011-2026. The
 - **State (A00520)**: State codes and names
 - **Type (A00540)**: Crop type codes and descriptions
 
-#### Constructed Datasets
 
-- **county_yield_history**: A processed dataset combining HistoricalYieldTrend and InsuranceOffer data for county-level yield analysis
 
 
 
