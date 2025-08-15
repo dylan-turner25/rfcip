@@ -2,8 +2,8 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "rfcip",
-  "description": "This package is a wrapper for RMA's summary of business app. The package helps users get data on the Federal Crop Insurance Program in an easy to use format. ",
-  "name": "rfcip: What the Package Does (One Line, Title Case)",
+  "description": "This package provides a set of tools to access public data on the Federal Crop Insurance Program, including both Summary of Business data and Actuarial Data Master (ADM) datasets.",
+  "name": "rfcip: Tools for Accessing U.S. Crop Insurance Data",
   "license": "https://spdx.org/licenses/CC0-1.0",
   "version": "0.0.0.9003",
   "programmingLanguage": {

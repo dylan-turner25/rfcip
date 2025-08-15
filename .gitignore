@@ -8,3 +8,17 @@ data-raw/**
 !data-raw/**/*.R
 /doc/
 /Meta/
+# Claude Code configuration
+.claude/
+# R CMD check
+*.Rcheck/
+..Rcheck/
+# Temporary files
+.Rhistory
+# Vignette cache and output
+vignettes/*_cache/
+vignettes/*_files/
+# Package cache directory
+cache/
+# Top-level figures (should be in vignettes/figures/)
+/figures/

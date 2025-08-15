@@ -99,7 +99,7 @@ print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
 
 A unique property of the summary of business data set is that its continuously updated (one per week) as new information is reported to USDA by [approved insurance providers](https://cropinsuranceinamerica.org/who-are-approved-insurance-providers-aips/). This means that analysis using the summary of business can quickly become outdated. One advantage of the the `rfcip` package is that it allows the raw data source to be directly integrated into the analysis. For example, the chart below plots indemnities for each crop year from 2015 up to the current year. The plot will automatically update with the latest data every time the plot is regenerated. Note that functions in `rfcip` are [memoised](https://en.wikipedia.org/wiki/Memoization) for the duration of the R session. This means that calling the same function with the same arguments will return a previously cached data set. In other words, in the below example, the data would not update if the code was run multiple times in the same R session, regaurdless of if the underlying data source changed. 
 
-```{r sob-method-chaining, include=T, cache=TRUE}
+```{r plot1, include=T, cache=TRUE}
 library(rfcip)
 library(dplyr)
 library(ggplot2)

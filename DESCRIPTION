@@ -1,6 +1,6 @@
 Package: rfcip
 Title: Tools for accessing U.S. crop insurance data
-Version: 0.1.0
+Version: 1.0.0
 Author: Dylan Turner <dylan.turner3@outlook.com>
 Maintainer: Dylan Turner <dylan.turner3@outlook.com>
 Authors@R: 
