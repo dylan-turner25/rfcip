@@ -56,6 +56,7 @@ download_and_verify <- function(url, destfile, method = NULL, attempts = 3) {
 #' @param county either a character string with a county name or 5-digit FIPS code corresponding to a county. when the county is specified using the name of the county, the state parameter must also be specified.
 #' @param fips a numeric value corresponding to a 5-digit FIPS code of a U.S. county.
 #' @param cov_lvl a numeric value indicating the coverage level. Valid coverage levels are `c(0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95)`
+#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
 #'
 #' @importFrom purrr map_dfr
 #' @importFrom usmap fips
@@ -70,8 +71,11 @@ get_sobtpu_data <- function(year = NULL,
                             state = NULL, 
                             county = NULL, 
                             fips = NULL, 
-                            cov_lvl = NULL) {
+                            cov_lvl = NULL,
+                            force = FALSE) {
   
+  # input checking
+  stopifnot("`year` must be a vector of numeric values." = is.numeric(year))
   
   # clean function arguments
   
@@ -104,145 +108,107 @@ get_sobtpu_data <- function(year = NULL,
     county <- as.numeric(substr(fips, 3, 5))
   }
   
+  # Check which years are already cached
+  cache_check <- check_cached_years("sobtpu", year)
+  cached_years <- cache_check$cached_years
+  missing_years <- cache_check$missing_years
   
-  # input checking
-  stopifnot("`year` must be a vector of numeric values." = is.numeric(year))
-  
-  # get the current location of the col files
-  cli::cli_alert_info("Locating Summary of Business download links on RMA's website.")
-  sob_urls <- locate_sobtpu_links()
-  cli::cli_alert_success("Download links located.")
-  
-  # set up a temporary directory
-  sobtpu_data_files <- tempdir()
-  
-  # initialize progress bar
-  cli::cli_progress_bar("Downloading Summary of Business files for specified crop years", total = length(year))
-  
-  # loop over years
-  for (y in year) {
-    cli::cli_progress_update()
-    
-    
-    # locate url corresponding to the crop year
-    url <- sob_urls$url[which(sob_urls$year == y)]
-    
-    data <- NULL
-    try({
-      # set a temporary zip file
-      temp_zip <- tempfile(fileext = ".zip")
-      
-      # download the zip file
-      utils::download.file(url, destfile = temp_zip, mode = "wb", quiet = T)
-      
-      # set a temporary txt file
-      temp_txt <- tempfile()
-      
-      # unzip the file
-      utils::unzip(zipfile = temp_zip, exdir = temp_txt)
-      
-      # load the text file
-      data <- utils::read.delim2(
-        file = list.files(temp_txt, full.names = T),
-        sep = "|", header = F, skipNul = T
-      )
-      
-      # remove the temporary files
-      unlink(temp_zip)
-      unlink(temp_txt, recursive = T)
-      
-      
-    })
-    
-    
-    colnames(data) <- c(
-      "commodity_year",
-      "state_code",
-      "state_name",
-      "state_abbreviation",
-      "county_code",
-      "county_name",
-      "commodity_code",
-      "commodity_name",
-      "insurance_plan_code",
-      "insurance_plan_abbreviation",
-      "coverage_type_code",
-      "coverage_level_percent",
-      "delivery_id",
-      "type_code",
-      "type_name",
-      "practice_code",
-      "practice_name",
-      "unit_structure_code",
-      "unit_structure_name",
-      "net_reporting_level_amount",
-      "reporting_level_type",
-      "liability_amount",
-      "total_premium_amount",
-      "subsidy_amount",
-      "indemnity_amount",
-      "loss_ratio",
-      "endorsed_commodity_reporting_level_amount"
-    )
-    
-    # convert all columns to character values
-    data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
-    
-    
-    # apply any filters specified by the function arguments
-    
-    # filter by crop
-    if (!is.null(crop)) {
-      data <- data[data$commodity_code %in% as.character(crop), ]
-    }
-    
-    # filter by insurance plan
-    if (!is.null(insurance_plan)) {
-      data <- data[data$insurance_plan_code %in% as.character(insurance_plan), ]
-    }
-    
-    # filter by state
-    if (!is.null(state)) {
-      data <- data[data$state_code %in% as.character(state), ]
-    }
-    
-    # filter by county
-    if (!is.null(county)) {
-      data <- data[data$county_code %in% as.character(county), ]
-    }
-    
-  
-    # filter by coverage level
-    if (!is.null(cov_lvl)) {
-      data <- data[as.numeric(data$coverage_level_percent) %in% as.numeric(cov_lvl), ]
-    }
-    
-    # save as a rds file
-    saveRDS(data, file = paste0(sobtpu_data_files, "/sobtpu_", y, ".rds"))
-    
+  # If force=TRUE, treat all years as missing but keep track of cached data for fallback
+  cached_files_for_fallback <- NULL
+  if (force) {
+    cached_files_for_fallback <- cache_check$cached_files
+    missing_years <- year
+    cached_years <- numeric(0)
   }
   
-  # close progress bar
-  cli::cli_progress_done()
+  # Load data from cached files and apply filters
+  cached_data_list <- list()
+  if (length(cached_years) > 0) {
+    cli::cli_alert_info("Loading {length(cached_years)} year{?s} from cache: {paste(cached_years, collapse = ', ')}")
+    for (cached_file in cache_check$cached_files) {
+      cached_zip <- load_cached_data(cached_file)
+      processed_data <- process_sobtpu_zip(cached_zip, crop, insurance_plan, state, county, cov_lvl)
+      cached_data_list <- append(cached_data_list, list(processed_data))
+    }
+  }
   
+  # Download and process missing years
+  missing_data_list <- list()
+  if (length(missing_years) > 0) {
+    # get the current location of the SOBTPU files
+    cli::cli_alert_info("Locating Summary of Business download links on RMA's website.")
+    sob_urls <- locate_sobtpu_links()
+    cli::cli_alert_success("Download links located.")
+
+    # initialize progress bar for missing years only
+    cli::cli_progress_bar("Downloading Summary of Business files for missing years", total = length(missing_years))
+
+    # loop over missing years only
+    for (y in missing_years) {
+      cli::cli_progress_update()
+
+      # locate url corresponding to the crop year
+      url <- sob_urls$url[which(sob_urls$year == y)]
+
+      if (length(url) == 0) {
+        cli::cli_alert_warning("No data found for year {y}")
+        next
+      }
+
+      # Create cache key for this year
+      cache_key <- paste0("sobtpu_", y, ".zip")
+      
+      data <- NULL
+      try({
+        # set a temporary zip file
+        temp_zip <- tempfile(fileext = ".zip")
+
+        # download the zip file
+        utils::download.file(url, destfile = temp_zip, mode = "wb", quiet = TRUE)
+        
+        # Cache the ZIP file
+        cached_zip_path <- cache_raw_data(temp_zip, cache_key, "zip")
+        
+        # Process the data from cached ZIP and apply filters
+        data <- process_sobtpu_zip(cached_zip_path, crop, insurance_plan, state, county, cov_lvl)
+        
+        # Clean up temp file
+        unlink(temp_zip)
+      })
+
+      if (!is.null(data)) {
+        missing_data_list <- append(missing_data_list, list(data))
+      } else if (force && !is.null(cached_files_for_fallback)) {
+        # If download failed and force=TRUE, try to load from cache as fallback
+        fallback_file <- cached_files_for_fallback[basename(cached_files_for_fallback) == cache_key]
+        if (length(fallback_file) > 0) {
+          cli::cli_alert_warning("Download failed for year {y}, using cached data")
+          cached_zip <- load_cached_data(fallback_file[1])
+          fallback_data <- process_sobtpu_zip(cached_zip, crop, insurance_plan, state, county, cov_lvl)
+          missing_data_list <- append(missing_data_list, list(fallback_data))
+        }
+      }
+    }
+
+    # close progress bar
+    cli::cli_progress_done()
+  }
+  
+  # Combine all data
+  all_data_list <- c(cached_data_list, missing_data_list)
+  
+  if (length(all_data_list) == 0) {
+    stop("No data available for the specified years")
+  }
+
   # indicate merging of files is taking place
   cli::cli_alert_info("Merging Summary of Business files for all specified crop years")
-  
-  # list all files in the temporary directory matching the file naming convention
-  files_to_load <- list.files(sobtpu_data_files, full.names = T, pattern = "sobtpu_\\d+.rds")
-  
-  # remove any files that aren't the specified years
-  files_to_load <- files_to_load[grepl(paste0(year, collapse = "|"), files_to_load)]
-  
-  # load all the `files_to_load` and aggregate them into a single data frame
-  sobtpu <- files_to_load |>
-    purrr::map_dfr(readRDS) |>
+
+  # Combine all data frames
+  sobtpu <- all_data_list |>
     dplyr::bind_rows()
-  
-  
+
   return(sobtpu)
-  
-  
 }
 
 #' Generates a data frame of urls and years corresponding to where each cause of loss file is hosted on RMA's website
@@ -833,26 +799,515 @@ restore_factor_levels <- function(data, filename) {
 
 #' Clear the package cache of downloaded data files
 #'
-#' Deletes the entire cache directory used by the **rfcip** package to store
-#' downloaded data files. Useful if you need to force re-download of data,
-#' or free up disk space.
+#' Deletes cached data files used by the **rfcip** package. Can clear all files
+#' or filter by function type, specific years, or other criteria.
 #'
+#' @param function_name Character. Optional function name to clear cache for 
+#'   (e.g., "get_sob_data", "get_col_data"). If NULL, clears all cache.
+#' @param years Numeric vector. Optional years to clear from cache.
+#' @param program Character. Optional program to clear (for livestock data).
 #' @return Invisibly returns `NULL`. A message is printed indicating which
-#'   directory was cleared.
+#'   files were cleared.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Remove all cached data files so they will be re-downloaded on next use
+#' # Remove all cached data files
 #' clear_rfcip_cache()
+#' 
+#' # Clear only SOB data cache
+#' clear_rfcip_cache(function_name = "get_sob_data")
+#' 
+#' # Clear specific years
+#' clear_rfcip_cache(years = 2023)
+#' 
+#' # Clear livestock data for specific program
+#' clear_rfcip_cache(function_name = "get_livestock_data", program = "LRP")
 #' }
-clear_rfcip_cache <- function(){
+clear_rfcip_cache <- function(function_name = NULL, years = NULL, program = NULL){
   dest_dir <- tools::R_user_dir("rfcip", which = "cache")
-  if (dir.exists(dest_dir)) {
-    unlink(dest_dir, recursive = TRUE, force = TRUE)
+  if (!dir.exists(dest_dir)) {
+    message("No cache directory found")
+    return(invisible(NULL))
   }
-  message("Cleared cached files in ", dest_dir)
+  
+  # If no filters specified, clear everything
+  if (is.null(function_name) && is.null(years) && is.null(program)) {
+    unlink(dest_dir, recursive = TRUE, force = TRUE)
+    message("Cleared all cached files in ", dest_dir)
+    return(invisible(NULL))
+  }
+  
+  # Get all cached files
+  cached_files <- list.files(dest_dir, full.names = TRUE)
+  files_to_remove <- character(0)
+  
+  # Filter by function name
+  if (!is.null(function_name)) {
+    pattern <- switch(function_name,
+      "get_sob_data" = "^(sob_|sobtpu_)",
+      "get_col_data" = "^col_",
+      "get_livestock_data" = "^livestock_",
+      "get_price_data" = "^price_",
+      stop("Unknown function name: ", function_name)
+    )
+    cached_files <- cached_files[grepl(pattern, basename(cached_files))]
+  }
+  
+  # Filter by years
+  if (!is.null(years)) {
+    year_pattern <- paste0("(", paste(years, collapse = "|"), ")")
+    cached_files <- cached_files[grepl(year_pattern, basename(cached_files))]
+  }
+  
+  # Filter by program (for livestock)
+  if (!is.null(program)) {
+    cached_files <- cached_files[grepl(paste0("_", program, "_"), basename(cached_files))]
+  }
+  
+  # Remove filtered files
+  if (length(cached_files) > 0) {
+    unlink(cached_files)
+    message("Cleared ", length(cached_files), " cached files")
+  } else {
+    message("No matching cached files found")
+  }
+  
   invisible(NULL)
+}
+
+
+#' Generate cache key from function parameters
+#'
+#' Creates a unique, filesystem-safe cache key from function parameters.
+#' Handles NULL values, vectors, and complex parameter combinations.
+#'
+#' @param prefix Character. Function-specific prefix (e.g., "sob", "price").
+#' @param params List. Named list of function parameters.
+#' @param suffix Character. File extension (e.g., "parquet", "zip", "xml").
+#' @return Character. Unique cache key suitable for filename.
+#' @keywords internal
+generate_cache_key <- function(prefix, params, suffix) {
+  # Remove NULL parameters
+  params <- params[!sapply(params, is.null)]
+  
+  # Convert parameters to strings
+  param_strings <- character(0)
+  for (name in names(params)) {
+    value <- params[[name]]
+    if (is.vector(value) && length(value) > 1) {
+      # Handle vectors by sorting and collapsing
+      value_str <- paste(sort(as.character(value)), collapse = "-")
+    } else {
+      value_str <- as.character(value)
+    }
+    param_strings <- c(param_strings, paste0(name, "_", value_str))
+  }
+  
+  # Create cache key
+  if (length(param_strings) > 0) {
+    cache_key <- paste0(prefix, "_", paste(param_strings, collapse = "_"))
+  } else {
+    cache_key <- prefix
+  }
+  
+  # Make filesystem safe
+  cache_key <- gsub("[^A-Za-z0-9._-]", "_", cache_key)
+  cache_key <- gsub("_{2,}", "_", cache_key)  # Remove multiple underscores
+  
+  # Add extension
+  cache_key <- paste0(cache_key, ".", suffix)
+  
+  return(cache_key)
+}
+
+
+#' Check which years are cached for a given function
+#'
+#' Examines the cache directory to determine which years already have cached
+#' files for a specific function pattern.
+#'
+#' @param prefix Character. Function-specific prefix to search for.
+#' @param years Numeric vector. Years to check for.
+#' @param program Character. Optional program filter (for livestock).
+#' @return List with elements: cached_years, missing_years, cached_files.
+#' @keywords internal
+check_cached_years <- function(prefix, years, program = NULL) {
+  dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+  
+  if (!dir.exists(dest_dir)) {
+    return(list(
+      cached_years = integer(0),
+      missing_years = years,
+      cached_files = character(0)
+    ))
+  }
+  
+  # Build search pattern
+  if (!is.null(program)) {
+    pattern <- paste0("^", prefix, "_", program, "_")
+  } else {
+    pattern <- paste0("^", prefix, "_")
+  }
+  
+  # Get matching files
+  cached_files <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
+  
+  if (length(cached_files) == 0) {
+    return(list(
+      cached_years = integer(0),
+      missing_years = years,
+      cached_files = character(0)
+    ))
+  }
+  
+  # Extract years from filenames
+  cached_years <- integer(0)
+  for (year in years) {
+    year_pattern <- paste0("_", year, "[._]")
+    if (any(grepl(year_pattern, basename(cached_files)))) {
+      cached_years <- c(cached_years, year)
+    }
+  }
+  
+  missing_years <- setdiff(years, cached_years)
+  
+  return(list(
+    cached_years = cached_years,
+    missing_years = missing_years,
+    cached_files = cached_files[grepl(paste0("_(", paste(cached_years, collapse = "|"), ")[._]"), 
+                                      basename(cached_files))]
+  ))
+}
+
+
+#' Cache raw data (ZIP or XML files)
+#'
+#' Saves raw data files (ZIP, XML) to the cache directory with appropriate naming.
+#'
+#' @param data Raw data (for XML) or file path (for ZIP files).
+#' @param cache_key Character. Cache key for the file.
+#' @param data_type Character. Type of data ("zip" or "xml").
+#' @return Character. Path to cached file.
+#' @keywords internal
+cache_raw_data <- function(data, cache_key, data_type = "zip") {
+  dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+  if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+  
+  dest_file <- file.path(dest_dir, cache_key)
+  
+  if (data_type == "zip") {
+    # For ZIP files, 'data' should be the path to downloaded file
+    if (file.exists(data)) {
+      file.copy(data, dest_file, overwrite = TRUE)
+    } else {
+      stop("Source ZIP file not found: ", data)
+    }
+  } else if (data_type == "xml") {
+    # For XML data, write the content directly
+    writeLines(data, dest_file)
+  } else {
+    stop("Unsupported data type: ", data_type)
+  }
+  
+  return(dest_file)
+}
+
+
+#' Cache processed data as parquet
+#'
+#' Saves processed data frames as parquet files with compression.
+#'
+#' @param data Data frame to cache.
+#' @param cache_key Character. Cache key for the file.
+#' @return Character. Path to cached file.
+#' @keywords internal
+cache_processed_data <- function(data, cache_key) {
+  dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+  if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+  
+  dest_file <- file.path(dest_dir, cache_key)
+  
+  # Save as parquet with compression
+  if (!requireNamespace("arrow", quietly = TRUE)) {
+    stop("arrow package needed for parquet caching. Please install it: install.packages('arrow')")
+  }
+  
+  arrow::write_parquet(data, dest_file, compression = "gzip")
+  return(dest_file)
+}
+
+
+#' Load cached data
+#'
+#' Loads data from cache based on file extension and type.
+#'
+#' @param cache_file Character. Path to cached file.
+#' @return Data frame or raw data depending on file type.
+#' @keywords internal
+load_cached_data <- function(cache_file) {
+  if (!file.exists(cache_file)) {
+    stop("Cached file not found: ", cache_file)
+  }
+  
+  file_ext <- tools::file_ext(cache_file)
+  
+  if (file_ext == "parquet") {
+    if (!requireNamespace("arrow", quietly = TRUE)) {
+      stop("arrow package needed for parquet loading. Please install it: install.packages('arrow')")
+    }
+    return(arrow::read_parquet(cache_file))
+  } else if (file_ext == "rds") {
+    return(readRDS(cache_file))
+  } else if (file_ext == "xml") {
+    return(readLines(cache_file))
+  } else if (file_ext == "zip") {
+    # For ZIP files, return the file path for further processing
+    return(cache_file)
+  } else {
+    stop("Unsupported cached file format: ", file_ext)
+  }
+}
+
+
+#' List cached files with information
+#'
+#' Returns information about all cached files in the rfcip cache directory.
+#'
+#' @return Data frame with columns: filename, size_mb, modified, function_type.
+#' @export
+#' @examples
+#' \dontrun{
+#' # View all cached files
+#' get_cache_info()
+#' }
+get_cache_info <- function() {
+  dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+  
+  if (!dir.exists(dest_dir)) {
+    message("No cache directory found")
+    return(data.frame())
+  }
+  
+  cached_files <- list.files(dest_dir, full.names = TRUE)
+  
+  if (length(cached_files) == 0) {
+    message("No cached files found")
+    return(data.frame())
+  }
+  
+  # Get file info
+  file_info <- file.info(cached_files)
+  
+  # Create result data frame
+  result <- data.frame(
+    filename = basename(cached_files),
+    size_mb = round(file_info$size / (1024^2), 2),
+    modified = file_info$mtime,
+    stringsAsFactors = FALSE
+  )
+  
+  # Add function type based on filename pattern
+  result$function_type <- ifelse(grepl("^sob_", result$filename), "get_sob_data",
+                        ifelse(grepl("^sobtpu_", result$filename), "get_sob_data (SOBTPU)",
+                        ifelse(grepl("^col_", result$filename), "get_col_data",
+                        ifelse(grepl("^livestock_", result$filename), "get_livestock_data",
+                        ifelse(grepl("^price_", result$filename), "get_price_data",
+                        "ADM or other")))))
+  
+  # Sort by modification time (most recent first)
+  result <- result[order(result$modified, decreasing = TRUE), ]
+  
+  return(result)
+}
+
+
+#' Process cause of loss ZIP file
+#'
+#' Extracts and processes data from a cached cause of loss ZIP file.
+#'
+#' @param zip_file Character. Path to cached ZIP file.
+#' @return Data frame with processed cause of loss data.
+#' @keywords internal
+process_col_zip <- function(zip_file) {
+  if (!file.exists(zip_file)) {
+    stop("ZIP file not found: ", zip_file)
+  }
+  
+  # Create temporary directory for extraction
+  temp_txt <- tempfile()
+  
+  # Unzip the file
+  utils::unzip(zipfile = zip_file, exdir = temp_txt)
+  
+  # Load the text file
+  data <- utils::read.delim2(
+    file = list.files(temp_txt, full.names = TRUE),
+    sep = "|", header = FALSE, skipNul = TRUE
+  )
+  
+  # Set column names
+  colnames(data) <- c(
+    "commodity_year", "state_code", "state_abbrv",
+    "county_code", "county_name", "commodity_code",
+    "commodity_name", "insurance_plan_code",
+    "insurance_plan_abbrv", "delivery_type",
+    "stage_code", "col_code", "col_name",
+    "month_of_loss_code", "month_of_loss_name",
+    "year_of_loss", "policies_earning_prem",
+    "policies_indemnified", "net_planted_qty",
+    "net_endorsed_acres", "liability", "total_premium",
+    "producer_paid_premium",
+    "subsidy", "state_subsidy", "addnl_subsidy",
+    "efa_prem_discount", "indemnified_quantity",
+    "indem_amount", "loss_ratio"
+  )
+  
+  # Convert the whole data frame to character (to ensure merging works later)
+  data <- data |>
+    dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
+  
+  # Clean up temporary directory
+  unlink(temp_txt, recursive = TRUE)
+  
+  return(data)
+}
+
+
+#' Process livestock ZIP file
+#'
+#' Extracts and processes data from a cached livestock ZIP file.
+#'
+#' @param zip_file Character. Path to cached ZIP file.
+#' @param program Character. Livestock program type ("LRP", "DRP", "LGM").
+#' @return Data frame with processed livestock data.
+#' @keywords internal
+process_livestock_zip <- function(zip_file, program) {
+  if (!file.exists(zip_file)) {
+    stop("ZIP file not found: ", zip_file)
+  }
+  
+  # Create temporary directory for extraction
+  temp_dir <- tempfile()
+  dir.create(temp_dir)
+  
+  # Unzip the file
+  utils::unzip(zipfile = zip_file, exdir = temp_dir)
+  
+  # Load the text file
+  data_file <- list.files(temp_dir, full.names = TRUE)
+  data <- utils::read.delim(
+    file = data_file,
+    sep = "|", header = FALSE, skipNul = TRUE
+  )
+  
+  # Add program information
+  data$program <- program
+  
+  # Convert every column to character
+  data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
+  
+  # Clean up temporary directory
+  unlink(temp_dir, recursive = TRUE)
+  
+  return(data)
+}
+
+
+#' Process SOBTPU ZIP file
+#'
+#' Extracts and processes data from a cached SOBTPU ZIP file and applies filters.
+#'
+#' @param zip_file Character. Path to cached ZIP file.
+#' @param crop Numeric vector. Crop codes to filter on (optional).
+#' @param insurance_plan Numeric vector. Insurance plan codes to filter on (optional).
+#' @param state Numeric vector. State codes to filter on (optional).
+#' @param county Numeric vector. County codes to filter on (optional).
+#' @param cov_lvl Numeric vector. Coverage levels to filter on (optional).
+#' @return Data frame with processed and filtered SOBTPU data.
+#' @keywords internal
+process_sobtpu_zip <- function(zip_file, crop = NULL, insurance_plan = NULL, state = NULL, county = NULL, cov_lvl = NULL) {
+  if (!file.exists(zip_file)) {
+    stop("ZIP file not found: ", zip_file)
+  }
+  
+  # Create temporary directory for extraction
+  temp_txt <- tempfile()
+  
+  # Unzip the file
+  utils::unzip(zipfile = zip_file, exdir = temp_txt)
+  
+  # Load the text file
+  data <- utils::read.delim2(
+    file = list.files(temp_txt, full.names = TRUE),
+    sep = "|", header = FALSE, skipNul = TRUE
+  )
+  
+  # Set column names
+  colnames(data) <- c(
+    "commodity_year",
+    "state_code",
+    "state_name",
+    "state_abbreviation",
+    "county_code",
+    "county_name",
+    "commodity_code",
+    "commodity_name",
+    "insurance_plan_code",
+    "insurance_plan_abbreviation",
+    "coverage_type_code",
+    "coverage_level_percent",
+    "delivery_id",
+    "type_code",
+    "type_name",
+    "practice_code",
+    "practice_name",
+    "unit_structure_code",
+    "unit_structure_name",
+    "net_reporting_level_amount",
+    "reporting_level_type",
+    "liability_amount",
+    "total_premium_amount",
+    "subsidy_amount",
+    "indemnity_amount",
+    "loss_ratio",
+    "endorsed_commodity_reporting_level_amount"
+  )
+  
+  # Convert all columns to character values
+  data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
+  
+  # Apply any filters specified by the function arguments
+  
+  # filter by crop
+  if (!is.null(crop)) {
+    data <- data[data$commodity_code %in% as.character(crop), ]
+  }
+  
+  # filter by insurance plan
+  if (!is.null(insurance_plan)) {
+    data <- data[data$insurance_plan_code %in% as.character(insurance_plan), ]
+  }
+  
+  # filter by state
+  if (!is.null(state)) {
+    data <- data[data$state_code %in% as.character(state), ]
+  }
+  
+  # filter by county
+  if (!is.null(county)) {
+    data <- data[data$county_code %in% as.character(county), ]
+  }
+  
+  # filter by coverage level
+  if (!is.null(cov_lvl)) {
+    data <- data[as.numeric(data$coverage_level_percent) %in% as.numeric(cov_lvl), ]
+  }
+  
+  # Clean up temporary directory
+  unlink(temp_txt, recursive = TRUE)
+  
+  return(data)
 }
 
 

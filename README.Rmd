@@ -233,9 +233,7 @@ lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
 ```
 ## Actuarial Data Master (ADM)
 
-RMA's [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) contains the detailed actuarial data that underlies crop insurance rate-making and premium calculations. This data includes base rates, price discovery information, subsidy schedules, and reference information for all crops, counties, and insurance plans offered through the Federal Crop Insurance Program. Although publicly available, the data is difficult to access primarily due to the size of the raw files which overwhelms the memory on typical hardware. The `rfcip` package addresses this by pre-procssing the ADM data into smaller, more manageable data sets and applying compression techniques to reduce to total file size. 
-
-The `get_adm_data()` function provides access to these processed ADM datasets. The first time a dataset is called, it will be downloaded from this GitHub release [here](https://github.com/dylan-turner25/rfcip/releases) and then cached locally for future use. Subsequent calls for the same data will pull from the local cache. To clear the cache, use the `clear_adm_cache()` function, after which the data will be re-downloaded from the GitHub release if called again. 
+RMA's [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) contains the detailed actuarial data that underlies crop insurance rate-making and premium calculations. This data includes base rates, price discovery information, subsidy schedules, and reference information for all crops, counties, and insurance plans offered through the Federal Crop Insurance Program. Although publicly available, the data is difficult to access primarily due to the size of the raw files which overwhelms the memory on typical hardware. The `rfcip` package addresses this by pre-procssing the ADM data into smaller, more manageable data sets and applying compression techniques to reduce to total file size. The `get_adm_data()` function provides access to these processed ADM datasets which are stored as a [GitHub release](https://github.com/dylan-turner25/rfcip/releases).
 
 ```{r adm-basic, eval=T}
 library(rfcip)
@@ -292,6 +290,116 @@ The package provides access to multiple ADM datasets across years 2011-2026. The
 - **Practice (A00510)**: Practice codes and descriptions
 - **State (A00520)**: State codes and names
 - **Type (A00540)**: Crop type codes and descriptions
+
+# Caching and Performance
+
+The `rfcip` package implements a caching system designed to minimizing redundant data downloads. This system combines session-level memoization with disk caching to provide performance benefits and reduce host server load.
+
+## How Caching Works
+
+### Two-Tier Caching System
+
+1. **Session-Level Memoization**: All data functions are memoized using the `memoise` package, meaning that repeated calls with identical arguments within the same R session return cached results immediately without any disk I/O.
+
+2. **Persistent Disk Caching**: Downloaded data is cached to disk in the package's installed location (view that location using `tools::R_user_dir("rfcip", "cache")` ). 
+
+The caching system  handles partial data requests. For example, if you previously downloaded data for 2020-2022 and later request 2020-2023, the system will:
+- Load 2020-2022 data from cache
+- Only download the new 2023 data
+- Combine both cached and fresh data in the returned data
+
+Below is a demonstration of the performance increases that come from caching the data.
+```{r caching-demo, eval=FALSE}
+library(rfcip)
+
+# First call - downloads and caches data (will take several seconds)
+system.time({
+  col_data1 <- get_col_data(year = 2020:2022)
+})
+#   user  system elapsed 
+#  2.156   0.234  15.423 
+
+# Subsequent call - loads from cache (much faster!)
+system.time({
+  col_data2 <- get_col_data(year = 2020:2022)
+})
+#   user  system elapsed 
+#  0.023   0.008   0.156 
+
+# Verify data is identical
+identical(col_data1, col_data2)
+# [1] TRUE
+```
+
+Since the above example already downloaded data for 2020 - 2022, the following only downloads 2023 data. 
+
+```{r incremental-demo, eval=FALSE}
+# Request additional year - only downloads 2023, loads 2020-2022 from cache
+col_data3 <- get_col_data(year = 2020:2023)
+
+# The function automatically:
+# 1. Identifies that 2020-2022 are already cached
+# 2. Loads cached data for these years
+# 3. Downloads only the missing 2023 data
+# 4. Combines all data into a single data frame
+```
+
+Functions that utilize server-side data processing use the unique parameters of the function call to create unique cache entries. This means that different parameters will result in different cache entries. 
+
+```{r parameter-caching, eval=FALSE}
+# These create separate cache entries due to different parameters
+price_data_corn <- get_price_data(year = 2023, crop = "corn", state = "IL")
+price_data_soy <- get_price_data(year = 2023, crop = "soybeans", state = "IL")
+price_data_ia <- get_price_data(year = 2023, crop = "corn", state = "IA")
+```
+
+## Force Parameter and Cache Refresh
+
+All caching functions include a `force` parameter for refreshing cached data.
+
+```{r force-demo, eval=FALSE}
+# Force refresh - attempts fresh download, falls back to cache on failure
+col_data_fresh <- get_col_data(year = 2020:2022, force = TRUE)
+
+# If download fails due to network issues, you'll see:
+# Warning: Download failed for year 2021, using cached data
+```
+
+
+## Cache Management
+
+### Viewing Cache Information
+
+Use `get_cache_info()` to inspect your cached data:
+
+```{r cache-info, eval=FALSE}
+# View all cached files
+cache_info <- get_cache_info()
+print(cache_info)
+#      filename size_mb            modified    function_type
+# 1  col_2023.zip    45.2 2024-01-15 14:23:01     get_col_data
+# 2  col_2022.zip    43.8 2024-01-15 14:22:45     get_col_data
+# 3 price_abc123.parquet 2.1 2024-01-15 14:20:15  get_price_data
+```
+
+### Clearing Cache
+
+Use `clear_rfcip_cache()` with various filtering options:
+
+```{r cache-clear, eval=FALSE}
+# Clear all cached data
+clear_rfcip_cache()
+
+# Clear only cause of loss data
+clear_rfcip_cache(function_name = "get_col_data")
+
+# Clear specific years
+clear_rfcip_cache(years = c(2023, 2024))
+
+# Clear livestock data for specific program
+clear_rfcip_cache(function_name = "get_livestock_data", program = "LRP")
+```
+
 
 
 

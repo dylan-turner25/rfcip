@@ -20,6 +20,7 @@ if(getRversion() >= "2.15.1") {
   get_insurance_plan_codes <<- memoise::memoise(get_insurance_plan_codes)
   get_col_data <<- memoise::memoise(get_col_data)
   get_price_data <<- memoise::memoise(get_price_data)
+  get_livestock_data <<- memoise::memoise(get_livestock_data)
   
   # memoise functions from merged rmaADM (with renamed function)
   locate_adm_download_link <<- memoise::memoise(locate_adm_download_link)

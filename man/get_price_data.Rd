@@ -7,7 +7,7 @@
 Data is downloaded directly from RMA's price discovery app: \url{https://public-rma.fpac.usda.gov/apps/PriceDiscovery/GetPrices/ManyPrices}
 }
 \usage{
-get_price_data(year = NULL, crop = NULL, state = NULL)
+get_price_data(year = NULL, crop = NULL, state = NULL, force = FALSE)
 }
 \arguments{
 \item{year}{a numeric value (either single value or a vector of values) that indicate the crop year (ex: \code{2024} or \code{c(2022,2023,2024)})}
@@ -17,6 +17,8 @@ Inputting a vector with multiple values will return data for multiple crops.
 To look up crop codes, use the \code{get_crop_codes()} function.}
 
 \item{state}{either a numeric value representing the state fips code or a character string that can either be the full state name or two-digit state abbreviation.}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 Returns a tibble containing data on project and harvest prices.

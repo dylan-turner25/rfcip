@@ -19,7 +19,8 @@ get_sob_data(
   comm_cat = "B",
   dest_file = NULL,
   group_by = NULL,
-  sob_version = "sob"
+  sob_version = "sob",
+  force = FALSE
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ dis-aggregated by year only where. The function call
 return the same data, but further dissagregated by insurance plan and coverage level}
 
 \item{sob_version}{a character string indicating the version of the summary of business to use. The default is "sob" which uses the summary of business app. The alternative is "sobtpu" which downloads the summary of business by type, practice, and unit structure.}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 Returns a tibble

@@ -1,6 +1,7 @@
 #' Builds a cause of loss data set using data from the specified years
 #'
 #' @param year a single numeric value or vector of values specifying the commodity years that should be used to construct the cause of loss data set
+#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
 #'
 #' @return returns a data frame with cause of loss data corresponding to the specified commodity years
 #' @export
@@ -16,90 +17,108 @@
 #' @importFrom purrr map_dfr
 #' @importFrom readr type_convert
 #' @import cli
-get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeric(format(Sys.Date(), "%Y")) - 4)) {
+get_col_data <- function(year = c(as.numeric(format(Sys.Date(), "%Y")):as.numeric(format(Sys.Date(), "%Y")) - 4), force = FALSE) {
   # input checking
   stopifnot("`year` must be a vector of numeric values." = is.numeric(year))
 
-  # get the current location of the col files
-  cli::cli_alert_info("Locating cause of loss download links on RMA's website.")
-  col_urls <- locate_col_links()
-  cli::cli_alert_success("Download links located.")
-
-  # set up a temporary directory
-  col_data_files <- tempdir()
-
-  # initialize progress bar
-  cli::cli_progress_bar("Downloading cause of loss files for specified crop years", total = length(year))
-
-  # loop over years
-  for (y in year) {
-    cli::cli_progress_update()
-
-
-    # locate url corresponding to the crop year
-    url <- col_urls$url[which(col_urls$year == y)]
-
-    data <- NULL
-    try({
-      # set a temporary zip file
-      temp_zip <- tempfile(fileext = ".zip")
-
-      # download the zip file
-      download_and_verify(url, temp_zip, method = "curl")
-
-      # set a temporary txt file
-      temp_txt <- tempfile()
-
-      # unzip the file
-      utils::unzip(zipfile = temp_zip, exdir = temp_txt)
-
-      # load the text file
-      data <- utils::read.delim2(
-        file = list.files(temp_txt, full.names = T),
-        sep = "|", header = F, skipNul = T
-      )
-    })
-
-
-    colnames(data) <- c(
-      "commodity_year", "state_code", "state_abbrv",
-      "county_code", "county_name", "commodity_code",
-      "commodity_name", "insurance_plan_code",
-      "insurance_plan_abbrv", "delivery_type",
-      "stage_code", "col_code", "col_name",
-      "month_of_loss_code", "month_of_loss_name",
-      "year_of_loss", "policies_earning_prem",
-      "policies_indemnified", "net_planted_qty",
-      "net_endorsed_acres", "liability", "total_premium",
-      "producer_paid_premium",
-      "subsidy", "state_subsidy", "addnl_subsidy",
-      "efa_prem_discount", "indemnified_quantity",
-      "indem_amount", "loss_ratio"
-    )
-
-    # convert the whole data frame to character (to ensure merging works later)
-    data <- data |>
-      dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
-    
-    # save as a rds file
-    saveRDS(data, file = paste0(col_data_files, "/col_", y, ".rds"))
+  # Check which years are already cached
+  cache_check <- check_cached_years("col", year)
+  cached_years <- cache_check$cached_years
+  missing_years <- cache_check$missing_years
+  
+  # If force=TRUE, treat all years as missing but keep track of cached data for fallback
+  cached_files_for_fallback <- NULL
+  if (force) {
+    cached_files_for_fallback <- cache_check$cached_files
+    missing_years <- year
+    cached_years <- numeric(0)
   }
+  
+  # Load data from cached files
+  cached_data_list <- list()
+  if (length(cached_years) > 0) {
+    cli::cli_alert_info("Loading {length(cached_years)} year{?s} from cache: {paste(cached_years, collapse = ', ')}")
+    for (cached_file in cache_check$cached_files) {
+      cached_zip <- load_cached_data(cached_file)
+      processed_data <- process_col_zip(cached_zip)
+      cached_data_list <- append(cached_data_list, list(processed_data))
+    }
+  }
+  
+  # Download and process missing years
+  missing_data_list <- list()
+  if (length(missing_years) > 0) {
+    # get the current location of the col files
+    cli::cli_alert_info("Locating cause of loss download links on RMA's website.")
+    col_urls <- locate_col_links()
+    cli::cli_alert_success("Download links located.")
 
-  # close progress bar
-  cli::cli_progress_done()
+    # initialize progress bar for missing years only
+    cli::cli_progress_bar("Downloading cause of loss files for missing years", total = length(missing_years))
+
+    # loop over missing years only
+    for (y in missing_years) {
+      cli::cli_progress_update()
+
+      # locate url corresponding to the crop year
+      url <- col_urls$url[which(col_urls$year == y)]
+
+      if (length(url) == 0) {
+        cli::cli_alert_warning("No data found for year {y}")
+        next
+      }
+
+      # Create cache key for this year
+      cache_key <- paste0("col_", y, ".zip")
+      
+      data <- NULL
+      try({
+        # set a temporary zip file
+        temp_zip <- tempfile(fileext = ".zip")
+
+        # download the zip file
+        download_and_verify(url, temp_zip, method = "curl")
+        
+        # Cache the ZIP file
+        cached_zip_path <- cache_raw_data(temp_zip, cache_key, "zip")
+        
+        # Process the data from cached ZIP
+        data <- process_col_zip(cached_zip_path)
+        
+        # Clean up temp file
+        unlink(temp_zip)
+      })
+
+      if (!is.null(data)) {
+        missing_data_list <- append(missing_data_list, list(data))
+      } else if (force && !is.null(cached_files_for_fallback)) {
+        # If download failed and force=TRUE, try to load from cache as fallback
+        fallback_file <- cached_files_for_fallback[basename(cached_files_for_fallback) == cache_key]
+        if (length(fallback_file) > 0) {
+          cli::cli_alert_warning("Download failed for year {y}, using cached data")
+          cached_zip <- load_cached_data(fallback_file[1])
+          fallback_data <- process_col_zip(cached_zip)
+          missing_data_list <- append(missing_data_list, list(fallback_data))
+        }
+      }
+    }
+
+    # close progress bar
+    cli::cli_progress_done()
+  }
+  
+  # Combine all data
+  all_data_list <- c(cached_data_list, missing_data_list)
+  
+  if (length(all_data_list) == 0) {
+    stop("No data available for the specified years")
+  }
 
   # indicate merging of files is taking place
   cli::cli_alert_info("Merging cause of loss files for all specified crop years")
 
-  # list all files in the temporary directory matching the file naming convention
-  files_to_load <- list.files(col_data_files, full.names = T, pattern = "col_\\d+.rds")
-
-  # remove any files that aren't the specified years
-  files_to_load <- files_to_load[grepl(paste0(year, collapse = "|"), files_to_load)]
-
-  # load all the `files_to_load` and aggregate them into a single data frame
-  col <- files_to_load |>
-    purrr::map_dfr(readRDS) |>
+  # Combine all data frames
+  col <- all_data_list |>
     dplyr::bind_rows()
   
   # manually type check each column

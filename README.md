@@ -17,6 +17,14 @@ rfcip (R FCIP)
     Reports](#livestock-and-dairy-participation-reports)
   - [Actuarial Data Master (ADM)](#actuarial-data-master-adm)
     - [Available Datasets](#available-datasets)
+- [Caching and Performance](#caching-and-performance)
+  - [How Caching Works](#how-caching-works)
+    - [Two-Tier Caching System](#two-tier-caching-system)
+  - [Force Parameter and Cache
+    Refresh](#force-parameter-and-cache-refresh)
+  - [Cache Management](#cache-management)
+    - [Viewing Cache Information](#viewing-cache-information)
+    - [Clearing Cache](#clearing-cache)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -70,20 +78,21 @@ for the current year, at the highest level aggregation.
 ``` r
 library(rfcip)
 get_sob_data()
+#> ℹ Downloading and caching new data
 #> # A tibble: 11 × 21
 #>    commodity_year policies_sold policies_earning_prem policies_indemnified
 #>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025         56924                 24178                 1041
-#>  2           2025            60                    28                    5
-#>  3           2025           795                   365                  249
-#>  4           2025          3909                  3466                  368
-#>  5           2025            16                    14                    0
-#>  6           2025          7669                  6982                 5736
-#>  7           2025          2043                  2043                 1281
-#>  8           2025            82                    79                    0
-#>  9           2025       2525186               1220168               115193
-#> 10           2025           806                     0                    0
-#> 11           2025          2514                  2069                  448
+#>  1           2025       2525186               1220168               115193
+#>  2           2025           806                     0                    0
+#>  3           2025            82                    79                    0
+#>  4           2025         56924                 24178                 1041
+#>  5           2025            60                    28                    5
+#>  6           2025           795                   365                  249
+#>  7           2025          2514                  2069                  448
+#>  8           2025          3909                  3466                  368
+#>  9           2025            16                    14                    0
+#> 10           2025          7669                  6982                 5736
+#> 11           2025          2043                  2043                 1281
 #> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
 #> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
 #> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
@@ -101,6 +110,7 @@ see the help file for the function using `help(get_sob_data)`
 
 ``` r
 get_sob_data(year = 2022, crop = "corn")
+#> ℹ Loading data from cache
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl>          <int> <chr>                  <dbl>
@@ -226,6 +236,7 @@ return the same underlying as above, but decomposed by county.
 
 ``` r
 get_sob_data(year = 2022, crop = "corn", group_by = "county")
+#> ℹ Downloading and caching new data
 #> # A tibble: 2,405 × 27
 #>    commodity_year commodity_code commodity_name        state_code state_abbrv
 #>             <dbl>          <int> <chr>                 <chr>      <chr>      
@@ -296,6 +307,7 @@ mutate(indemnity = indemnity/1000000000) %>%
   ggtitle(paste0("FCIP Indemnities by Year: 2015 - ",format(Sys.Date(), "%Y"))) +
   scale_y_continuous(labels = scales::dollar) +
   theme_minimal()
+#> ℹ Downloading and caching new data
 #> Downloading summary of business data for specified crop years ■■■■■■
 #> …Downloading summary of business data for specified crop years ■■■■■■■■■
 #> …Downloading summary of business data for specified crop years ■■■■■■■■■■■■
@@ -331,10 +343,7 @@ Otherwise, the function behaves the same as when `sob_version = "sob"`
 ``` r
 # get the summary of business by type, practice, and unit structure
 data <- get_sob_data(year = 2022, crop = "corn", sob_version = "sobtpu")
-#> ℹ Locating Summary of Business download links on RMA's website.
-#> Warning in readLines(url): incomplete final line found on
-#> 'https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/state_county_crop/index.html'
-#> ✔ Download links located.
+#> ℹ Loading 1 year from cache: 2022
 #> ℹ Merging Summary of Business files for all specified crop years
 
 head(data)
@@ -425,7 +434,7 @@ col_data <- get_col_data(year = 2020:2022)
 #> Warning in readLines(url): incomplete final line found on
 #> 'https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/index.html'
 #> ✔ Download links located.
-#> Downloading cause of loss files for specified crop years ■■■■■■■■■■■■■■■■■■■■■ …                                                                                 ℹ Merging cause of loss files for all specified crop years
+#> ℹ Merging cause of loss files for all specified crop years
 head(col_data)
 #>   commodity_year state_code state_abbrv county_code county_name commodity_code
 #> 1           2020          1          AL           1     Autauga             21
@@ -492,7 +501,9 @@ in Illinois from 2020-2024 can be obtained with the following code.
 price_data <- get_price_data(year = 2020:2024,
                              crop = "corn",
                              state = "IL")
-#> ℹ Downloading data
+#> ℹ Downloading and caching data
+#> Warning in readLines(url): incomplete final line found on
+#> 'https://public-rma.fpac.usda.gov/apps/PriceDiscovery/Services/RevenuePriceDataService.svc/RevenuePrices?commodityYears=2020,2021,2022,2023,2024&commodityCodes=0041&stateCodes=17'
 
 head(price_data) 
 #> # A tibble: 6 × 38
@@ -651,16 +662,9 @@ data is difficult to access primarily due to the size of the raw files
 which overwhelms the memory on typical hardware. The `rfcip` package
 addresses this by pre-procssing the ADM data into smaller, more
 manageable data sets and applying compression techniques to reduce to
-total file size.
-
-The `get_adm_data()` function provides access to these processed ADM
-datasets. The first time a dataset is called, it will be downloaded from
-this GitHub release
-[here](https://github.com/dylan-turner25/rfcip/releases) and then cached
-locally for future use. Subsequent calls for the same data will pull
-from the local cache. To clear the cache, use the `clear_adm_cache()`
-function, after which the data will be re-downloaded from the GitHub
-release if called again.
+total file size. The `get_adm_data()` function provides access to these
+processed ADM datasets which are stored as a [GitHub
+release](https://github.com/dylan-turner25/rfcip/releases).
 
 ``` r
 library(rfcip)
@@ -725,3 +729,125 @@ The package provides access to multiple ADM datasets across years
 - **Practice (A00510)**: Practice codes and descriptions
 - **State (A00520)**: State codes and names
 - **Type (A00540)**: Crop type codes and descriptions
+
+# Caching and Performance
+
+The `rfcip` package implements a caching system designed to minimizing
+redundant data downloads. This system combines session-level memoization
+with disk caching to provide performance benefits and reduce host server
+load.
+
+## How Caching Works
+
+### Two-Tier Caching System
+
+1.  **Session-Level Memoization**: All data functions are memoized using
+    the `memoise` package, meaning that repeated calls with identical
+    arguments within the same R session return cached results
+    immediately without any disk I/O.
+
+2.  **Persistent Disk Caching**: Downloaded data is cached to disk in
+    the package’s installed location (view that location using
+    `tools::R_user_dir("rfcip", "cache")` ).
+
+The caching system handles partial data requests. For example, if you
+previously downloaded data for 2020-2022 and later request 2020-2023,
+the system will: - Load 2020-2022 data from cache - Only download the
+new 2023 data - Combine both cached and fresh data in the returned data
+
+Below is a demonstration of the performance increases that come from
+caching the data.
+
+``` r
+library(rfcip)
+
+# First call - downloads and caches data (will take several seconds)
+system.time({
+  col_data1 <- get_col_data(year = 2020:2022)
+})
+#   user  system elapsed 
+#  2.156   0.234  15.423 
+
+# Subsequent call - loads from cache (much faster!)
+system.time({
+  col_data2 <- get_col_data(year = 2020:2022)
+})
+#   user  system elapsed 
+#  0.023   0.008   0.156 
+
+# Verify data is identical
+identical(col_data1, col_data2)
+# [1] TRUE
+```
+
+Since the above example already downloaded data for 2020 - 2022, the
+following only downloads 2023 data.
+
+``` r
+# Request additional year - only downloads 2023, loads 2020-2022 from cache
+col_data3 <- get_col_data(year = 2020:2023)
+
+# The function automatically:
+# 1. Identifies that 2020-2022 are already cached
+# 2. Loads cached data for these years
+# 3. Downloads only the missing 2023 data
+# 4. Combines all data into a single data frame
+```
+
+Functions that utilize server-side data processing use the unique
+parameters of the function call to create unique cache entries. This
+means that different parameters will result in different cache entries.
+
+``` r
+# These create separate cache entries due to different parameters
+price_data_corn <- get_price_data(year = 2023, crop = "corn", state = "IL")
+price_data_soy <- get_price_data(year = 2023, crop = "soybeans", state = "IL")
+price_data_ia <- get_price_data(year = 2023, crop = "corn", state = "IA")
+```
+
+## Force Parameter and Cache Refresh
+
+All caching functions include a `force` parameter for refreshing cached
+data.
+
+``` r
+# Force refresh - attempts fresh download, falls back to cache on failure
+col_data_fresh <- get_col_data(year = 2020:2022, force = TRUE)
+
+# If download fails due to network issues, you'll see:
+# Warning: Download failed for year 2021, using cached data
+```
+
+## Cache Management
+
+### Viewing Cache Information
+
+Use `get_cache_info()` to inspect your cached data:
+
+``` r
+# View all cached files
+cache_info <- get_cache_info()
+print(cache_info)
+#      filename size_mb            modified    function_type
+# 1  col_2023.zip    45.2 2024-01-15 14:23:01     get_col_data
+# 2  col_2022.zip    43.8 2024-01-15 14:22:45     get_col_data
+# 3 price_abc123.parquet 2.1 2024-01-15 14:20:15  get_price_data
+```
+
+### Clearing Cache
+
+Use `clear_rfcip_cache()` with various filtering options:
+
+``` r
+# Clear all cached data
+clear_rfcip_cache()
+
+# Clear only cause of loss data
+clear_rfcip_cache(function_name = "get_col_data")
+
+# Clear specific years
+clear_rfcip_cache(years = c(2023, 2024))
+
+# Clear livestock data for specific program
+clear_rfcip_cache(function_name = "get_livestock_data", program = "LRP")
+```

@@ -6,7 +6,8 @@
 \usage{
 get_livestock_data(
   year = as.numeric(format(Sys.Date(), "\%Y")),
-  program = "LRP"
+  program = "LRP",
+  force = FALSE
 )
 }
 \arguments{
@@ -14,6 +15,8 @@ get_livestock_data(
 
 \item{program}{A character vector specifying which livestock insurance programs to include.
 Options are "DRP" (Dairy Revenue Protection), "LGM" (Livestock Gross Margin), and "LRP" (Livestock Risk Protection).}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 A data frame containing the specified livestock insurance data for the specified years and program.

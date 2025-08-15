@@ -18,6 +18,7 @@
 #' dis-aggregated by year only where. The function call
 #' `get_sob_data(year = 2023:2024, group_by = c("insurance_plan","cov_lvl"))` will
 #'  return the same data, but further dissagregated by insurance plan and coverage level
+#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
 #' @return Returns a tibble
 #' @export
 #' @importFrom utils download.file
@@ -41,7 +42,8 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
                          comm_cat = "B", 
                          dest_file = NULL, 
                          group_by = NULL,
-                         sob_version = "sob") {
+                         sob_version = "sob",
+                         force = FALSE) {
   
   # input checking
   stopifnot("`year` must be a numeric value or vector of numeric values." = is.numeric(year))
@@ -52,53 +54,95 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
 
   # if sob_version is "sob", pull data from the application
   if(sob_version == "sob"){
-  
-  # initialize progress bar
-  cli::cli_progress_bar("Downloading summary of business data for specified crop years", total = length(year))
-  
-  # loop over years to avoid server timeout issues.
-  for (y in year) {
     
-    cli::cli_progress_update()
+    # Generate cache key based on parameters
+    cache_params <- list(
+      year = year,
+      crop = crop,
+      delivery_type = delivery_type,
+      insurance_plan = insurance_plan,
+      state = state,
+      county = county,
+      fips = fips,
+      cov_lvl = cov_lvl,
+      comm_cat = comm_cat,
+      group_by = group_by
+    )
     
-    # if sob_version is "sob", pull data from the application
+    cache_key <- generate_cache_key("sob", cache_params, "parquet")
+    dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+    cache_file <- file.path(dest_dir, cache_key)
     
-      url <- get_sob_url(
-        year = y,
-        crop = crop,
-        delivery_type = delivery_type,
-        insurance_plan = insurance_plan,
-        state = state,
-        county = county,
-        fips = fips,
-        cov_lvl = cov_lvl,
-        comm_cat = comm_cat,
-        group_by = group_by
-      )
-  
-  
-      temp_data <- tempfile(fileext = ".xlsx")
-  
-      utils::download.file(url, destfile = temp_data, mode = "wb", quiet = T)
-  
-      data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data)))
-  
-      if (colnames(data)[2] == "x2") {
-        data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data, skip = 1)))
+    # Check if data is already cached and force=FALSE
+    if (file.exists(cache_file) && !force) {
+      cli::cli_alert_info("Loading data from cache")
+      full_data <- load_cached_data(cache_file)
+    } else {
+      # Download and cache new data
+      cli::cli_alert_info("Downloading and caching new data")
+      
+      success <- FALSE
+      
+      # initialize progress bar
+      cli::cli_progress_bar("Downloading summary of business data for specified crop years", total = length(year))
+      
+      # loop over years to avoid server timeout issues.
+      tryCatch({
+        for (y in year) {
+          
+          cli::cli_progress_update()
+          
+          url <- get_sob_url(
+            year = y,
+            crop = crop,
+            delivery_type = delivery_type,
+            insurance_plan = insurance_plan,
+            state = state,
+            county = county,
+            fips = fips,
+            cov_lvl = cov_lvl,
+            comm_cat = comm_cat,
+            group_by = group_by
+          )
+      
+          temp_data <- tempfile(fileext = ".xlsx")
+      
+          utils::download.file(url, destfile = temp_data, mode = "wb", quiet = T)
+      
+          data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data)))
+      
+          if (colnames(data)[2] == "x2") {
+            data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data, skip = 1)))
+          }
+          
+          # remove the temporary file
+          unlink(temp_data)
+          
+          # convert all columns to character values
+          data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
+          
+          # bind temp data to full data
+          full_data <- dplyr::bind_rows(full_data, data)
+        }
+        success <- TRUE
+      }, error = function(e) {
+        if (force && file.exists(cache_file)) {
+          cli::cli_alert_warning("Download failed, using cached data")
+          full_data <<- load_cached_data(cache_file)
+          success <<- TRUE
+        } else {
+          stop(e)
+        }
+      })
+        
+      # close progress bar
+      cli::cli_progress_done()
+      
+      # Cache the processed data only if download was successful
+      if (success && !file.exists(cache_file)) {
+        cache_processed_data(full_data, cache_key)
       }
-      
-      # remove the temporary file
-      unlink(temp_data)
-      
-      # convert all columns to character values
-      data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
-      
-      # bind temp data to full data
-      full_data <- dplyr::bind_rows(full_data, data)
-  }
-    
-  # close progress bar
-  cli::cli_progress_done()
+    }
     
   }
   
@@ -113,7 +157,8 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
       state = state,
       county = county,
       fips = fips,
-      cov_lvl = cov_lvl
+      cov_lvl = cov_lvl,
+      force = force
     )
     
     

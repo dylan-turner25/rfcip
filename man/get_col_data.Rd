@@ -6,11 +6,14 @@
 \usage{
 get_col_data(
   year = c(as.numeric(format(Sys.Date(), "\%Y")):as.numeric(format(Sys.Date(), "\%Y")) -
-    4)
+    4),
+  force = FALSE
 )
 }
 \arguments{
 \item{year}{a single numeric value or vector of values specifying the commodity years that should be used to construct the cause of loss data set}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 returns a data frame with cause of loss data corresponding to the specified commodity years

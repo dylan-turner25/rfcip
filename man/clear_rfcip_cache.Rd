@@ -4,20 +4,36 @@
 \alias{clear_rfcip_cache}
 \title{Clear the package cache of downloaded data files}
 \usage{
-clear_rfcip_cache()
+clear_rfcip_cache(function_name = NULL, years = NULL, program = NULL)
+}
+\arguments{
+\item{function_name}{Character. Optional function name to clear cache for
+(e.g., "get_sob_data", "get_col_data"). If NULL, clears all cache.}
+
+\item{years}{Numeric vector. Optional years to clear from cache.}
+
+\item{program}{Character. Optional program to clear (for livestock data).}
 }
 \value{
 Invisibly returns \code{NULL}. A message is printed indicating which
-directory was cleared.
+files were cleared.
 }
 \description{
-Deletes the entire cache directory used by the \strong{rfcip} package to store
-downloaded data files. Useful if you need to force re-download of data,
-or free up disk space.
+Deletes cached data files used by the \strong{rfcip} package. Can clear all files
+or filter by function type, specific years, or other criteria.
 }
 \examples{
 \dontrun{
-# Remove all cached data files so they will be re-downloaded on next use
+# Remove all cached data files
 clear_rfcip_cache()
+
+# Clear only SOB data cache
+clear_rfcip_cache(function_name = "get_sob_data")
+
+# Clear specific years
+clear_rfcip_cache(years = 2023)
+
+# Clear livestock data for specific program
+clear_rfcip_cache(function_name = "get_livestock_data", program = "LRP")
 }
 }

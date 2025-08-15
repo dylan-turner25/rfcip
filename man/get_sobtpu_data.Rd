@@ -11,7 +11,8 @@ get_sobtpu_data(
   state = NULL,
   county = NULL,
   fips = NULL,
-  cov_lvl = NULL
+  cov_lvl = NULL,
+  force = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ get_sobtpu_data(
 \item{fips}{a numeric value corresponding to a 5-digit FIPS code of a U.S. county.}
 
 \item{cov_lvl}{a numeric value indicating the coverage level. Valid coverage levels are \code{c(0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95)}}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 A tibble containing the summary of business data by type, practice, and unit structure.

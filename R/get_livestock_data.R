@@ -5,6 +5,7 @@
 #' @param year A numeric vector of years to retrieve data for. Defaults to the current year and previous four years.
 #' @param program A character vector specifying which livestock insurance programs to include. 
 #'   Options are "DRP" (Dairy Revenue Protection), "LGM" (Livestock Gross Margin), and "LRP" (Livestock Risk Protection).
+#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
 #' @return A data frame containing the specified livestock insurance data for the specified years and program.
 #' @export
 #' @examples
@@ -19,7 +20,7 @@
 #' all_programs_2021 <- get_livestock_data(year = 2021, program = c("DRP", "LGM", "LRP"))
 #' }
 get_livestock_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), 
-                               program = "LRP") {
+                               program = "LRP", force = FALSE) {
   # input checking
   stopifnot("`year` must be a vector of numeric values." = is.numeric(year))
   stopifnot("`program` must be one or more of 'DRP', 'LGM', or 'LRP'." = all(program %in% c("DRP", "LGM", "LRP")))
@@ -27,98 +28,112 @@ get_livestock_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
     stop("Only one program can be specified at a time.")
   }
   
-  # get the current location of the livestock files
-  cli::cli_alert_info("Locating livestock download links on RMA's website.")
-  livestock_urls <- locate_livestock_links()
+  # Check which years are already cached for this program
+  cache_check <- check_cached_years("livestock", year, program)
+  cached_years <- cache_check$cached_years
+  missing_years <- cache_check$missing_years
   
-  # Filter to only the requested programs
-  livestock_urls <- livestock_urls[livestock_urls$program %in% program, ]
-  cli::cli_alert_success("Download links located.")
+  # If force=TRUE, treat all years as missing but keep track of cached data for fallback
+  cached_files_for_fallback <- NULL
+  if (force) {
+    cached_files_for_fallback <- cache_check$cached_files
+    missing_years <- year
+    cached_years <- numeric(0)
+  }
   
-  # set up a temporary directory
-  livestock_data_files <- tempdir()
-  
-  # initialize progress bar
-  cli::cli_progress_bar("Downloading livestock files for specified crop years", total = length(year))
-  
-  # loop over years
-  for (y in year) {
-    cli::cli_progress_update()
-    
-    # locate urls corresponding to the crop year and selected programs
-    urls <- livestock_urls$url[which(livestock_urls$year == y & livestock_urls$program %in% program)]
-    
-    if(length(urls) == 0) {
-      cli::cli_alert_warning(paste("No livestock data found for year", y))
-      next
-    }
-    
-    # process each program for the year
-    for(url in urls) {
-      program_type <- livestock_urls$program[livestock_urls$url == url]
-      
-      data <- NULL
-      try({
-        # set a temporary zip file
-        temp_zip <- tempfile(fileext = ".zip")
-        
-        # download the zip file
-        download_and_verify(url, temp_zip, method = "curl")
-        
-        # set a temporary directory
-        temp_dir <- tempfile()
-        dir.create(temp_dir)
-        
-        # unzip the file
-        utils::unzip(zipfile = temp_zip, exdir = temp_dir)
-        
-        # load the text file
-        data_file <- list.files(temp_dir, full.names = TRUE)
-        data <- utils::read.delim(
-          file = data_file,
-          sep = "|", header = FALSE, skipNul = TRUE
-        )
-        
-        
-        
-        
-      })
-      
-      if(!is.null(data)) {
-        # Add program information
-        data$program <- program_type
-        
-        # convert every column to character
-        data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
-        
-        # Save as an RDS file
-        saveRDS(data, file = paste0(livestock_data_files, "/livestock_", program_type, "_", y, ".rds"))
-      }
+  # Load data from cached files
+  cached_data_list <- list()
+  if (length(cached_years) > 0) {
+    cli::cli_alert_info("Loading {length(cached_years)} year{?s} from cache for {program}: {paste(cached_years, collapse = ', ')}")
+    for (cached_file in cache_check$cached_files) {
+      cached_zip <- load_cached_data(cached_file)
+      processed_data <- process_livestock_zip(cached_zip, program)
+      cached_data_list <- append(cached_data_list, list(processed_data))
     }
   }
   
-  # close progress bar
-  cli::cli_progress_done()
+  # Download and process missing years
+  missing_data_list <- list()
+  if (length(missing_years) > 0) {
+    # get the current location of the livestock files
+    cli::cli_alert_info("Locating livestock download links on RMA's website.")
+    livestock_urls <- locate_livestock_links()
+    
+    # Filter to only the requested programs
+    livestock_urls <- livestock_urls[livestock_urls$program %in% program, ]
+    cli::cli_alert_success("Download links located.")
+    
+    # initialize progress bar for missing years only
+    cli::cli_progress_bar("Downloading livestock files for missing years", total = length(missing_years))
+    
+    # loop over missing years only
+    for (y in missing_years) {
+      cli::cli_progress_update()
+      
+      # locate urls corresponding to the crop year and selected programs
+      urls <- livestock_urls$url[which(livestock_urls$year == y & livestock_urls$program %in% program)]
+      
+      if(length(urls) == 0) {
+        cli::cli_alert_warning("No livestock data found for year {y} and program {program}")
+        next
+      }
+      
+      # process each URL for the year (should only be one per program/year)
+      for(url in urls) {
+        # Create cache key for this year/program
+        cache_key <- paste0("livestock_", program, "_", y, ".zip")
+        
+        data <- NULL
+        try({
+          # set a temporary zip file
+          temp_zip <- tempfile(fileext = ".zip")
+          
+          # download the zip file
+          download_and_verify(url, temp_zip, method = "curl")
+          
+          # Cache the ZIP file
+          cached_zip_path <- cache_raw_data(temp_zip, cache_key, "zip")
+          
+          # Process the data from cached ZIP
+          data <- process_livestock_zip(cached_zip_path, program)
+          
+          # Clean up temp file
+          unlink(temp_zip)
+        })
+        
+        if(!is.null(data)) {
+          missing_data_list <- append(missing_data_list, list(data))
+        } else if (force && !is.null(cached_files_for_fallback)) {
+          # If download failed and force=TRUE, try to load from cache as fallback
+          fallback_file <- cached_files_for_fallback[basename(cached_files_for_fallback) == cache_key]
+          if (length(fallback_file) > 0) {
+            cli::cli_alert_warning("Download failed for year {y} and program {program}, using cached data")
+            cached_zip <- load_cached_data(fallback_file[1])
+            fallback_data <- process_livestock_zip(cached_zip, program)
+            missing_data_list <- append(missing_data_list, list(fallback_data))
+          }
+        }
+      }
+    }
+    
+    # close progress bar
+    cli::cli_progress_done()
+  }
+  
+  # Combine all data
+  all_data_list <- c(cached_data_list, missing_data_list)
+  
+  if (length(all_data_list) == 0) {
+    cli::cli_alert_warning("No livestock data files found for specified years and program")
+    return(NULL)
+  }
   
   # indicate merging of files is taking place
   cli::cli_alert_info("Merging livestock files for all specified crop years")
   
-  # list all files in the temporary directory matching the file naming convention
-  files_to_load <- list.files(livestock_data_files, full.names = TRUE, pattern = "livestock_.+_\\d+.rds")
-  
-  # remove any files that aren't the specified years
-  files_to_load <- files_to_load[grepl(paste0(year, collapse = "|"), files_to_load)]
-  
-  # remove any files that aren't the specified programs
-  files_to_load <- files_to_load[grepl(paste0(program, collapse = "|"), files_to_load)]
-  
-  if(length(files_to_load) == 0) {
-    cli::cli_alert_warning("No livestock data files found for specified years")
-    return(NULL)
-  }
-  
-  # load all the `files_to_load` and aggregate them into a single data frame
-  livestock_data <- purrr::map_dfr(files_to_load, readRDS)
+  # Combine all data frames
+  livestock_data <- all_data_list |>
+    dplyr::bind_rows()
  
   # apply column names and convert data types
   if(program == "LRP"){
