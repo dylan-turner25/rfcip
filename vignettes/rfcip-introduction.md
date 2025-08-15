@@ -1,6 +1,9 @@
 ---
 title: "Introduction to rfcip"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{Introduction to rfcip}
   %\VignetteEngine{knitr::rmarkdown}
@@ -14,99 +17,63 @@ vignette: >
 library(rfcip)
 ```
 
-## Overview
+# Introduction
+This vignette provides an introduction to the `rfcip` package which provides tools for accessing publicly available data related to the Federal Crop Insurance Program (FCIP). The package includes functions for accessing data from RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) reports, [Cause of Loss](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) files, [Price Discovery](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/) application, [Reinsurance Agreements](https://www.rma.usda.gov/tools-reports/reinsurance-reports), [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports, and [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) datasets.
 
-The `rfcip` package provides tools to access publicly available data related to the Federal Crop Insurance Program (FCIP). The package functions as an unofficial API wrapper, making it easy to retrieve and analyze crop insurance data that is otherwise scattered across different URLs, files, and data portals.
+# Supported Data Sources
 
-**Important**: This package uses data provided by the USDA but is not endorsed by or affiliated with USDA or the Federal Government.
+## Summary of Business
+The [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) files produced by the USDA Risk Management Agency contains crop insurance participation measures and outcomes by state, county, crop, and insurance policy choices. Insured acres, collected premiums, disbursed subsides, liabilities, number of policies sold, number of indemnified policies, and loss ratios are all available from the summary of business. 
 
-## Key Data Sources
-
-### Summary of Business Data
-
-The Summary of Business files contain comprehensive crop insurance participation and outcome data by state, county, crop, and insurance policy choices. This includes:
-
-- Insured acres
-- Collected premiums  
-- Disbursed subsidies
-- Liabilities
-- Number of policies sold
-- Number of indemnified policies
-- Loss ratios
-
-#### Basic Usage
-
-Get current year data with default parameters:
+Accessing data from the summary of business can be done using the `get_sob_data`. With no arguments specified, the `get_sob_data` function will default to downloading data from [RMA's summary of business report generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator) for the current year, at the highest level aggregation. 
 
 
 ``` r
-# Get current year summary data
-current_data <- get_sob_data()
-head(current_data)
-#> # A tibble: 6 × 21
-#>   commodity_year policies_sold policies_earning_prem policies_indemnified
-#>            <dbl>         <dbl>                 <dbl>                <dbl>
-#> 1           2025          2514                  2069                  448
-#> 2           2025       2525186               1220168               115193
-#> 3           2025           806                     0                    0
-#> 4           2025          3909                  3466                  368
-#> 5           2025            16                    14                    0
-#> 6           2025          2043                  2043                 1281
-#> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
-#> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
-#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
-#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
+library(rfcip)
+get_sob_data()
+#> # A tibble: 11 × 21
+#>    commodity_year policies_sold policies_earning_prem policies_indemnified units_earning_prem
+#>             <dbl>         <dbl>                 <dbl>                <dbl>              <dbl>
+#>  1           2025       2525186               1220168               115193            2989668
+#>  2           2025           806                     0                    0                  0
+#>  3           2025            82                    79                    0                126
+#>  4           2025         56924                 24178                 1041              82970
+#>  5           2025            60                    28                    5                 84
+#>  6           2025           795                   365                  249               4808
+#>  7           2025          2514                  2069                  448               3836
+#>  8           2025          3909                  3466                  368               5508
+#>  9           2025            16                    14                    0                 14
+#> 10           2025          7669                  6982                 5736              25889
+#> 11           2025          2043                  2043                 1281              18210
+#> # ℹ 16 more variables: units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>,
+#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
+#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
+#> #   organic_certified_subsidy_amount <dbl>, organic_transitional_subsidy_amount <dbl>,
+#> #   earn_prem_rate <dbl>, loss_ratio <dbl>
+```
+
+Most of the arguments for the `get_sob_data` function filter the returned data. For example, specifying the `year = 2022` and `crop = "corn"` will return data for corn in crop year 2022. For a description of all the arguments that can be supplied to `get_sob_data` see the help file for the function using `help(get_sob_data)`
+
+``` r
+get_sob_data(year = 2022, crop = "corn")
+#> # A tibble: 1 × 23
+#>   commodity_year commodity_code commodity_name policies_sold policies_earning_prem policies_indemnified
+#>            <dbl>          <int> <chr>                  <dbl>                 <dbl>                <dbl>
+#> 1           2022             41 Corn                  590774                388012               106763
+#> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
+#> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
+#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
 #> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
-#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
-#> #   loss_ratio <dbl>
+#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>, loss_ratio <dbl>
 ```
+In the above example, the data set was filtered to a single crop, "corn". This potentially raises the question of what other values can be passed to the arguments that control the filters. For arguments with limited options, the options are explained in the functions help file (again, accessed via `help(get_sob_data)`). For some arguments that have many options, there are dedicated functions for pulling up values than can be passed to these arguments. 
 
-#### Filtering Data
-
-Filter by specific criteria:
-
+The `get_crop_codes` function will return the commodity_code and commodity_name for a supplied year. Note that the `commodity_code` and `commodity_name` can be used interchangeably as values for the `crop` argument in `get_sob_data`. If there is a crop that is suspected to be an option, the `comm` argument can also be specified which will return just that specified crop if it exists. 
 
 ``` r
-# Get corn data for 2022
-corn_2022 <- get_sob_data(year = 2022, crop = "corn")
-print(paste("Rows:", nrow(corn_2022)))
-#> [1] "Rows: 1"
-
-# Get data for multiple years and crops
-multi_data <- get_sob_data(
-  year = 2020:2022, 
-  crop = c("corn", "soybeans"),
-  state = "IA"
-)
-head(multi_data)
-#> # A tibble: 6 × 25
-#>   commodity_year commodity_code commodity_name state_code state_abbrv
-#>            <dbl>          <int> <chr>               <dbl> <chr>      
-#> 1           2020             41 Corn                   19 IA         
-#> 2           2020             81 Soybeans               19 IA         
-#> 3           2021             41 Corn                   19 IA         
-#> 4           2021             81 Soybeans               19 IA         
-#> 5           2022             41 Corn                   19 IA         
-#> 6           2022             81 Soybeans               19 IA         
-#> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>,
-#> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
-#> #   units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>,
-#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
-#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
-#> #   addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
-#> #   organic_certified_subsidy_amount <dbl>, …
-```
-
-#### Discovering Available Options
-
-Use helper functions to find valid parameter values:
-
-
-``` r
-# Get all available crops for 2024
-crops_2024 <- get_crop_codes(2024)
-head(crops_2024, 10)
-#> # A tibble: 10 × 3
+# get all crop codes and crop names for 2024
+get_crop_codes(2024)
+#> # A tibble: 129 × 3
 #>    commodity_year commodity_code commodity_name        
 #>    <chr>          <chr>          <chr>                 
 #>  1 2024           0107           Alfalfa Seed          
@@ -118,253 +85,557 @@ head(crops_2024, 10)
 #>  7 2024           0054           Apples                
 #>  8 2024           0212           Avocado Trees         
 #>  9 2024           0019           Avocados              
-#> 10 2024           0255           Banana
+#> 10 2024           0255           Banana                
+#> # ℹ 119 more rows
+```
 
-# Get all available insurance plans
-plans <- get_insurance_plan_codes(2024)
-head(plans)
-#> # A tibble: 6 × 4
-#>   commodity_year insurance_plan_code insurance_plan         insurance_plan_abbrv
-#>   <chr>          <chr>               <chr>                  <chr>               
-#> 1 2024           90                  APH                    APH                 
-#> 2 2024           91                  APH Price Component    APHPC               
-#> 3 2024           43                  Aquaculture Dollar     AQDOL               
-#> 4 2024           47                  Actual Revenue History ARH                 
-#> 5 2024           05                  Area Revenue Protecti… ARP                 
-#> 6 2024           06                  Area Revenue Protecti… ARP - HPE
+``` r
 
-# Check if a specific crop exists
-corn_check <- get_crop_codes(2024, crop = "corn")
-corn_check
+# double check that "corn" is a valid crop
+get_crop_codes(2024, crop = "corn")
+#> # A tibble: 1 × 3
+#>   commodity_year commodity_code commodity_name
+#>   <chr>          <chr>          <chr>         
+#> 1 2024           0041           Corn
+
+# below are other ways to call the same data
+get_crop_codes(2024, crop = "CORN")
+#> # A tibble: 1 × 3
+#>   commodity_year commodity_code commodity_name
+#>   <chr>          <chr>          <chr>         
+#> 1 2024           0041           Corn
+get_crop_codes(2024, crop = 41)
 #> # A tibble: 1 × 3
 #>   commodity_year commodity_code commodity_name
 #>   <chr>          <chr>          <chr>         
 #> 1 2024           0041           Corn
 ```
 
-### Detailed Data: Summary of Business by Type, Practice, and Unit Structure
 
-For more granular data, use the SOBTPU version:
 
+The `get_insurance_plan_codes` function works analogously to the `get_crop_codes` function and helps identiy valid names of insurance plans. 
 
 ``` r
-# Get detailed corn data for 2022 (large dataset, not evaluated in vignette)
-detailed_data <- get_sob_data(
-  year = 2022, 
-  crop = "corn", 
-  sob_version = "sobtpu"
-)
-head(detailed_data)
+# return all insurance plans avaliable in 2024
+get_insurance_plan_codes(year = 2024)
+#> # A tibble: 35 × 4
+#>    commodity_year insurance_plan_code insurance_plan                                   insurance_plan_abbrv
+#>    <chr>          <chr>               <chr>                                            <chr>               
+#>  1 2024           90                  APH                                              APH                 
+#>  2 2024           91                  APH Price Component                              APHPC               
+#>  3 2024           43                  Aquaculture Dollar                               AQDOL               
+#>  4 2024           47                  Actual Revenue History                           ARH                 
+#>  5 2024           05                  Area Revenue Protection                          ARP                 
+#>  6 2024           06                  Area Revenue Protection - Harvest Price Exclusi… ARP - HPE           
+#>  7 2024           04                  Area Yield Protection                            AYP                 
+#>  8 2024           50                  Dollar Amount Of Insurance                       DO                  
+#>  9 2024           83                  Dairy Revenue Protection                         DRP                 
+#> 10 2024           88                  Enhanced Cov Opt - Rev Prot                      ECO-RP              
+#> # ℹ 25 more rows
+
+# return the insurance plan code for the revenue projection plan
+get_insurance_plan_codes(year = 2024, plan = "revenue protection")
+#> # A tibble: 1 × 4
+#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
+#>   <chr>          <chr>               <chr>              <chr>               
+#> 1 2024           02                  Revenue Protection RP
+
+# below are other ways to call the same data
+get_insurance_plan_codes(year = 2024, plan = 2)
+#> # A tibble: 1 × 4
+#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
+#>   <chr>          <chr>               <chr>              <chr>               
+#> 1 2024           02                  Revenue Protection RP
+get_insurance_plan_codes(year = 2024, plan = "RP")
+#> # A tibble: 1 × 4
+#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
+#>   <chr>          <chr>               <chr>              <chr>               
+#> 1 2024           02                  Revenue Protection RP
+get_insurance_plan_codes(year = 2024, plan = "reVeNue PrOtEcTiOn")
+#> # A tibble: 1 × 4
+#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
+#>   <chr>          <chr>               <chr>              <chr>               
+#> 1 2024           02                  Revenue Protection RP
 ```
 
-### Cause of Loss Data
 
-Access indemnity data with associated causes of loss:
-
+As was previously stated above, most arguments for the `get_sob_data` function are for filtering the returned data. One exception is the `group_by` argument which does not filter the data being returned, but instead alters the level of aggregation. Taking the above example that returns data for corn in 2022 and setting `group_by = "county"` will return the same underlying as above, but decomposed by county. 
 
 ``` r
-# Get cause of loss data for multiple years (large dataset, not evaluated in vignette)
-col_data <- get_col_data(year = 2020:2022)
-head(col_data)
+get_sob_data(year = 2022, crop = "corn", group_by = "county")
+#> # A tibble: 2,405 × 27
+#>    commodity_year commodity_code commodity_name        state_code state_abbrv county_code county_name      
+#>             <dbl>          <int> <chr>                 <chr>      <chr>       <chr>       <chr>            
+#>  1           2022           9999 All Other Commodities 01         AL          999         All Other Counti…
+#>  2           2022           9999 All Other Commodities 01         AL          007         Bibb             
+#>  3           2022           9999 All Other Commodities 01         AL          013         Butler           
+#>  4           2022           9999 All Other Commodities 01         AL          023         Choctaw          
+#>  5           2022           9999 All Other Commodities 01         AL          025         Clarke           
+#>  6           2022           9999 All Other Commodities 01         AL          027         Clay             
+#>  7           2022           9999 All Other Commodities 01         AL          029         Cleburne         
+#>  8           2022           9999 All Other Commodities 01         AL          057         Fayette          
+#>  9           2022           9999 All Other Commodities 01         AL          075         Lamar            
+#> 10           2022           9999 All Other Commodities 01         AL          093         Marion           
+#> # ℹ 2,395 more rows
+#> # ℹ 20 more variables: policies_sold <dbl>, policies_earning_prem <dbl>, policies_indemnified <dbl>,
+#> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>,
+#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
+#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
+#> #   organic_certified_subsidy_amount <dbl>, organic_transitional_subsidy_amount <dbl>,
+#> #   earn_prem_rate <dbl>, loss_ratio <dbl>
 ```
 
-### Price Data
-
-Retrieve commodity price data used for insurance calculations:
-
+We can confirm `get_sob_data(year = 2022, crop = "corn")` and `get_sob_data(year = 2022, crop = "corn", group_by = "county")` return the same underlying data by summing up one of individual columns in the county level data. 
 
 ``` r
-# Get price data for corn in Illinois
-price_data <- get_price_data(
-  year = 2022:2023,
-  crop = "corn", 
-  state = "IL"
-)
-head(price_data)
-#> # A tibble: 6 × 38
-#>   CommodityYear CommodityCode CommodityName TypeCode TypeName       PracticeCode
-#>           <int>         <int> <chr>            <int> <chr>                 <int>
-#> 1          2022            41 Corn                16 High Amylose              2
-#> 2          2022            41 Corn                16 High Amylose              3
-#> 3          2022            41 Corn                17 All (Non-High…            2
-#> 4          2022            41 Corn                17 All (Non-High…            3
-#> 5          2023            41 Corn                16 High Amylose              2
-#> 6          2023            41 Corn                16 High Amylose              3
-#> # ℹ 32 more variables: PracticeName <chr>, StateCode <int>, StateName <chr>,
-#> #   PriceMultiplicativeFactor <dbl>, PriceAdditiveFactor <dbl>,
-#> #   ProjectedPriceExchangeCode <chr>, ProjectedPriceMarketSymbolCode <chr>,
-#> #   ProjectedPricePreviousMarketSymbolCode <chr>,
-#> #   ProjectedPriceCurrencyMarketSymbolCode <lgl>,
-#> #   ProjectedPriceBeginDate <dttm>, ProjectedPriceEndDate <dttm>,
-#> #   ProjectedPriceDateRange <chr>, ProjectedPrice <dbl>, …
+national_data <- get_sob_data(year = 2022, crop = "corn")
+print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
+#> [1] "Liabilities from national data:  67671440421"
+
+county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
+print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
+#> [1] "Liabilities from county data:    67671440421"
 ```
 
-### Livestock Data
-
-Access livestock and dairy participation data:
 
 
-``` r
-# Get Livestock Risk Protection data
-lrp_data <- get_livestock_data(year = 2020:2022, program = "LRP")
-
-# Get Dairy Revenue Protection data  
-drp_data <- get_livestock_data(year = 2020:2022, program = "DRP")
-
-# Get Livestock Gross Margin data
-lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
-```
-
-## Working with the Data
-
-### Data Aggregation Levels
-
-Control aggregation using the `group_by` parameter:
+A unique property of the summary of business data set is that its continuously updated (one per week) as new information is reported to USDA by [approved insurance providers](https://cropinsuranceinamerica.org/who-are-approved-insurance-providers-aips/). This means that analysis using the summary of business can quickly become outdated. One advantage of the the `rfcip` package is that it allows the raw data source to be directly integrated into the analysis. For example, the chart below plots indemnities for each crop year from 2015 up to the current year. The plot will automatically update with the latest data every time the plot is regenerated. Note that functions in `rfcip` are [memoised](https://en.wikipedia.org/wiki/Memoization) for the duration of the R session. This means that calling the same function with the same arguments will return a previously cached data set. In other words, in the below example, the data would not update if the code was run multiple times in the same R session, regaurdless of if the underlying data source changed. 
 
 
 ``` r
-# National level (default)
-national <- get_sob_data(year = 2022, crop = "corn")
-print(paste("National rows:", nrow(national)))
-#> [1] "National rows: 1"
-
-# County level detail
-county_level <- get_sob_data(
-  year = 2022, 
-  crop = "corn", 
-  group_by = "county"
-)
-print(paste("County level rows:", nrow(county_level)))
-#> [1] "County level rows: 2405"
-
-# Show first few counties with available columns
-head(county_level[c("commodity_year", "total_prem", "indemnity")])
-#> # A tibble: 6 × 3
-#>   commodity_year total_prem indemnity
-#>            <dbl>      <dbl>     <dbl>
-#> 1           2022      46354    148839
-#> 2           2022          0         0
-#> 3           2022     159659    237761
-#> 4           2022          0         0
-#> 5           2022       2982         0
-#> 6           2022          0         0
-```
-
-### Exporting Data
-
-Export data directly to Excel:
-
-
-``` r
-# Export to Excel file (requires writexl package)
-get_sob_data(
-  year = 2022, 
-  crop = "corn",
-  dest_file = "corn_2022.xlsx"
-)
-```
-
-## Performance Considerations
-
-- Functions use memoization to cache results during R sessions
-- For large datasets, consider filtering before downloading
-- SOBTPU data requires full file downloads before filtering
-- Progress bars show download status for long-running operations
-
-## Static Datasets
-
-The package includes pre-built datasets for reinsurance data:
-
-
-``` r
-# National Standard Reinsurance Agreement data
-data(nationalSRA)
-head(nationalSRA)
-#> # A tibble: 6 × 11
-#>   fund_abb reinsurance_year report_geography value_type            dollars
-#>   <chr>               <dbl> <chr>            <chr>                   <dbl>
-#> 1 AR                   1998 NationalFund     gross_liability    3286742595
-#> 2 AR                   1998 NationalFund     gross_premium       313517141
-#> 3 AR                   1998 NationalFund     gross_indemnity     463493075
-#> 4 AR                   1998 NationalFund     retained_liability  597494229
-#> 5 AR                   1998 NationalFund     retained_premium     58503706
-#> 6 AR                   1998 NationalFund     retained_indemnity   51840753
-#> # ℹ 6 more variables: data_release_month <dbl>, data_release_year <dbl>,
-#> #   data_release_day <dbl>, data_release_date <date>, fund_name <chr>,
-#> #   report_type <chr>
-print(paste("National SRA years:", min(nationalSRA$year), "to", max(nationalSRA$year)))
-#> [1] "National SRA years: Inf to -Inf"
-
-# State-level SRA data
-data(stateSRA)
-print(paste("State SRA data includes", length(unique(stateSRA$state_name)), "states"))
-#> [1] "State SRA data includes 0 states"
-
-# National Livestock Price Reinsurance Agreement data
-data(nationalLPRA)
-print(paste("National LPRA years:", min(nationalLPRA$year), "to", max(nationalLPRA$year)))
-#> [1] "National LPRA years: Inf to -Inf"
-```
-
-## Example Analysis
-
-Here's a complete example analyzing corn insurance trends:
-
-
-``` r
+library(rfcip)
 library(dplyr)
 library(ggplot2)
 
-# Get corn data for recent years
-corn_trends <- get_sob_data(
-  year = 2018:2023,  # Reduced range for faster processing
-  crop = "corn"
-) %>%
-  select(commodity_year, total_prem, indemnity, loss_ratio) %>%
-  mutate(
-    total_prem = total_prem / 1e9,  # Convert to billions
-    indemnity = indemnity / 1e9
-  )
-
-# Show the data
-print("Corn trends data:")
-#> [1] "Corn trends data:"
-print(corn_trends)
-#> # A tibble: 6 × 4
-#>   commodity_year total_prem indemnity loss_ratio
-#>            <dbl>      <dbl>     <dbl>      <dbl>
-#> 1           2018       3.16      1.37      0.434
-#> 2           2019       3.75      4.03      1.08 
-#> 3           2020       3.51      2.63      0.749
-#> 4           2021       4.99      1.86      0.373
-#> 5           2022       6.47      4.92      0.760
-#> 6           2023       6.27      5.00      0.798
-
-# Plot premium vs indemnity trends
-ggplot(corn_trends, aes(x = commodity_year)) +
-  geom_line(aes(y = total_prem, color = "Premium"), size = 1.2) +
-  geom_line(aes(y = indemnity, color = "Indemnity"), size = 1.2) +
-  geom_point(aes(y = total_prem, color = "Premium"), size = 3) +
-  geom_point(aes(y = indemnity, color = "Indemnity"), size = 3) +
-  labs(
-    title = "Corn Insurance: Premium vs Indemnity Trends",
-    x = "Year",
-    y = "Billions USD",
-    color = "Measure"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    legend.position = "bottom"
-  ) +
-  scale_color_manual(values = c("Premium" = "#2E86AB", "Indemnity" = "#A23B72"))
+get_sob_data(year = 2015:as.numeric(format(Sys.Date(), "%Y"))) %>%
+select(commodity_year, indemnity) %>%
+group_by(commodity_year) %>%
+summarize(indemnity = sum(indemnity)) %>%
+mutate(indemnity = indemnity/1000000000) %>%
+  ggplot(., aes(y = indemnity, x = commodity_year)) +
+  geom_bar(stat = "identity", fill = "firebrick4") +
+  xlab("") + ylab("USD (Billions)") +
+  ggtitle(paste0("FCIP Indemnities by Year: 2015 - ",format(Sys.Date(), "%Y"))) +
+  scale_y_continuous(labels = scales::dollar) +
+  theme_minimal()
 ```
 
-![plot of chunk corn-analysis](figures/rfcip-introduction/corn-analysis-1.png)
+![plot of chunk sob-method-chaining](figures/rfcip-introduction/sob-method-chaining-1.png)
 
-## Getting Help
+### Summary of Business by Type, Practice, and Unit Structure
+The default behavior of the `get_sob_data()`function is to pull data from [RMA's summary of business report generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator). Although this allows for server side filtering of data before it gets to your local machine it does not allow access to the most granular version of the data know as the [Summary of Business by Type, Practice, and Unit Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business). By setting the optional parameter `sob_version = "sobtpu"` the behavior of the `get_sob_data()` function will change to pull data from the [Summary of Business by Type, Practice, and Unit Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business). Note that when `sob_version = "sobtpu"`, the arguments `delivery_type`, `comm_cat`, and `group_by` are not applicable and will be ignored. Otherwise, the function behaves the same as when `sob_version = "sob"` (the default). 
 
-- Use `help(function_name)` for detailed function documentation
-- Check function examples with `example(function_name)`
-- Report issues on GitHub: https://github.com/dylan-turner25/rfcip
-- All data comes directly from USDA RMA sources - see function documentation for source URLs
+
+``` r
+# get the summary of business by type, practice, and unit structure
+data <- get_sob_data(year = 2022, crop = "corn", sob_version = "sobtpu")
+
+head(data)
+#>   commodity_year state_code state_name state_abbreviation county_code county_name commodity_code
+#> 1           2022          1    Alabama                 AL           1     Autauga             41
+#> 2           2022          1    Alabama                 AL           1     Autauga             41
+#> 3           2022          1    Alabama                 AL           1     Autauga             41
+#> 4           2022          1    Alabama                 AL           1     Autauga             41
+#> 5           2022          1    Alabama                 AL           1     Autauga             41
+#> 6           2022          1    Alabama                 AL           1     Autauga             41
+#>   commodity_name insurance_plan_code insurance_plan_abbreviation coverage_type_code coverage_level_percent
+#> 1           Corn                   1                          YP                  C                   0.50
+#> 2           Corn                   2                          RP                  A                   0.60
+#> 3           Corn                   2                          RP                  A                   0.65
+#> 4           Corn                   2                          RP                  A                   0.70
+#> 5           Corn                   2                          RP                  A                   0.70
+#> 6           Corn                   2                          RP                  A                   0.70
+#>   delivery_id type_code         type_name practice_code         practice_name unit_structure_code
+#> 1           R         0 No Type Specified             0 No Practice Specified                  OU
+#> 2           R        16             Grain             3         Non-Irrigated                  BU
+#> 3           R         0 No Type Specified             0 No Practice Specified                  OU
+#> 4           R         0 No Type Specified             0 No Practice Specified                  OU
+#> 5           R        16             Grain             2             Irrigated                  OU
+#> 6           R        16             Grain             3         Non-Irrigated                  OU
+#>   unit_structure_name net_reporting_level_amount reporting_level_type liability_amount
+#> 1       Optional Unit                          0                Acres                0
+#> 2          Basic Unit                         76                Acres            33327
+#> 3       Optional Unit                          0                Acres                0
+#> 4       Optional Unit                          0                Acres                0
+#> 5       Optional Unit                        355                Acres           319499
+#> 6       Optional Unit                         51                Acres            21822
+#>   total_premium_amount subsidy_amount indemnity_amount loss_ratio
+#> 1                    0              0                0       0.00
+#> 2                 3520           2253                0       0.00
+#> 3                    0              0                0       0.00
+#> 4                    0              0                0       0.00
+#> 5                22646          13361            81213       3.59
+#> 6                 4094           2416            11644       2.84
+#>   endorsed_commodity_reporting_level_amount
+#> 1                                         0
+#> 2                                         0
+#> 3                                         0
+#> 4                                         0
+#> 5                                         0
+#> 6                                         0
+```
+
+Once consideration when using `sob_version = "sobtpu"` is that the data is only accessible via bulk download by year. This means there will be little to no performance advantage from filtering data via the function arguments since the full data set must be downloaded before the filters are applied. However, the function does apply the filters to each year-specific file as they are read in to minimize memory usage to the extent possible.
+
+
+
+## Cause of Loss Files
+Although RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) files do report indemnities, they don't report the cause of loss associated with the indemnities which is often relevant. To obtain indemnities with the associated cause of loss that generated those indemnities, accessing the [cause of loss files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) is necessary. Unlike data contained in the [summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business), the [cause of loss files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) can only be accessed by bulk downloading all data for a particular year. Because of this, the cause of loss data cannot be filtered prior to loading it into local memory meaning there is no advantage to offering any within-function filtering options. To download [cause of loss files](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) for a year or series of years, use the `get_col_data` function. The function will automatically download all the relevant cause of loss files and merge them into a single data frame that will be returned. 
+
+
+
+``` r
+col_data <- get_col_data(year = 2020:2022)
+head(col_data)
+#>   commodity_year state_code state_abbrv county_code county_name commodity_code commodity_name
+#> 1           2020          1          AL           1     Autauga             21         Cotton
+#> 2           2020          1          AL           1     Autauga             21         Cotton
+#> 3           2020          1          AL           1     Autauga             21         Cotton
+#> 4           2020          1          AL           1     Autauga             41           Corn
+#> 5           2020          1          AL           1     Autauga             41           Corn
+#> 6           2020          1          AL           1     Autauga             41           Corn
+#>   insurance_plan_code insurance_plan_abbrv delivery_type stage_code col_code
+#> 1                   2                   RP             A          H       31
+#> 2                   2                   RP             A          H       92
+#> 3                   2                   RP             A          H       92
+#> 4                   2                   RP             A          H        1
+#> 5                   2                   RP             A          H       11
+#> 6                   2                   RP             A          R       93
+#>                             col_name month_of_loss_code month_of_loss_name year_of_loss
+#> 1 Excess Moisture/Precipitation/Rain                  9                SEP         2020
+#> 2      Hurricane/Tropical Depression                 10                OCT         2020
+#> 3      Hurricane/Tropical Depression                  9                SEP         2020
+#> 4                   Decline in Price                  9                SEP         2020
+#> 5                            Drought                  7                JUL         2020
+#> 6                           Wildlife                  5                MAY         2020
+#>   policies_earning_prem policies_indemnified net_planted_qty net_endorsed_acres  liability total_premium
+#> 1                     1                    1          38.925                  0  11519.000      1389.000
+#> 2                     3                    3         992.425                  0 495420.000     38585.500
+#> 3                     3                    3         392.600                  0 220061.000     17815.500
+#> 4                     1                    1          12.900                  0   2543.665       437.095
+#> 5                     1                    1           8.100                  0   1597.185       274.455
+#> 6                     1                    1          30.000                  0   5915.500      1016.500
+#>   producer_paid_premium  subsidy state_subsidy addnl_subsidy efa_prem_discount indemnified_quantity
+#> 1               570.000   819.00             0             0                 0               38.925
+#> 2              8457.500 30128.00             0             0                 0              992.425
+#> 3              4157.500 13658.00             0             0                 0              392.600
+#> 4               196.725   240.37             0             0                 0               25.800
+#> 5               123.525   150.93             0             0                 0               16.200
+#> 6               457.500   559.00             0             0                 0               14.000
+#>   indem_amount loss_ratio
+#> 1      1938.00       1.40
+#> 2     95015.00       2.46
+#> 3     18962.00       1.06
+#> 4      1602.18       3.67
+#> 5      1006.02       3.67
+#> 6       439.00       0.43
+```
+
+
+## Price
+Insurance guarantees and indemnities for revenue protection plans are base, in part, on projected commodity prices and harvest commodity prices. These are available via RMA's [price discovery application](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/), but can also be obtained using the `get_price_data` function which supports arguments for `year`, `crop`, and `state`. For example, prices for corn in Illinois from 2020-2024 can be obtained with the following code. 
+
+
+``` r
+price_data <- get_price_data(year = 2020:2024,
+                             crop = "corn",
+                             state = "IL")
+
+head(price_data) 
+#> # A tibble: 6 × 38
+#>   CommodityYear CommodityCode CommodityName TypeCode TypeName PracticeCode PracticeName StateCode StateName
+#>           <int>         <int> <chr>            <int> <chr>           <int> <chr>            <int> <chr>    
+#> 1          2020            41 Corn                16 High Am…            2 Conventional        17 Illinois 
+#> 2          2020            41 Corn                16 High Am…            3 Organic             17 Illinois 
+#> 3          2020            41 Corn                17 All (No…            2 Conventional        17 Illinois 
+#> 4          2020            41 Corn                17 All (No…            3 Organic             17 Illinois 
+#> 5          2021            41 Corn                16 High Am…            2 Conventional        17 Illinois 
+#> 6          2021            41 Corn                16 High Am…            3 Organic             17 Illinois 
+#> # ℹ 29 more variables: PriceMultiplicativeFactor <dbl>, PriceAdditiveFactor <dbl>,
+#> #   ProjectedPriceExchangeCode <chr>, ProjectedPriceMarketSymbolCode <chr>,
+#> #   ProjectedPricePreviousMarketSymbolCode <chr>, ProjectedPriceCurrencyMarketSymbolCode <lgl>,
+#> #   ProjectedPriceBeginDate <dttm>, ProjectedPriceEndDate <dttm>, ProjectedPriceDateRange <chr>,
+#> #   ProjectedPrice <dbl>, ApprovedPriceVolatilityPercent <dbl>, HarvestPriceExchangeCode <chr>,
+#> #   HarvestPriceMarketSymbolCode <chr>, HarvestPriceCurrencyMarketSymbolCode <lgl>,
+#> #   HarvestPriceBeginDate <dttm>, HarvestPriceEndDate <dttm>, HarvestPriceDateRange <chr>, …
+```
+
+## Reinsurance Agreements
+
+### Standard Reinsurance Agreement
+Data related to the Standard Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalSRA)`. This data set is based on data from RMA's [reinsurance reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports). 
+
+``` r
+# load the national SRA data set
+data(nationalSRA)
+
+head(nationalSRA)
+#> # A tibble: 6 × 11
+#>   fund_abb reinsurance_year report_geography value_type        dollars data_release_month data_release_year
+#>   <chr>               <dbl> <chr>            <chr>               <dbl>              <dbl>             <dbl>
+#> 1 AR                   1998 NationalFund     gross_liability    3.29e9                  2              2002
+#> 2 AR                   1998 NationalFund     gross_premium      3.14e8                  2              2002
+#> 3 AR                   1998 NationalFund     gross_indemnity    4.63e8                  2              2002
+#> 4 AR                   1998 NationalFund     retained_liabili…  5.97e8                  2              2002
+#> 5 AR                   1998 NationalFund     retained_premium   5.85e7                  2              2002
+#> 6 AR                   1998 NationalFund     retained_indemni…  5.18e7                  2              2002
+#> # ℹ 4 more variables: data_release_day <dbl>, data_release_date <date>, fund_name <chr>, report_type <chr>
+
+# pull up the data sets documentation file.
+?nationalSRA
+
+```
+
+Similarly, a state level version of the SRA data set is also available. To load the state level data set, use `data(stateSRA)`.
+
+``` r
+# load the state SRA data set
+data(stateSRA)
+
+head(stateSRA)
+#> # A tibble: 6 × 12
+#>   state fund_abb reinsurance_year report_geography value_type  dollars data_release_month data_release_year
+#>   <chr> <chr>               <int> <chr>            <chr>         <dbl>              <dbl>             <dbl>
+#> 1 AL    AR                   1998 StateFund        gross_liab…  6.35e7                  2              2002
+#> 2 AL    AR                   1998 StateFund        gross_prem…  7.15e6                  2              2002
+#> 3 AL    AR                   1998 StateFund        gross_inde…  1.64e7                  2              2002
+#> 4 AL    AR                   1998 StateFund        retained_l…  1.27e7                  2              2002
+#> 5 AL    AR                   1998 StateFund        retained_p…  1.43e6                  2              2002
+#> 6 AL    AR                   1998 StateFund        retained_i…  1.51e6                  2              2002
+#> # ℹ 4 more variables: data_release_day <dbl>, data_release_date <date>, fund_name <chr>, report_type <chr>
+
+# pull up the data sets documentation file.
+?stateSRA
+
+```
+
+
+### Livestock Price Reinsurance Agreement
+Data related to the Livestock Price Reinsurance Agreement (including retained liabilities, premiums, indemnities, and net underwriting gains and losses) is included as a static internal data set. To load the national level data set, use `data(nationalLPRA)`. This data set is based on data from [reinsurance reports](https://www.rma.usda.gov/tools-reports/reinsurance-reports). 
+
+``` r
+# load the national SRA data set
+data(nationalLPRA)
+
+head(nationalLPRA)
+#> # A tibble: 6 × 10
+#>   reinsurance_year report_geography footnote        value_type dollars data_release_month data_release_year
+#>              <dbl> <chr>            <chr>           <chr>        <dbl>              <dbl>             <dbl>
+#> 1             2014 NationalFund     "Footnote: Amo… gross_lia…  1.04e9                 10              2018
+#> 2             2014 NationalFund     "Footnote: Amo… gross_pre…  2.28e7                 10              2018
+#> 3             2014 NationalFund     "Footnote: Amo… gross_ind…  1.05e7                 10              2018
+#> 4             2014 NationalFund     "Footnote: Amo… retained_…  4.03e8                 10              2018
+#> 5             2014 NationalFund     "Footnote: Amo… retained_…  8.64e6                 10              2018
+#> 6             2014 NationalFund     "Footnote: Amo… retained_…  3.69e6                 10              2018
+#> # ℹ 3 more variables: data_release_day <dbl>, data_release_date <date>, report_type <chr>
+
+# pull up the data sets documentation file.
+?nationalLPRA
+
+```
+
+
+
+Please note that `rfcip` is released with a [Contributor Code of Conduct](https://ropensci.org/code-of-conduct/#:~:text=rOpenSci%20is%20committed%20to%20providing,understand%E2%80%9D%20or%20%E2%80%9CWhy%E2%80%9D.). By contributing to the package you agree to abide by its terms.
+
+## Livestock and Dairy Participation Reports
+Some data on participation in livestock insurance plans can be retrieved using the `get_sob_data` function, however, more detailed information is available from the [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports. The `get_livestock_data` function can be used to download the most recent versions of the data contained there. 
+
+
+``` r
+
+# get data on the livestock risk protection plan from 2020 to 2022
+lrp_data <- get_livestock_data(year = 2020:2022, program = "LRP")
+
+# get data on the  dairy revenue protection plan from 2020 to 2022
+drp_data <- get_livestock_data(year = 2020:2022, program = "DRP")
+
+# get data on the livestock gross margin plan from 2020 to 2022
+lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
+
+```
+## Actuarial Data Master (ADM)
+
+RMA's [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) contains the detailed actuarial data that underlies crop insurance rate-making and premium calculations. This data includes base rates, price discovery information, subsidy schedules, and reference information for all crops, counties, and insurance plans offered through the Federal Crop Insurance Program. Although publicly available, the data is difficult to access primarily due to the size of the raw files which overwhelms the memory on typical hardware. The `rfcip` package addresses this by pre-procssing the ADM data into smaller, more manageable data sets and applying compression techniques to reduce to total file size. The `get_adm_data()` function provides access to these processed ADM datasets which are stored as a [GitHub release](https://github.com/dylan-turner25/rfcip/releases).
+
+
+``` r
+library(rfcip)
+
+# Get base rate data for 2020
+baserate_2020 <- get_adm_data(year = 2020, dataset = "baserate")
+
+# Get price data for 2018
+price_2018 <- get_adm_data(year = 2018, dataset = "price")
+
+# Get subsidy data for multiple years
+subsidy_multi <- get_adm_data(year = c(2018, 2019, 2020), dataset = "subsidypercent")
+```
+
+The function is case-insensitive for dataset names and can use either the descriptive name or the record code. All of the following return the same data:
+
+
+``` r
+# These all return the same BaseRate data for 2020
+get_adm_data(year = 2020, dataset = "BaseRate")
+get_adm_data(year = 2020, dataset = "base_RaTe")  
+get_adm_data(year = 2020, dataset = "A01010")
+get_adm_data(year = 2020, dataset = "a01010")
+```
+
+### Available Datasets
+
+The package provides access to multiple ADM datasets across years 2011-2026. The datasets are organized into three categories:
+
+#### Core Actuarial Datasets
+
+- **BaseRate (A01010)**: Base rates for crop insurance premiums
+- **Price (A00810)**: Commodity prices (established, projected, harvest)
+- **SubsidyPercent (A00070)**: Premium subsidy percentages by coverage level
+- **InsuranceOffer (A00030)**: Insurance offer information and coverage details
+- **Beta (A01020)**: Beta risk adjustment factors for rate calculations
+- **ComboRevenueFactor (A01030)**: Combined revenue factors for revenue insurance
+- **CoverageLevelDifferential (A01040)**: Coverage level rate differentials
+- **HistoricalRevenueCapping (A01110)**: Historical revenue capping data
+- **HistoricalYieldTrend (A01115)**: Historical yield trend data (2016+)
+- **AreaCoverageLevel (A01130)**: Area coverage levels (2017+)
+- **AreaRate (A01135)**: Area rates for county-level coverage (2017+)
+- **AreaRiskRate (A01005)**: Area risk rates (2011-2016)
+- **UnitDiscount (A01090)**: Unit discount factors
+
+#### Reference Datasets
+
+- **Date (A00200)**: Important dates for crop insurance (sales closing, etc.)
+- **Commodity (A00420)**: Commodity codes and descriptions
+- **CommodityType (A00430)**: Commodity type classifications
+- **County (A00440)**: County codes and names
+- **InsurancePlan (A00460)**: Insurance plan codes and descriptions
+- **IrrigationPractice (A00490)**: Irrigation practice codes
+- **OrganicPractice (A00500)**: Organic practice designations
+- **Practice (A00510)**: Practice codes and descriptions
+- **State (A00520)**: State codes and names
+- **Type (A00540)**: Crop type codes and descriptions
+
+# Caching and Performance
+
+The `rfcip` package implements a caching system designed to minimizing redundant data downloads. This system combines session-level memoization with disk caching to provide performance benefits and reduce host server load.
+
+## How Caching Works
+
+### Two-Tier Caching System
+
+1. **Session-Level Memoization**: All data functions are memoized using the `memoise` package, meaning that repeated calls with identical arguments within the same R session return cached results immediately without any disk I/O.
+
+2. **Persistent Disk Caching**: Downloaded data is cached to disk in the package's installed location (view that location using `tools::R_user_dir("rfcip", "cache")` ). 
+
+The caching system  handles partial data requests. For example, if you previously downloaded data for 2020-2022 and later request 2020-2023, the system will:
+- Load 2020-2022 data from cache
+- Only download the new 2023 data
+- Combine both cached and fresh data in the returned data
+
+Below is a demonstration of the performance increases that come from caching the data.
+
+``` r
+library(rfcip)
+
+# First call - downloads and caches data (will take several seconds)
+system.time({
+  col_data1 <- get_col_data(year = 2020:2022)
+})
+#   user  system elapsed 
+#  2.156   0.234  15.423 
+
+# Subsequent call - loads from cache (much faster!)
+system.time({
+  col_data2 <- get_col_data(year = 2020:2022)
+})
+#   user  system elapsed 
+#  0.023   0.008   0.156 
+
+# Verify data is identical
+identical(col_data1, col_data2)
+# [1] TRUE
+```
+
+Since the above example already downloaded data for 2020 - 2022, the following only downloads 2023 data. 
+
+
+``` r
+# Request additional year - only downloads 2023, loads 2020-2022 from cache
+col_data3 <- get_col_data(year = 2020:2023)
+
+# The function automatically:
+# 1. Identifies that 2020-2022 are already cached
+# 2. Loads cached data for these years
+# 3. Downloads only the missing 2023 data
+# 4. Combines all data into a single data frame
+```
+
+Functions that utilize server-side data processing use the unique parameters of the function call to create unique cache entries. This means that different parameters will result in different cache entries. 
+
+
+``` r
+# These create separate cache entries due to different parameters
+price_data_corn <- get_price_data(year = 2023, crop = "corn", state = "IL")
+price_data_soy <- get_price_data(year = 2023, crop = "soybeans", state = "IL")
+price_data_ia <- get_price_data(year = 2023, crop = "corn", state = "IA")
+```
+
+## Force Parameter and Cache Refresh
+
+All caching functions include a `force` parameter for refreshing cached data.
+
+
+``` r
+# Force refresh - attempts fresh download, falls back to cache on failure
+col_data_fresh <- get_col_data(year = 2020:2022, force = TRUE)
+
+# If download fails due to network issues, you'll see:
+# Warning: Download failed for year 2021, using cached data
+```
+
+
+## Cache Management
+
+### Viewing Cache Information
+
+Use `get_cache_info()` to inspect your cached data:
+
+
+``` r
+# View all cached files
+cache_info <- get_cache_info()
+print(cache_info)
+#      filename size_mb            modified    function_type
+# 1  col_2023.zip    45.2 2024-01-15 14:23:01     get_col_data
+# 2  col_2022.zip    43.8 2024-01-15 14:22:45     get_col_data
+# 3 price_abc123.parquet 2.1 2024-01-15 14:20:15  get_price_data
+```
+
+### Clearing Cache
+
+Use `clear_rfcip_cache()` with various filtering options:
+
+
+``` r
+# Clear all cached data
+clear_rfcip_cache()
+
+# Clear only cause of loss data
+clear_rfcip_cache(function_name = "get_col_data")
+
+# Clear specific years
+clear_rfcip_cache(years = c(2023, 2024))
+
+# Clear livestock data for specific program
+clear_rfcip_cache(function_name = "get_livestock_data", program = "LRP")
+```
+
+
+
+
+
+
+
+
+
