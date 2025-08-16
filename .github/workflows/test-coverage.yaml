@@ -58,6 +58,7 @@ jobs:
           # The action automatically detects the commit, branch, etc.
           token: ${{ secrets.CODECOV_TOKEN }} # You can uncomment this if uploads fail without it.
           config_file: ./codecov.yml
+          verbose: true
           
       - name: Show testthat output on failure
         if: failure()
