@@ -1,0 +1,10 @@
+# codecov.yml
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1% # Fails if coverage drops by more than 1%
+    patch:
+      default:
+        target: auto

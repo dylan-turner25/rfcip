@@ -46,6 +46,10 @@ jobs:
           covr::to_cobertura(cov, "cobertura.xml") # Explicitly name the output file
         shell: Rscript {0}
 
+      - name: Display coverage report for debugging
+        run: cat ./cobertura.xml
+        shell: bash
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -53,7 +57,8 @@ jobs:
           # For public repos on GitHub Actions, the token is often not required.
           # The action automatically detects the commit, branch, etc.
           token: ${{ secrets.CODECOV_TOKEN }} # You can uncomment this if uploads fail without it.
-
+          config_file: ./codecov.yml
+          
       - name: Show testthat output on failure
         if: failure()
         run: |
