@@ -35,23 +35,27 @@ jobs:
             clean = FALSE,
             install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
-          covr::to_cobertura(cov)
+          covr::to_cobertura(cov, filename = "cobertura.xml")
         shell: Rscript {0}
+        
+      - name: Verify coverage file exists
+        run: |
+          if [ -f "cobertura.xml" ]; then
+            echo "✅ Coverage file found"
+            ls -la cobertura.xml
+            head -20 cobertura.xml
+          else
+            echo "❌ Coverage file not found"
+            ls -la
+          fi
 
-      - uses: codecov/codecov-action@v4
-        with:
-          # Fail if error if not on PR, or if on PR and token is given
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
-          file: ./cobertura.xml
-          plugin: noop
-          disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-          
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v4
         with:
+          file: ./cobertura.xml
+          fail_ci_if_error: false
+          verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: dylan-turner25/rfcip
           
       - name: Show testthat output
         if: always()
