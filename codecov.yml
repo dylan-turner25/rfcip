@@ -1,0 +1,18 @@
+# codecov.yml
+
+# This setting tells Codecov how to fix the file paths it finds in the coverage reports.
+# It says: "Find any path that starts with /home/runner/work/rfcip/rfcip/ and remove that prefix."
+# This transforms the absolute paths from the CI runner into the relative paths that match your git repo.
+fixes:
+  - "/home/runner/work/rfcip/rfcip/::"
+
+# Optional: You can also add project status checks here if you want.
+coverage:
+  status:
+    project:
+      default:
+        target: auto # Fails if coverage drops
+        threshold: 1% # Fails if coverage drops by more than 1%
+    patch:
+      default:
+        target: auto # Fails if the new code in a PR is not covered

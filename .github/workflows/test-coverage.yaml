@@ -46,6 +46,10 @@ jobs:
           covr::to_cobertura(cov, "cobertura.xml") # Explicitly name the output file
         shell: Rscript {0}
 
+      - name: Display coverage report for debugging
+        run: cat ./cobertura.xml
+        shell: bash
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
