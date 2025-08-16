@@ -50,7 +50,8 @@ started](vignettes/rfcip-introduction.md) vignette.
 # get summary of business data for corn in 2022
 library(rfcip)
 get_sob_data(year = 2022, crop = "corn")
-#> ℹ Loading data from cache
+#> ℹ Downloading and caching new data
+#> ℹ Loading crop codes from cache
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl>          <int> <chr>                  <dbl>
