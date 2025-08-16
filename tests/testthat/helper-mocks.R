@@ -158,3 +158,183 @@ setup_crop_codes_url_mock_error <- function(status_code = 500, error_message = "
     body = error_message
   )
 }
+
+# Create realistic mock cause of loss data
+create_mock_col_data <- function() {
+  data.frame(
+    commodity_year = c("2023", "2023", "2023"),
+    state_code = c("17", "17", "17"),
+    state_abbrv = c("IL", "IL", "IL"),
+    county_code = c("001", "003", "005"),
+    county_name = c("Adams", "Alexander", "Bond"),
+    commodity_code = c("41", "81", "91"),
+    commodity_name = c("Corn", "Soybeans", "Sunflowers"),
+    insurance_plan_code = c("2", "2", "2"),
+    insurance_plan_abbrv = c("RP", "RP", "RP"),
+    delivery_type = c("A", "A", "A"),
+    stage_code = c("", "", ""),
+    col_code = c("11", "12", "16"),
+    col_name = c("Drought", "Excess Moisture/Precip/Rain", "Wind/Windstorm"),
+    month_of_loss_code = c("7", "6", "8"),
+    month_of_loss_name = c("July", "June", "August"),
+    year_of_loss = c("2023", "2023", "2023"),
+    policies_earning_prem = c("100", "85", "45"),
+    policies_indemnified = c("25", "20", "12"),
+    net_planted_qty = c("50000", "40000", "25000"),
+    net_endorsed_acres = c("50000", "40000", "25000"),
+    liability = c("15000000", "12000000", "7500000"),
+    total_premium = c("750000", "600000", "375000"),
+    producer_paid_premium = c("225000", "180000", "112500"),
+    subsidy = c("525000", "420000", "262500"),
+    state_subsidy = c("0", "0", "0"),
+    addnl_subsidy = c("0", "0", "0"),
+    efa_prem_discount = c("0", "0", "0"),
+    indemnified_quantity = c("12500", "10000", "6250"),
+    indem_amount = c("3750000", "3000000", "1875000"),
+    loss_ratio = c("5.00", "5.00", "5.00"),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Create mock URLs data for locate_col_links
+create_mock_col_urls <- function() {
+  data.frame(
+    year = c(2020, 2021, 2022, 2023),
+    url = c(
+      "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/2020_cause-loss.zip",
+      "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/2021_cause-loss.zip", 
+      "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/2022_cause-loss.zip",
+      "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/2023_cause-loss.zip"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Create a temporary ZIP file with mock COL data
+create_mock_col_zip_file <- function(data = create_mock_col_data()) {
+  # Create temporary directory
+  temp_dir <- tempfile()
+  dir.create(temp_dir)
+  
+  # Write data to pipe-delimited text file (COL format)
+  temp_txt <- file.path(temp_dir, "cause_of_loss_data.txt")
+  write.table(data, temp_txt, sep = "|", row.names = FALSE, col.names = FALSE, quote = FALSE)
+  
+  # Create ZIP file
+  temp_zip <- tempfile(fileext = ".zip")
+  utils::zip(temp_zip, temp_txt, flags = "-j")
+  
+  # Clean up temp directory
+  unlink(temp_dir, recursive = TRUE)
+  
+  return(temp_zip)
+}
+
+# Setup webmockr for COL locate_col_links HTML response
+setup_col_links_mock <- function(mock_urls = create_mock_col_urls(), status_code = 200) {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  # Create mock HTML response with download links
+  html_content <- paste0(
+    '<html><body>',
+    paste0('<a href="', mock_urls$url, '">', basename(mock_urls$url), '</a>', collapse = '\n'),
+    '</body></html>\n'
+  )
+  
+  # Mock the index.html page
+  webmockr::stub_request("get", "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/index.html") %>%
+    webmockr::to_return(
+      status = status_code,
+      body = html_content,
+      headers = list("content-type" = "text/html")
+    )
+}
+
+# Setup webmockr for COL ZIP file downloads
+setup_col_download_mock <- function(mock_data = create_mock_col_data(), status_code = 200) {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  # Create mock ZIP file
+  mock_zip <- create_mock_col_zip_file(mock_data)
+  mock_zip_content <- readBin(mock_zip, "raw", file.info(mock_zip)$size)
+  
+  # Clean up temp ZIP file
+  unlink(mock_zip)
+  
+  # Mock specific URL patterns for COL ZIP downloads
+  # Pattern 1: cause-loss files
+  webmockr::stub_request("get", "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/") %>%
+    webmockr::wi_th(
+      query = list(.pattern = TRUE)
+    ) %>%
+    webmockr::to_return(
+      status = status_code,
+      body = mock_zip_content,
+      headers = list(
+        "content-type" = "application/zip",
+        "content-length" = as.character(length(mock_zip_content))
+      )
+    )
+  
+  # Also mock individual file downloads with full URLs
+  for (year in c(2020, 2021, 2022, 2023, 2024)) {
+    for (pattern in c("cause-loss", "colsom")) {
+      url <- paste0("https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/", 
+                    year, "_", pattern, ".zip")
+      webmockr::stub_request("get", url) %>%
+        webmockr::to_return(
+          status = status_code,
+          body = mock_zip_content,
+          headers = list(
+            "content-type" = "application/zip",
+            "content-length" = as.character(length(mock_zip_content))
+          )
+        )
+    }
+  }
+}
+
+# Setup webmockr for COL error scenarios  
+setup_col_links_mock_error <- function(status_code = 500, error_message = "Server Error") {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  webmockr::stub_request("get", "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/index.html") %>%
+    webmockr::to_return(
+      status = status_code,
+      body = error_message
+    )
+}
+
+# Setup webmockr for COL download error scenarios
+setup_col_download_mock_error <- function(status_code = 500, error_message = "Download Error") {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  # Mock base URL pattern
+  webmockr::stub_request("get", "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/") %>%
+    webmockr::wi_th(query = list(.pattern = TRUE)) %>%
+    webmockr::to_return(
+      status = status_code,
+      body = error_message
+    )
+  
+  # Also mock individual file downloads with errors
+  for (year in c(2020, 2021, 2022, 2023, 2024)) {
+    for (pattern in c("cause-loss", "colsom")) {
+      url <- paste0("https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Summary_of_Business/cause_of_loss/", 
+                    year, "_", pattern, ".zip")
+      webmockr::stub_request("get", url) %>%
+        webmockr::to_return(
+          status = status_code,
+          body = error_message
+        )
+    }
+  }
+}
