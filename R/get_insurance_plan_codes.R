@@ -2,6 +2,7 @@
 #'
 #' @param year A single numeric value, or vector of numeric values, indicating what years of the summary of business should be used to get crop names and crop codes. Defaults to the current year.
 #' @param plan can be either a character string indicating an insurance plan (ex: `yp` and `yield protection` are both valid) or a numeric value indicating the insurance plan code (i.e. `1`). Inputting nothing for the `plan` argument will return codes for all insurance plans in the specified year(s).
+#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
 #'
 #' @return Returns a tibble containing the relevant commodity year, insurance plan codes, insurance plan name, and insurance plan abbreviation
 #' @export
@@ -13,19 +14,67 @@
 #' get_insurance_plan_codes(year = 2023, plan = 1)
 #' get_insurance_plan_codes(year = 2023, plan = "yield protection")
 #' get_insurance_plan_codes(year = 2018:2022, plan = c("yp", "rp"))
+#' get_insurance_plan_codes(year = 2024, force = TRUE)  # Force fresh download
 #' }
+#' @importFrom janitor clean_names
+#' @importFrom readxl read_excel
+#' @import cli
 #' @source Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
-get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y")), plan = NULL) {
-  # url for all commodities with commodity codes
-  url <- paste0("https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?CY=", paste(year, collapse = ","), "&ORD=CY,IP&CC=B&VisibleColumns=CommodityYear,InsurancePlanCode,InsurancePlanName,InsurancePlanAbbreviation&SortField=&SortDir=")
-  # set temporary directory
-  dir <- tempdir()
-
-  # create a file path for the crop codes file in the temporary directory
-  data_path <- paste0(dir, "/plan_codes.xlsx")
-
-  # download the file to the temporary directory
-  download.file(url, destfile = data_path, mode = "wb", quiet = TRUE)
+get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y")), plan = NULL, force = FALSE) {
+  
+  # Generate cache key based on parameters
+  cache_params <- list(
+    year = year,
+    plan = plan
+  )
+  
+  cache_key <- generate_cache_key("insurance_plans", cache_params, "xlsx")
+  dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+  cache_file <- file.path(dest_dir, cache_key)
+  
+  # Check if Excel data is already cached and force=FALSE
+  if (file.exists(cache_file) && !force) {
+    cli::cli_alert_info("Loading insurance plan codes from cache")
+    data_path <- cache_file
+  } else {
+    # Download and cache new Excel data
+    cli::cli_alert_info("Downloading and caching insurance plan codes data")
+    
+    success <- FALSE
+    
+    tryCatch({
+      # url for all insurance plans with codes
+      url <- paste0("https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?CY=", paste(year, collapse = ","), "&ORD=CY,IP&CC=B&VisibleColumns=CommodityYear,InsurancePlanCode,InsurancePlanName,InsurancePlanAbbreviation&SortField=&SortDir=")
+      
+      # download the file to temporary location
+      temp_path <- tempfile(fileext = ".xlsx")
+      download.file(url, destfile = temp_path, mode = "wb", quiet = TRUE)
+      
+      # Cache the downloaded file
+      cached_file <- cache_raw_data(temp_path, cache_key, "zip")
+      
+      # Clean up temp file since we now have cached version
+      unlink(temp_path)
+      
+      # Use cached file for reading
+      data_path <- cached_file
+      
+      success <- TRUE
+    }, error = function(e) {
+      # If download failed and force=TRUE, try to use cached data
+      if (force && file.exists(cache_file)) {
+        cli::cli_alert_warning("Download failed, using cached insurance plan codes data")
+        data_path <<- cache_file
+        success <<- TRUE
+      } else {
+        stop("Failed to download insurance plan codes data and no cached data available: ", e$message)
+      }
+    })
+    
+    if (!success) {
+      stop("Failed to download insurance plan codes data")
+    }
+  }
 
   # load data
   data <- suppressMessages(janitor::clean_names(readxl::read_excel(data_path)))
@@ -37,9 +86,6 @@ get_insurance_plan_codes <- function(year = as.numeric(format(Sys.Date(), "%Y"))
 
   # filter to desired columns
   data <- data[, c("commodity_year", "insurance_plan_code", "insurance_plan", "insurance_plan_abbrv")]
-
-  # remove temporary file
-  unlink(data_path)
   
   # remove any duplicate entries
   data <- dplyr::distinct(data)

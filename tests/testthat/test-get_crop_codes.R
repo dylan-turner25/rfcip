@@ -273,3 +273,90 @@ test_that("get_crop_codes mixed valid/invalid crops", {
   
   cleanup_webmockr()
 })
+
+# Caching and force parameter tests
+test_that("get_crop_codes caching behavior with mocked functions", {
+  # Mock the caching functions to test behavior without actual file I/O
+  mock_data <- create_mock_crop_data()
+  
+  with_mocked_bindings(
+    generate_cache_key = function(...) "test_cache_key.xlsx",
+    file.exists = function(path) {
+      if (grepl("test_cache_key", path)) TRUE else FALSE
+    },
+    {
+      # Should use cached data when available and force=FALSE
+      result1 <- get_crop_codes(year = 2023, force = FALSE)
+      expect_s3_class(result1, "data.frame")
+      
+      # Should attempt fresh download when force=TRUE
+      result2 <- get_crop_codes(year = 2023, force = TRUE)
+      expect_s3_class(result2, "data.frame")
+    }
+  )
+})
+
+test_that("get_crop_codes force parameter fallback behavior", {
+  # Test scenario where force=TRUE but download fails, should fallback to cache
+  mock_data <- create_mock_crop_data()
+  
+  with_mocked_bindings(
+    generate_cache_key = function(...) "test_cache_key.xlsx",
+    file.exists = function(path) {
+      if (grepl("test_cache_key", path)) TRUE else FALSE
+    },
+    `httr::GET` = function(...) stop("Download failed"),
+    {
+      # Should fall back to cached data when download fails with force=TRUE
+      expect_no_error({
+        result <- get_crop_codes(year = 2023, force = TRUE)
+      })
+    }
+  )
+})
+
+test_that("get_crop_codes cache key generation with different parameters", {
+  # Test that different parameters create different cache keys
+  mock_data <- create_mock_crop_data()
+  
+  # Mock to capture the cache keys generated
+  cache_keys <- character(0)
+  
+  with_mocked_bindings(
+    generate_cache_key = function(prefix, params, suffix) {
+      key <- paste0(prefix, "_", paste(names(params), params, sep = "=", collapse = "_"), ".", suffix)
+      cache_keys <<- c(cache_keys, key)
+      return(key)
+    },
+    file.exists = function(...) FALSE,  # Force downloads
+    cache_raw_data = function(...) tempfile(fileext = ".xlsx"),
+    `httr::GET` = function(...) invisible(),
+    `readxl::read_excel` = function(...) mock_data,
+    {
+      # Different parameters should create different cache keys
+      result1 <- get_crop_codes(year = 2023, crop = "corn")
+      result2 <- get_crop_codes(year = 2024, crop = "corn")
+      result3 <- get_crop_codes(year = 2023, crop = "soybeans")
+      
+      expect_true(length(unique(cache_keys)) >= 3)
+    }
+  )
+})
+
+test_that("get_crop_codes handles cache directory creation", {
+  # Test that cache directory is created if it doesn't exist
+  with_mocked_bindings(
+    `tools::R_user_dir` = function(...) tempfile(),
+    dir.exists = function(...) FALSE,
+    dir.create = function(...) TRUE,
+    file.exists = function(...) FALSE,
+    cache_raw_data = function(...) tempfile(fileext = ".xlsx"),
+    `httr::GET` = function(...) invisible(),
+    `readxl::read_excel` = function(...) create_mock_crop_data(),
+    {
+      expect_no_error({
+        result <- get_crop_codes(year = 2023)
+      })
+    }
+  )
+})

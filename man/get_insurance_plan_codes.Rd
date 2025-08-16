@@ -9,13 +9,16 @@ Data is downloaded directly from RMA's summary of business app: \url{https://pub
 \usage{
 get_insurance_plan_codes(
   year = as.numeric(format(Sys.Date(), "\%Y")),
-  plan = NULL
+  plan = NULL,
+  force = FALSE
 )
 }
 \arguments{
 \item{year}{A single numeric value, or vector of numeric values, indicating what years of the summary of business should be used to get crop names and crop codes. Defaults to the current year.}
 
 \item{plan}{can be either a character string indicating an insurance plan (ex: \code{yp} and \verb{yield protection} are both valid) or a numeric value indicating the insurance plan code (i.e. \code{1}). Inputting nothing for the \code{plan} argument will return codes for all insurance plans in the specified year(s).}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 Returns a tibble containing the relevant commodity year, insurance plan codes, insurance plan name, and insurance plan abbreviation
@@ -30,5 +33,6 @@ get_insurance_plan_codes(year = 2023, plan = "yp")
 get_insurance_plan_codes(year = 2023, plan = 1)
 get_insurance_plan_codes(year = 2023, plan = "yield protection")
 get_insurance_plan_codes(year = 2018:2022, plan = c("yp", "rp"))
+get_insurance_plan_codes(year = 2024, force = TRUE)  # Force fresh download
 }
 }
