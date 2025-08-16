@@ -16,7 +16,9 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetches all history for all branches and tags
 
       - uses: r-lib/actions/setup-r@v2
         with:
