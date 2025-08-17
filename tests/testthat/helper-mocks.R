@@ -338,3 +338,65 @@ setup_col_download_mock_error <- function(status_code = 500, error_message = "Do
     }
   }
 }
+
+# Create realistic mock insurance plan codes data
+create_mock_insurance_plan_data <- function() {
+  data.frame(
+    commodity_year = c("2023", "2023", "2023", "2023", "2023"),
+    insurance_plan_code = c("1", "2", "3", "4", "14"),
+    insurance_plan = c("APH", "Revenue Protection", "Yield Protection", "Revenue Protection with Harvest Price Exclusion", "Enhanced Coverage Option"),
+    insurance_plan_abbrv = c("APH", "RP", "YP", "RP-HPE", "ECO"),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Create mock insurance plan data with x2 header (tests skip=1 logic)
+create_mock_insurance_plan_data_with_x2_header <- function() {
+  data.frame(
+    x1 = c("Header", "2023", "2023", "2023"),
+    x2 = c("Row", "1", "2", "3"), 
+    x3 = c("To", "APH", "Revenue Protection", "Yield Protection"),
+    x4 = c("Skip", "APH", "RP", "YP"),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Setup webmockr for insurance plan codes URL patterns
+setup_insurance_plan_codes_url_mock <- function(mock_data = create_mock_insurance_plan_data(), status_code = 200) {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  # Create temporary Excel file with mock data
+  mock_file <- create_mock_excel_file(mock_data)
+  mock_file_content <- readBin(mock_file, "raw", file.info(mock_file)$size)
+  
+  # Clean up temp file
+  unlink(mock_file)
+  
+  # Mock the insurance plan codes URL pattern using same approach as crop codes
+  stub <- webmockr::stub_request("get", "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel")
+  stub <- webmockr::wi_th(stub, query = list(.pattern = TRUE))
+  webmockr::to_return(stub,
+    status = status_code,
+    body = mock_file_content,
+    headers = list(
+      "content-type" = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "content-length" = as.character(length(mock_file_content))
+    )
+  )
+}
+
+# Setup webmockr for insurance plan codes error scenarios
+setup_insurance_plan_codes_url_mock_error <- function(status_code = 500, error_message = "Server Error") {
+  if (!requireNamespace("webmockr", quietly = TRUE)) {
+    skip("webmockr not available")
+  }
+  
+  stub <- webmockr::stub_request("get", "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel")
+  stub <- webmockr::wi_th(stub, query = list(.pattern = TRUE))
+  webmockr::to_return(stub,
+    status = status_code,
+    body = error_message
+  )
+}

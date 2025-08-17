@@ -128,7 +128,6 @@ reconcile_yield_history <- function(df) {
 #'
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr inner_join
-#' @export
 #'
 build_county_yield_history <- function(years, export_dir = "./data-raw", by_year = TRUE) {
 
