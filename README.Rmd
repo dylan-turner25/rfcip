@@ -33,7 +33,17 @@ load_all()
 [![R-CMD-check](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
-[![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=6sJUenko4X)](https://codecov.io/gh/dylan-turner25/rfcip) 
+[![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=F6ZBMNEHYT)](https://codecov.io/gh/dylan-turner25/rfcip)
+
+# Coverage Report
+
+The `rfcip` integration with CodeCov is not currently working. Below are package coverage metrics as a substitute. 
+```{r, echo = F}
+library(covr)
+cov <- package_coverage(quiet = FALSE, clean = FALSE)
+cov
+```
+
 
 # Introduction
 `rfcip` provides a set of tools to allow users to access publicly available data related to the Federal Crop Insurance Program, including both Summary of Business data and Actuarial Data Master (ADM) datasets. The package provides a set of functions to easily navigate and access data that is publicly available, but otherwise scattered across different urls, files, and data portals. Although no official API exists for Federal Crop Insurance Data, much of the data can be located with a structured url meaning the `rfcip` package effectively functions like a defacto API wrapper.

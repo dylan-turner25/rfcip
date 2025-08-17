@@ -1,6 +1,7 @@
 rfcip (R FCIP)
 ================
 
+- [Coverage Report](#coverage-report)
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
@@ -14,7 +15,26 @@ state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Lifecycle:
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
-[![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=6sJUenko4X)](https://codecov.io/gh/dylan-turner25/rfcip)
+[![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=F6ZBMNEHYT)](https://codecov.io/gh/dylan-turner25/rfcip)
+
+# Coverage Report
+
+The `rfcip` integration with CodeCov is not currently working. Below are
+package coverage metrics as a substitute.
+
+    #> Running specific tests for package 'rfcip'
+    #>   Running 'testthat.R'
+    #> rfcip Coverage: 23.18%
+    #> R/get_adm_data.R: 0.00%
+    #> R/get_price_data.R: 0.00%
+    #> R/zzz.R: 0.00%
+    #> R/get_livestock_data.R: 1.74%
+    #> R/helpers.R: 18.52%
+    #> R/build_county_yield_history.R: 35.42%
+    #> R/get_crop_codes.R: 39.58%
+    #> R/get_insurance_plan_codes.R: 46.94%
+    #> R/get_sob_data.R: 52.27%
+    #> R/get_col_data.R: 90.91%
 
 # Introduction
 
@@ -50,8 +70,7 @@ started](vignettes/rfcip-introduction.md) vignette.
 # get summary of business data for corn in 2022
 library(rfcip)
 get_sob_data(year = 2022, crop = "corn")
-#> ℹ Downloading and caching new data
-#> ℹ Loading crop codes from cache
+#> ℹ Loading data from cache
 #> # A tibble: 1 × 23
 #>   commodity_year commodity_code commodity_name policies_sold
 #>            <dbl>          <int> <chr>                  <dbl>
