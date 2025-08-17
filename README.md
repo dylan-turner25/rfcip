@@ -24,16 +24,16 @@ package coverage metrics as a substitute.
 
     #> Running specific tests for package 'rfcip'
     #>   Running 'testthat.R'
-    #> rfcip Coverage: 23.18%
+    #> rfcip Coverage: 26.65%
     #> R/get_adm_data.R: 0.00%
     #> R/get_price_data.R: 0.00%
     #> R/zzz.R: 0.00%
     #> R/get_livestock_data.R: 1.74%
-    #> R/helpers.R: 18.52%
+    #> R/helpers.R: 19.27%
     #> R/build_county_yield_history.R: 35.42%
-    #> R/get_crop_codes.R: 39.58%
-    #> R/get_insurance_plan_codes.R: 46.94%
     #> R/get_sob_data.R: 52.27%
+    #> R/get_crop_codes.R: 87.50%
+    #> R/get_insurance_plan_codes.R: 87.76%
     #> R/get_col_data.R: 90.91%
 
 # Introduction
