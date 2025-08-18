@@ -1,7 +1,6 @@
 rfcip (R FCIP)
 ================
 
-- [Coverage Report](#coverage-report)
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
@@ -16,26 +15,16 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 [![Lifecycle:
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
 [![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=F6ZBMNEHYT)](https://codecov.io/gh/dylan-turner25/rfcip)
-[![Coverage Status](https://coveralls.io/repos/github/dylan-turner25/rfcip/badge.svg?branch=main)](https://coveralls.io/github/dylan-turner25/rfcip?branch=main)
+[![Coverage
+Status](https://coveralls.io/repos/github/dylan-turner25/rfcip/badge.svg)](https://coveralls.io/github/dylan-turner25/rfcip)
 
-# Coverage Report
-
-The `rfcip` integration with CodeCov is not currently working. Below are
-package coverage metrics as a substitute.
-
-    #> Running specific tests for package 'rfcip'
-    #>   Running 'testthat.R'
-    #> rfcip Coverage: 29.34%
-    #> R/get_price_data.R: 0.00%
-    #> R/zzz.R: 0.00%
-    #> R/get_livestock_data.R: 7.39%
-    #> R/helpers.R: 21.03%
-    #> R/build_county_yield_history.R: 35.42%
-    #> R/get_sob_data.R: 52.27%
-    #> R/get_crop_codes.R: 87.50%
-    #> R/get_insurance_plan_codes.R: 87.76%
-    #> R/get_col_data.R: 90.91%
-    #> R/get_adm_data.R: 100.00%
+<!-- # Coverage Report -->
+<!-- The `rfcip` integration with CodeCov is not currently working. Below are package coverage metrics as a substitute.  -->
+<!-- ```{r, echo = F} -->
+<!-- library(covr) -->
+<!-- cov <- package_coverage(quiet = FALSE, clean = FALSE) -->
+<!-- cov -->
+<!-- ``` -->
 
 # Introduction
 

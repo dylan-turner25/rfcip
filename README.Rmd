@@ -34,15 +34,16 @@ load_all()
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
 [![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=F6ZBMNEHYT)](https://codecov.io/gh/dylan-turner25/rfcip)
+[![Coverage Status](https://coveralls.io/repos/github/dylan-turner25/rfcip/badge.svg)](https://coveralls.io/github/dylan-turner25/rfcip)
 
-# Coverage Report
+<!-- # Coverage Report -->
 
-The `rfcip` integration with CodeCov is not currently working. Below are package coverage metrics as a substitute. 
-```{r, echo = F}
-library(covr)
-cov <- package_coverage(quiet = FALSE, clean = FALSE)
-cov
-```
+<!-- The `rfcip` integration with CodeCov is not currently working. Below are package coverage metrics as a substitute.  -->
+<!-- ```{r, echo = F} -->
+<!-- library(covr) -->
+<!-- cov <- package_coverage(quiet = FALSE, clean = FALSE) -->
+<!-- cov -->
+<!-- ``` -->
 
 
 # Introduction
