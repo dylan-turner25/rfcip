@@ -18,7 +18,7 @@ library(rfcip)
 ```
 
 # Introduction
-This vignette provides an introduction to the `rfcip` package which provides tools for accessing publicly available data related to the Federal Crop Insurance Program (FCIP). The package includes functions for accessing data from RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) reports, [Cause of Loss](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) files, [Price Discovery](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/) application, [Reinsurance Agreements](https://www.rma.usda.gov/tools-reports/reinsurance-reports), [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports, and [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) datasets.
+This vignette provides an introduction to the `rfcip` package which provides tools for accessing publicly available data related to the Federal Crop Insurance Program (FCIP). The package includes functions for accessing data from RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) reports, [Cause of Loss](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) files, [Price Discovery](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/) application, [Reinsurance Agreements](https://www.rma.usda.gov/tools-reports/reinsurance-reports), [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports, [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) datasets, and [Insurance Control Elements (ICE)](https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/) data.
 
 # Supported Data Sources
 
@@ -32,26 +32,23 @@ Accessing data from the summary of business can be done using the `get_sob_data`
 library(rfcip)
 get_sob_data()
 #> # A tibble: 11 × 21
-#>    commodity_year policies_sold policies_earning_prem policies_indemnified
-#>             <dbl>         <dbl>                 <dbl>                <dbl>
-#>  1           2025       2525186               1220168               115193
-#>  2           2025           806                     0                    0
-#>  3           2025            82                    79                    0
-#>  4           2025         56924                 24178                 1041
-#>  5           2025            60                    28                    5
-#>  6           2025           795                   365                  249
-#>  7           2025          2514                  2069                  448
-#>  8           2025          3909                  3466                  368
-#>  9           2025            16                    14                    0
-#> 10           2025          7669                  6982                 5736
-#> 11           2025          2043                  2043                 1281
-#> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>,
-#> #   quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
-#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
-#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
-#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
-#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
-#> #   loss_ratio <dbl>
+#>    commodity_year policies_sold policies_earning_prem policies_indemnified units_earning_prem units_indemnified quantity quantity_type companion_endorsed_a…¹
+#>             <dbl>         <dbl>                 <dbl>                <dbl>              <dbl>             <dbl>    <dbl> <chr>                          <dbl>
+#>  1           2025            82                    79                    0                126                 0  2.23e 7 Vines                              0
+#>  2           2025         56927                 24174                 1042              82964              1042  5.30e 7 Head                               0
+#>  3           2025            60                    28                    5                 84                15  2.77e 8 # of Clams                         0
+#>  4           2025           795                   365                  251               4808               251  6.48e 7 Hundred Weig…                      0
+#>  5           2025       2525240               1286019               126625            3160020            215877  5.57e 8 Acres                       85541494
+#>  6           2025           812                     0                    0                  0                 0  0       Tons                               0
+#>  7           2025          2514                  2069                  449               3834               709  5.12e 7 Trees                        7365741
+#>  8           2025          3911                  3472                  375               5515               208  0       Not Reported                       0
+#>  9           2025            16                    15                    0                 15                 0  1.92e 7 # of Shellfi…               12686500
+#> 10           2025          7669                  6990                 5745              25913              9763  3.73e 6 Colonies                           0
+#> 11           2025          2043                  2043                 1328              18210              4196  4.97e10 Pounds                             0
+#> # ℹ abbreviated name: ¹​companion_endorsed_acres
+#> # ℹ 12 more variables: liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>,
+#> #   state_subsidy <dbl>, pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>, organic_transitional_subsidy_amount <dbl>,
+#> #   earn_prem_rate <dbl>, loss_ratio <dbl>
 ```
 
 Most of the arguments for the `get_sob_data` function filter the returned data. For example, specifying the `year = 2022` and `crop = "corn"` will return data for corn in crop year 2022. For a description of all the arguments that can be supplied to `get_sob_data` see the help file for the function using `help(get_sob_data)`
@@ -59,16 +56,12 @@ Most of the arguments for the `get_sob_data` function filter the returned data. 
 ``` r
 get_sob_data(year = 2022, crop = "corn")
 #> # A tibble: 1 × 23
-#>   commodity_year commodity_code commodity_name policies_sold
-#>            <dbl>          <int> <chr>                  <dbl>
-#> 1           2022             41 Corn                  590774
-#> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
-#> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
-#> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
-#> #   total_prem <dbl>, subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
-#> #   addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
-#> #   organic_certified_subsidy_amount <dbl>,
-#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>, …
+#>   commodity_year commodity_code commodity_name policies_sold policies_earning_prem policies_indemnified units_earning_prem units_indemnified quantity
+#>            <dbl>          <int> <chr>                  <dbl>                 <dbl>                <dbl>              <dbl>             <dbl>    <dbl>
+#> 1           2022             41 Corn                  590772                388010               106763             733238            184944 81513330
+#> # ℹ 14 more variables: quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>,
+#> #   efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
+#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>, loss_ratio <dbl>
 ```
 In the above example, the data set was filtered to a single crop, "corn". This potentially raises the question of what other values can be passed to the arguments that control the filters. For arguments with limited options, the options are explained in the functions help file (again, accessed via `help(get_sob_data)`). For some arguments that have many options, there are dedicated functions for pulling up values than can be passed to these arguments. 
 
@@ -123,18 +116,18 @@ The `get_insurance_plan_codes` function works analogously to the `get_crop_codes
 # return all insurance plans avaliable in 2024
 get_insurance_plan_codes(year = 2024)
 #> # A tibble: 35 × 4
-#>    commodity_year insurance_plan_code insurance_plan        insurance_plan_abbrv
-#>    <chr>          <chr>               <chr>                 <chr>               
-#>  1 2024           90                  APH                   APH                 
-#>  2 2024           91                  APH Price Component   APHPC               
-#>  3 2024           43                  Aquaculture Dollar    AQDOL               
-#>  4 2024           47                  Actual Revenue Histo… ARH                 
-#>  5 2024           05                  Area Revenue Protect… ARP                 
-#>  6 2024           06                  Area Revenue Protect… ARP - HPE           
-#>  7 2024           04                  Area Yield Protection AYP                 
-#>  8 2024           50                  Dollar Amount Of Ins… DO                  
-#>  9 2024           83                  Dairy Revenue Protec… DRP                 
-#> 10 2024           88                  Enhanced Cov Opt - R… ECO-RP              
+#>    commodity_year insurance_plan_code insurance_plan                                    insurance_plan_abbrv
+#>    <chr>          <chr>               <chr>                                             <chr>               
+#>  1 2024           90                  APH                                               APH                 
+#>  2 2024           91                  APH Price Component                               APHPC               
+#>  3 2024           43                  Aquaculture Dollar                                AQDOL               
+#>  4 2024           47                  Actual Revenue History                            ARH                 
+#>  5 2024           05                  Area Revenue Protection                           ARP                 
+#>  6 2024           06                  Area Revenue Protection - Harvest Price Exclusion ARP - HPE           
+#>  7 2024           04                  Area Yield Protection                             AYP                 
+#>  8 2024           50                  Dollar Amount Of Insurance                        DO                  
+#>  9 2024           83                  Dairy Revenue Protection                          DRP                 
+#> 10 2024           88                  Enhanced Cov Opt - Rev Prot                       ECO-RP              
 #> # ℹ 25 more rows
 
 # return the insurance plan code for the revenue projection plan
@@ -168,25 +161,23 @@ As was previously stated above, most arguments for the `get_sob_data` function a
 ``` r
 get_sob_data(year = 2022, crop = "corn", group_by = "county")
 #> # A tibble: 2,405 × 27
-#>    commodity_year commodity_code commodity_name        state_code state_abbrv
-#>             <dbl>          <int> <chr>                 <chr>      <chr>      
-#>  1           2022           9999 All Other Commodities 01         AL         
-#>  2           2022           9999 All Other Commodities 01         AL         
-#>  3           2022           9999 All Other Commodities 01         AL         
-#>  4           2022           9999 All Other Commodities 01         AL         
-#>  5           2022           9999 All Other Commodities 01         AL         
-#>  6           2022           9999 All Other Commodities 01         AL         
-#>  7           2022           9999 All Other Commodities 01         AL         
-#>  8           2022           9999 All Other Commodities 01         AL         
-#>  9           2022           9999 All Other Commodities 01         AL         
-#> 10           2022           9999 All Other Commodities 01         AL         
+#>    commodity_year commodity_code commodity_name       state_code state_abbrv county_code county_name policies_sold policies_earning_prem policies_indemnified
+#>             <dbl>          <int> <chr>                <chr>      <chr>       <chr>       <chr>               <dbl>                 <dbl>                <dbl>
+#>  1           2022           9999 All Other Commoditi… 01         AL          999         All Other …             2                     2                    1
+#>  2           2022           9999 All Other Commoditi… 01         AL          007         Bibb                    6                     0                    0
+#>  3           2022           9999 All Other Commoditi… 01         AL          013         Butler                 25                    14                    5
+#>  4           2022           9999 All Other Commoditi… 01         AL          023         Choctaw                12                     0                    0
+#>  5           2022           9999 All Other Commoditi… 01         AL          025         Clarke                  3                     1                    0
+#>  6           2022           9999 All Other Commoditi… 01         AL          027         Clay                    1                     0                    0
+#>  7           2022           9999 All Other Commoditi… 01         AL          029         Cleburne                6                     4                    0
+#>  8           2022           9999 All Other Commoditi… 01         AL          057         Fayette                16                     7                    3
+#>  9           2022           9999 All Other Commoditi… 01         AL          075         Lamar                  10                     3                    3
+#> 10           2022           9999 All Other Commoditi… 01         AL          093         Marion                 16                     7                    2
 #> # ℹ 2,395 more rows
-#> # ℹ 22 more variables: county_code <chr>, county_name <chr>,
-#> #   policies_sold <dbl>, policies_earning_prem <dbl>,
-#> #   policies_indemnified <dbl>, units_earning_prem <dbl>,
-#> #   units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>,
-#> #   companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
-#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, …
+#> # ℹ 17 more variables: units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
+#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
+#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>, organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>,
+#> #   loss_ratio <dbl>
 ```
 
 We can confirm `get_sob_data(year = 2022, crop = "corn")` and `get_sob_data(year = 2022, crop = "corn", group_by = "county")` return the same underlying data by summing up one of individual columns in the county level data. 
@@ -194,11 +185,11 @@ We can confirm `get_sob_data(year = 2022, crop = "corn")` and `get_sob_data(year
 ``` r
 national_data <- get_sob_data(year = 2022, crop = "corn")
 print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67671440421"
+#> [1] "Liabilities from national data:  67671380320"
 
 county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
 print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67671440421"
+#> [1] "Liabilities from county data:    67671380320"
 ```
 
 
@@ -235,48 +226,27 @@ The default behavior of the `get_sob_data()`function is to pull data from [RMA's
 data <- get_sob_data(year = 2022, crop = "corn", sob_version = "sobtpu")
 
 head(data)
-#>   commodity_year state_code state_name state_abbreviation county_code
-#> 1           2022          1    Alabama                 AL           1
-#> 2           2022          1    Alabama                 AL           1
-#> 3           2022          1    Alabama                 AL           1
-#> 4           2022          1    Alabama                 AL           1
-#> 5           2022          1    Alabama                 AL           1
-#> 6           2022          1    Alabama                 AL           1
-#>   county_name commodity_code commodity_name insurance_plan_code
-#> 1     Autauga             41           Corn                   1
-#> 2     Autauga             41           Corn                   2
-#> 3     Autauga             41           Corn                   2
-#> 4     Autauga             41           Corn                   2
-#> 5     Autauga             41           Corn                   2
-#> 6     Autauga             41           Corn                   2
-#>   insurance_plan_abbreviation coverage_type_code coverage_level_percent
-#> 1                          YP                  C                   0.50
-#> 2                          RP                  A                   0.60
-#> 3                          RP                  A                   0.65
-#> 4                          RP                  A                   0.70
-#> 5                          RP                  A                   0.70
-#> 6                          RP                  A                   0.70
-#>   delivery_id type_code         type_name practice_code         practice_name
-#> 1           R         0 No Type Specified             0 No Practice Specified
-#> 2           R        16             Grain             3         Non-Irrigated
-#> 3           R         0 No Type Specified             0 No Practice Specified
-#> 4           R         0 No Type Specified             0 No Practice Specified
-#> 5           R        16             Grain             2             Irrigated
-#> 6           R        16             Grain             3         Non-Irrigated
-#>   unit_structure_code unit_structure_name net_reporting_level_amount
-#> 1                  OU       Optional Unit                          0
-#> 2                  BU          Basic Unit                         76
-#> 3                  OU       Optional Unit                          0
-#> 4                  OU       Optional Unit                          0
-#> 5                  OU       Optional Unit                        355
-#> 6                  OU       Optional Unit                         51
-#>   reporting_level_type liability_amount total_premium_amount subsidy_amount
-#> 1                Acres                0                    0              0
-#> 2                Acres            33327                 3520           2253
-#> 3                Acres                0                    0              0
-#> 4                Acres                0                    0              0
-#> 5                Acres           319499                22646          13361
-#> 6                Acres            21822                 4094           2416
+#>   commodity_year state_code state_name state_abbreviation county_code county_name commodity_code commodity_name insurance_plan_code
+#> 1           2022          1    Alabama                 AL           1     Autauga             41           Corn                   1
+#> 2           2022          1    Alabama                 AL           1     Autauga             41           Corn                   2
+#> 3           2022          1    Alabama                 AL           1     Autauga             41           Corn                   2
+#> 4           2022          1    Alabama                 AL           1     Autauga             41           Corn                   2
+#> 5           2022          1    Alabama                 AL           1     Autauga             41           Corn                   2
+#> 6           2022          1    Alabama                 AL           1     Autauga             41           Corn                   2
+#>   insurance_plan_abbreviation coverage_type_code coverage_level_percent delivery_id type_code         type_name practice_code         practice_name
+#> 1                          YP                  C                   0.50           R         0 No Type Specified             0 No Practice Specified
+#> 2                          RP                  A                   0.60           R        16             Grain             3         Non-Irrigated
+#> 3                          RP                  A                   0.65           R         0 No Type Specified             0 No Practice Specified
+#> 4                          RP                  A                   0.70           R         0 No Type Specified             0 No Practice Specified
+#> 5                          RP                  A                   0.70           R        16             Grain             2             Irrigated
+#> 6                          RP                  A                   0.70           R        16             Grain             3         Non-Irrigated
+#>   unit_structure_code unit_structure_name net_reporting_level_amount reporting_level_type liability_amount total_premium_amount subsidy_amount
+#> 1                  OU       Optional Unit                          0                Acres                0                    0              0
+#> 2                  BU          Basic Unit                         76                Acres            33327                 3520           2253
+#> 3                  OU       Optional Unit                          0                Acres                0                    0              0
+#> 4                  OU       Optional Unit                          0                Acres                0                    0              0
+#> 5                  OU       Optional Unit                        355                Acres           319499                22646          13361
+#> 6                  OU       Optional Unit                         51                Acres            21822                 4094           2416
 #>   indemnity_amount loss_ratio endorsed_commodity_reporting_level_amount
 #> 1                0       0.00                                         0
 #> 2                0       0.00                                         0
@@ -298,48 +268,27 @@ Although RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summ
 ``` r
 col_data <- get_col_data(year = 2020:2022)
 head(col_data)
-#>   commodity_year state_code state_abbrv county_code county_name commodity_code
-#> 1           2020          1          AL           1     Autauga             21
-#> 2           2020          1          AL           1     Autauga             21
-#> 3           2020          1          AL           1     Autauga             21
-#> 4           2020          1          AL           1     Autauga             41
-#> 5           2020          1          AL           1     Autauga             41
-#> 6           2020          1          AL           1     Autauga             41
-#>   commodity_name insurance_plan_code insurance_plan_abbrv delivery_type
-#> 1         Cotton                   2                   RP             A
-#> 2         Cotton                   2                   RP             A
-#> 3         Cotton                   2                   RP             A
-#> 4           Corn                   2                   RP             A
-#> 5           Corn                   2                   RP             A
-#> 6           Corn                   2                   RP             A
-#>   stage_code col_code                           col_name month_of_loss_code
-#> 1          H       31 Excess Moisture/Precipitation/Rain                  9
-#> 2          H       92      Hurricane/Tropical Depression                 10
-#> 3          H       92      Hurricane/Tropical Depression                  9
-#> 4          H        1                   Decline in Price                  9
-#> 5          H       11                            Drought                  7
-#> 6          R       93                           Wildlife                  5
-#>   month_of_loss_name year_of_loss policies_earning_prem policies_indemnified
-#> 1                SEP         2020                     1                    1
-#> 2                OCT         2020                     3                    3
-#> 3                SEP         2020                     3                    3
-#> 4                SEP         2020                     1                    1
-#> 5                JUL         2020                     1                    1
-#> 6                MAY         2020                     1                    1
-#>   net_planted_qty net_endorsed_acres  liability total_premium
-#> 1          38.925                  0  11519.000      1389.000
-#> 2         992.425                  0 495420.000     38585.500
-#> 3         392.600                  0 220061.000     17815.500
-#> 4          12.900                  0   2543.665       437.095
-#> 5           8.100                  0   1597.185       274.455
-#> 6          30.000                  0   5915.500      1016.500
-#>   producer_paid_premium  subsidy state_subsidy addnl_subsidy efa_prem_discount
-#> 1               570.000   819.00             0             0                 0
-#> 2              8457.500 30128.00             0             0                 0
-#> 3              4157.500 13658.00             0             0                 0
-#> 4               196.725   240.37             0             0                 0
-#> 5               123.525   150.93             0             0                 0
-#> 6               457.500   559.00             0             0                 0
+#>   commodity_year state_code state_abbrv county_code county_name commodity_code commodity_name insurance_plan_code insurance_plan_abbrv delivery_type
+#> 1           2020          1          AL           1     Autauga             21         Cotton                   2                   RP             A
+#> 2           2020          1          AL           1     Autauga             21         Cotton                   2                   RP             A
+#> 3           2020          1          AL           1     Autauga             21         Cotton                   2                   RP             A
+#> 4           2020          1          AL           1     Autauga             41           Corn                   2                   RP             A
+#> 5           2020          1          AL           1     Autauga             41           Corn                   2                   RP             A
+#> 6           2020          1          AL           1     Autauga             41           Corn                   2                   RP             A
+#>   stage_code col_code                           col_name month_of_loss_code month_of_loss_name year_of_loss policies_earning_prem policies_indemnified
+#> 1          H       31 Excess Moisture/Precipitation/Rain                  9                SEP         2020                     1                    1
+#> 2          H       92      Hurricane/Tropical Depression                 10                OCT         2020                     3                    3
+#> 3          H       92      Hurricane/Tropical Depression                  9                SEP         2020                     3                    3
+#> 4          H        1                   Decline in Price                  9                SEP         2020                     1                    1
+#> 5          H       11                            Drought                  7                JUL         2020                     1                    1
+#> 6          R       93                           Wildlife                  5                MAY         2020                     1                    1
+#>   net_planted_qty net_endorsed_acres  liability total_premium producer_paid_premium  subsidy state_subsidy addnl_subsidy efa_prem_discount
+#> 1          38.925                  0  11519.000      1389.000               570.000   819.00             0             0                 0
+#> 2         992.425                  0 495420.000     38585.500              8457.500 30128.00             0             0                 0
+#> 3         392.600                  0 220061.000     17815.500              4157.500 13658.00             0             0                 0
+#> 4          12.900                  0   2543.665       437.095               196.725   240.37             0             0                 0
+#> 5           8.100                  0   1597.185       274.455               123.525   150.93             0             0                 0
+#> 6          30.000                  0   5915.500      1016.500               457.500   559.00             0             0                 0
 #>   indemnified_quantity indem_amount loss_ratio
 #> 1               38.925      1938.00       1.40
 #> 2              992.425     95015.00       2.46
@@ -361,21 +310,21 @@ price_data <- get_price_data(year = 2020:2024,
 
 head(price_data) 
 #> # A tibble: 6 × 38
-#>   CommodityYear CommodityCode CommodityName TypeCode TypeName       PracticeCode
-#>           <int>         <int> <chr>            <int> <chr>                 <int>
-#> 1          2020            41 Corn                16 High Amylose              2
-#> 2          2020            41 Corn                16 High Amylose              3
-#> 3          2020            41 Corn                17 All (Non-High…            2
-#> 4          2020            41 Corn                17 All (Non-High…            3
-#> 5          2021            41 Corn                16 High Amylose              2
-#> 6          2021            41 Corn                16 High Amylose              3
-#> # ℹ 32 more variables: PracticeName <chr>, StateCode <int>, StateName <chr>,
-#> #   PriceMultiplicativeFactor <dbl>, PriceAdditiveFactor <dbl>,
-#> #   ProjectedPriceExchangeCode <chr>, ProjectedPriceMarketSymbolCode <chr>,
-#> #   ProjectedPricePreviousMarketSymbolCode <chr>,
-#> #   ProjectedPriceCurrencyMarketSymbolCode <lgl>,
-#> #   ProjectedPriceBeginDate <dttm>, ProjectedPriceEndDate <dttm>,
-#> #   ProjectedPriceDateRange <chr>, ProjectedPrice <dbl>, …
+#>   CommodityYear CommodityCode CommodityName TypeCode TypeName        PracticeCode PracticeName StateCode StateName PriceMultiplicativeF…¹ PriceAdditiveFactor
+#>           <int>         <int> <chr>            <int> <chr>                  <int> <chr>            <int> <chr>                      <dbl>               <dbl>
+#> 1          2020            41 Corn                16 High Amylose               2 Conventional        17 Illinois                    1.4                    0
+#> 2          2020            41 Corn                16 High Amylose               3 Organic             17 Illinois                    1.4                    0
+#> 3          2020            41 Corn                17 All (Non-High …            2 Conventional        17 Illinois                    1                      0
+#> 4          2020            41 Corn                17 All (Non-High …            3 Organic             17 Illinois                    2.23                   0
+#> 5          2021            41 Corn                16 High Amylose               2 Conventional        17 Illinois                    1.4                    0
+#> 6          2021            41 Corn                16 High Amylose               3 Organic             17 Illinois                    1.4                    0
+#> # ℹ abbreviated name: ¹​PriceMultiplicativeFactor
+#> # ℹ 27 more variables: ProjectedPriceExchangeCode <chr>, ProjectedPriceMarketSymbolCode <chr>, ProjectedPricePreviousMarketSymbolCode <chr>,
+#> #   ProjectedPriceCurrencyMarketSymbolCode <lgl>, ProjectedPriceBeginDate <dttm>, ProjectedPriceEndDate <dttm>, ProjectedPriceDateRange <chr>,
+#> #   ProjectedPrice <dbl>, ApprovedPriceVolatilityPercent <dbl>, HarvestPriceExchangeCode <chr>, HarvestPriceMarketSymbolCode <chr>,
+#> #   HarvestPriceCurrencyMarketSymbolCode <lgl>, HarvestPriceBeginDate <dttm>, HarvestPriceEndDate <dttm>, HarvestPriceDateRange <chr>, HarvestPrice <dbl>,
+#> #   HarvestPriceStatus <chr>, ProjectedSymbolCode <chr>, ProjectedSymbolName <chr>, ProjectedMonthCode <chr>, ProjectedMonthName <chr>, ProjectedYear <int>,
+#> #   HarvestSymbolCode <chr>, HarvestMonthCode <chr>, HarvestMonthName <chr>, HarvestYear <int>, ProjectedPriceStatus <chr>
 ```
 
 ## Reinsurance Agreements
@@ -389,17 +338,14 @@ data(nationalSRA)
 
 head(nationalSRA)
 #> # A tibble: 6 × 11
-#>   fund_abb reinsurance_year report_geography value_type            dollars
-#>   <chr>               <dbl> <chr>            <chr>                   <dbl>
-#> 1 AR                   1998 NationalFund     gross_liability    3286742595
-#> 2 AR                   1998 NationalFund     gross_premium       313517141
-#> 3 AR                   1998 NationalFund     gross_indemnity     463493075
-#> 4 AR                   1998 NationalFund     retained_liability  597494229
-#> 5 AR                   1998 NationalFund     retained_premium     58503706
-#> 6 AR                   1998 NationalFund     retained_indemnity   51840753
-#> # ℹ 6 more variables: data_release_month <dbl>, data_release_year <dbl>,
-#> #   data_release_day <dbl>, data_release_date <date>, fund_name <chr>,
-#> #   report_type <chr>
+#>   fund_abb reinsurance_year report_geography value_type dollars data_release_month data_release_year data_release_day data_release_date fund_name report_type
+#>   <chr>               <dbl> <chr>            <chr>        <dbl>              <dbl>             <dbl>            <dbl> <date>            <chr>     <chr>      
+#> 1 AR                   1998 NationalFund     gross_lia…  3.29e9                  2              2002                9 2002-02-09        Assigned… Standard R…
+#> 2 AR                   1998 NationalFund     gross_pre…  3.14e8                  2              2002                9 2002-02-09        Assigned… Standard R…
+#> 3 AR                   1998 NationalFund     gross_ind…  4.63e8                  2              2002                9 2002-02-09        Assigned… Standard R…
+#> 4 AR                   1998 NationalFund     retained_…  5.97e8                  2              2002                9 2002-02-09        Assigned… Standard R…
+#> 5 AR                   1998 NationalFund     retained_…  5.85e7                  2              2002                9 2002-02-09        Assigned… Standard R…
+#> 6 AR                   1998 NationalFund     retained_…  5.18e7                  2              2002                9 2002-02-09        Assigned… Standard R…
 
 # pull up the data sets documentation file.
 ?nationalSRA
@@ -414,17 +360,15 @@ data(stateSRA)
 
 head(stateSRA)
 #> # A tibble: 6 × 12
-#>   state fund_abb reinsurance_year report_geography value_type          dollars
-#>   <chr> <chr>               <int> <chr>            <chr>                 <dbl>
-#> 1 AL    AR                   1998 StateFund        gross_liability    63545502
-#> 2 AL    AR                   1998 StateFund        gross_premium       7153137
-#> 3 AL    AR                   1998 StateFund        gross_indemnity    16444842
-#> 4 AL    AR                   1998 StateFund        retained_liability 12709100
-#> 5 AL    AR                   1998 StateFund        retained_premium    1430627
-#> 6 AL    AR                   1998 StateFund        retained_indemnity  1507266
-#> # ℹ 6 more variables: data_release_month <dbl>, data_release_year <dbl>,
-#> #   data_release_day <dbl>, data_release_date <date>, fund_name <chr>,
-#> #   report_type <chr>
+#>   state fund_abb reinsurance_year report_geography value_type       dollars data_release_month data_release_year data_release_day data_release_date fund_name
+#>   <chr> <chr>               <int> <chr>            <chr>              <dbl>              <dbl>             <dbl>            <dbl> <date>            <chr>    
+#> 1 AL    AR                   1998 StateFund        gross_liability   6.35e7                  2              2002                9 2002-02-09        Assigned…
+#> 2 AL    AR                   1998 StateFund        gross_premium     7.15e6                  2              2002                9 2002-02-09        Assigned…
+#> 3 AL    AR                   1998 StateFund        gross_indemnity   1.64e7                  2              2002                9 2002-02-09        Assigned…
+#> 4 AL    AR                   1998 StateFund        retained_liabil…  1.27e7                  2              2002                9 2002-02-09        Assigned…
+#> 5 AL    AR                   1998 StateFund        retained_premium  1.43e6                  2              2002                9 2002-02-09        Assigned…
+#> 6 AL    AR                   1998 StateFund        retained_indemn…  1.51e6                  2              2002                9 2002-02-09        Assigned…
+#> # ℹ 1 more variable: report_type <chr>
 
 # pull up the data sets documentation file.
 ?stateSRA
@@ -441,16 +385,14 @@ data(nationalLPRA)
 
 head(nationalLPRA)
 #> # A tibble: 6 × 10
-#>   reinsurance_year report_geography footnote                  value_type dollars
-#>              <dbl> <chr>            <chr>                     <chr>        <dbl>
-#> 1             2014 NationalFund     "Footnote: Amounts shown… gross_lia…  1.04e9
-#> 2             2014 NationalFund     "Footnote: Amounts shown… gross_pre…  2.28e7
-#> 3             2014 NationalFund     "Footnote: Amounts shown… gross_ind…  1.05e7
-#> 4             2014 NationalFund     "Footnote: Amounts shown… retained_…  4.03e8
-#> 5             2014 NationalFund     "Footnote: Amounts shown… retained_…  8.64e6
-#> 6             2014 NationalFund     "Footnote: Amounts shown… retained_…  3.69e6
-#> # ℹ 5 more variables: data_release_month <dbl>, data_release_year <dbl>,
-#> #   data_release_day <dbl>, data_release_date <date>, report_type <chr>
+#>   reinsurance_year report_geography footnote           value_type dollars data_release_month data_release_year data_release_day data_release_date report_type
+#>              <dbl> <chr>            <chr>              <chr>        <dbl>              <dbl>             <dbl>            <dbl> <date>            <chr>      
+#> 1             2014 NationalFund     "Footnote: Amount… gross_lia…  1.04e9                 10              2018                1 2018-10-01        Livestock …
+#> 2             2014 NationalFund     "Footnote: Amount… gross_pre…  2.28e7                 10              2018                1 2018-10-01        Livestock …
+#> 3             2014 NationalFund     "Footnote: Amount… gross_ind…  1.05e7                 10              2018                1 2018-10-01        Livestock …
+#> 4             2014 NationalFund     "Footnote: Amount… retained_…  4.03e8                 10              2018                1 2018-10-01        Livestock …
+#> 5             2014 NationalFund     "Footnote: Amount… retained_…  8.64e6                 10              2018                1 2018-10-01        Livestock …
+#> 6             2014 NationalFund     "Footnote: Amount… retained_…  3.69e6                 10              2018                1 2018-10-01        Livestock …
 
 # pull up the data sets documentation file.
 ?nationalLPRA
@@ -538,6 +480,68 @@ The package provides access to multiple ADM datasets across years 2011-2026. The
 - **Practice (A00510)**: Practice codes and descriptions
 - **State (A00520)**: State codes and names
 - **Type (A00540)**: Crop type codes and descriptions
+
+## Insurance Control Elements (ICE)
+RMA's [Insurance Control Elements (ICE)](https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/) data contains regulatory and administrative information used in the Federal Crop Insurance Program. This data includes legal descriptions, insurance plan details, commodity specifications, county information, and other control elements that define how crop insurance policies are structured and administered.
+
+### Exploring Available Data
+The ICE data repository contains hundreds of files organized by year and dataset type. To help users discover what data is available, the `get_ice_data()` function includes a metadata feature that returns information about available files without downloading them.
+
+
+``` r
+library(rfcip)
+# Explore available ICE files for 2024
+ice_meta_2024 <- get_ice_data(years = 2024, dataset = "metadata")
+head(ice_meta_2024)
+#>   year                                    filename                description size_bytes size_mb       date     time            datetime
+#> 1 2024                        2024_D00001_CCWS.txt                   Ccws.txt     383534    0.37 08/18/2025 05:49 AM 2025-08-18 05:49:00
+#> 2 2024                        2024_D00001_PASS.txt                   Pass.txt     866817    0.83 08/18/2025 05:49 AM 2025-08-18 05:49:00
+#> 3 2024                         2024_D00001_ROE.txt                    Roe.txt      91508    0.09 08/18/2025 05:49 AM 2025-08-18 05:49:00
+#> 4 2024           2024_D00002_ProcessResult_YTD.txt             Process Result        472    0.00 07/31/2023 06:05 AM 2023-07-31 06:05:00
+#> 5 2024 2024_D00003_IceAddedCountyIndicator_YTD.txt Ice Added County Indicator        399    0.00 07/31/2023 06:05 AM 2023-07-31 06:05:00
+#> 6 2024     2024_D00004_IceRelationshipType_YTD.txt      Ice Relationship Type        569    0.00 07/31/2023 06:05 AM 2023-07-31 06:05:00
+#>                                                                                                                               url
+#> 1                        https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/2024/2024_D00001_CCWS.txt
+#> 2                        https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/2024/2024_D00001_PASS.txt
+#> 3                         https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/2024/2024_D00001_ROE.txt
+#> 4           https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/2024/2024_D00002_ProcessResult_YTD.txt
+#> 5 https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/2024/2024_D00003_IceAddedCountyIndicator_YTD.txt
+#> 6     https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/2024/2024_D00004_IceRelationshipType_YTD.txt
+```
+
+The metadata shows file names, descriptions, sizes, and last update dates, making it easy to identify relevant datasets before committing to downloads.
+
+### Accessing ICE Data
+Once you've identified the datasets of interest, you can download them by specifying filter keywords in the `dataset` parameter. The function will download all files matching your criteria and combine them into a single data frame.
+
+
+``` r
+# Get legal description data for 2024
+legal_data <- get_ice_data(years = 2024, dataset = "LegalDescription")
+head(legal_data)
+#> # A tibble: 6 × 9
+#>   record_type_code state_code county_code legal_description township_range frst_divid           released_date last_released_date deleted_date
+#>   <chr>            <chr>      <chr>       <chr>             <chr>          <chr>                <date>        <date>             <lgl>       
+#> 1 D00062           01         001         0001-015N-012E    015N-012E      AL250150N0120E0SN010 2025-08-07    2025-06-12         NA          
+#> 2 D00062           01         001         0001-016N-012E    016N-012E      AL250160N0120E0SN010 2025-08-07    2025-06-12         NA          
+#> 3 D00062           01         001         0001-016N-013E    016N-013E      AL250160N0130E0SN010 2025-08-07    2025-06-12         NA          
+#> 4 D00062           01         001         0001-016N-014E    016N-014E      AL250160N0140E0SN010 2025-08-07    2025-06-12         NA          
+#> 5 D00062           01         001         0001-016N-015E    016N-015E      AL250160N0150E0SN010 2025-08-07    2025-06-12         NA          
+#> 6 D00062           01         001         0001-017N-012E    017N-012E      AL250170N0120E0SN010 2025-08-07    2025-06-12         NA
+```
+
+### Filtering by Dataset Type
+The `dataset` parameter accepts keywords that are matched against filenames. This allows you to download specific types of data:
+
+
+``` r
+# Get insurance plan related data
+plan_data <- get_ice_data(years = 2024, dataset = "InsurancePlan")
+
+# You can also use dataset codes directly
+d00007_data <- get_ice_data(years = 2024, dataset = "D00007")
+```
+
 
 # Caching and Performance
 

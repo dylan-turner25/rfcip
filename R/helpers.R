@@ -616,7 +616,8 @@ clean_fips <- Vectorize(function(fips = NULL, county = NULL, state = NULL) {
 if(getRversion() >= "2.15.1") {
   utils::globalVariables(c(
     "reference_amount_code", "record_category_code", "beta_id",
-    "unit_structure_code", "nme", "lookup_rate", "base_rate"
+    "unit_structure_code", "nme", "lookup_rate", "base_rate",
+    "size_bytes", "time", "filename"
   ))
 }
 
@@ -1369,6 +1370,108 @@ list_data_assets <- function(){
   )
 
   return(df$name)
+}
+
+
+#' Locate the download links for ICE (Insurance Control Elements) data
+#'
+#' @param year The year of the ICE data to locate
+#' @param ice_url The base URL where the ICE FTP site is hosted
+#'
+#' @return A data frame with file information including filename, url, size_bytes, size_mb, date, time, datetime, and description
+#'
+#' @importFrom stringr str_match_all str_extract
+#' @importFrom dplyr mutate filter
+#'
+#' @examples \dontrun{locate_ice_download_links(year = 2024)}
+#' @keywords internal
+locate_ice_download_links <- function(year, ice_url = "https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/") {
+  
+  # Build the URL for the specific year
+  year_url <- paste0(ice_url, year, "/")
+  
+  tryCatch({
+    # Read the webpage
+    html <- suppressWarnings(paste0(readLines(year_url), collapse = "\n"))
+    
+    # Extract the <pre> block where the file info resides
+    pre_block <- stringr::str_extract(html, "<pre>.*?</pre>")
+    
+    if (is.na(pre_block)) {
+      cli::cli_alert_warning("Could not find file listing for year {year}")
+      return(data.frame())
+    }
+    
+    # Extract date, time, size, and filename from each line using regex
+    matches <- stringr::str_match_all(
+      pre_block,
+      "(\\d{2}/\\d{2}/\\d{4})\\s+(\\d{2}:\\d{2}\\s+[AP]M)\\s+(\\d+)\\s+<a href=\"\\./([^\"]*)\""
+    )[[1]]
+    
+    if (nrow(matches) == 0) {
+      cli::cli_alert_warning("No files found in directory for year {year}")
+      return(data.frame())
+    }
+    
+    # Convert to data frame
+    file_info <- data.frame(
+      date = matches[, 2],
+      time = matches[, 3],
+      size_bytes = as.numeric(matches[, 4]),
+      filename = matches[, 5],
+      stringsAsFactors = FALSE
+    )
+    
+    # Remove any non-txt files or directory entries
+    file_info <- file_info[grepl("\\.txt$", file_info$filename, ignore.case = TRUE), ]
+    
+    if (nrow(file_info) == 0) {
+      cli::cli_alert_warning("No .txt files found for year {year}")
+      return(data.frame())
+    }
+    
+    # Add computed columns
+    file_info <- file_info |>
+      dplyr::mutate(
+        year = year,
+        size_mb = round(size_bytes / (1024^2), 2),
+        datetime = as.POSIXct(paste(date, time), format = "%m/%d/%Y %I:%M %p", tz = "EST"),
+        url = paste0(year_url, filename),
+        description = extract_ice_description(filename)
+      )
+    
+    # Reorder columns for better readability
+    file_info <- file_info[, c("year", "filename", "description", "size_bytes", "size_mb", "date", "time", "datetime", "url")]
+    
+    return(file_info)
+    
+  }, error = function(e) {
+    cli::cli_alert_warning("Error accessing ICE data for year {year}: {e$message}")
+    return(data.frame())
+  })
+}
+
+
+#' Extract human-readable description from ICE filename
+#'
+#' @param filename Character filename to parse
+#' @return Character description
+#' @keywords internal
+extract_ice_description <- function(filename) {
+  # Remove year prefix and YTD suffix, extract the middle part
+  desc <- gsub("^\\d{4}_D\\d{5}_", "", filename)
+  desc <- gsub("_YTD\\.txt$", "", desc)
+  
+  # Convert camelCase to readable format
+  desc <- gsub("([a-z])([A-Z])", "\\1 \\2", desc)
+  
+  # Convert underscores to spaces
+  desc <- gsub("_", " ", desc)
+  
+  # Capitalize first letter of each word
+  desc <- tools::toTitleCase(tolower(desc))
+  
+  return(desc)
 }
 
 

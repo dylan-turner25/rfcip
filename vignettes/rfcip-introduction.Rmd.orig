@@ -27,7 +27,7 @@ library(rfcip)
 ```
 
 # Introduction
-This vignette provides an introduction to the `rfcip` package which provides tools for accessing publicly available data related to the Federal Crop Insurance Program (FCIP). The package includes functions for accessing data from RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) reports, [Cause of Loss](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) files, [Price Discovery](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/) application, [Reinsurance Agreements](https://www.rma.usda.gov/tools-reports/reinsurance-reports), [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports, and [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) datasets.
+This vignette provides an introduction to the `rfcip` package which provides tools for accessing publicly available data related to the Federal Crop Insurance Program (FCIP). The package includes functions for accessing data from RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) reports, [Cause of Loss](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) files, [Price Discovery](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/) application, [Reinsurance Agreements](https://www.rma.usda.gov/tools-reports/reinsurance-reports), [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports, [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) datasets, and [Insurance Control Elements (ICE)](https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/) data.
 
 # Supported Data Sources
 
@@ -276,6 +276,42 @@ The package provides access to multiple ADM datasets across years 2011-2026. The
 - **Practice (A00510)**: Practice codes and descriptions
 - **State (A00520)**: State codes and names
 - **Type (A00540)**: Crop type codes and descriptions
+
+## Insurance Control Elements (ICE)
+RMA's [Insurance Control Elements (ICE)](https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/) data contains regulatory and administrative information used in the Federal Crop Insurance Program. This data includes legal descriptions, insurance plan details, commodity specifications, county information, and other control elements that define how crop insurance policies are structured and administered.
+
+### Exploring Available Data
+The ICE data repository contains hundreds of files organized by year and dataset type. To help users discover what data is available, the `get_ice_data()` function includes a metadata feature that returns information about available files without downloading them.
+
+```{r ice-metadata, eval=T}
+library(rfcip)
+# Explore available ICE files for 2024
+ice_meta_2024 <- get_ice_data(years = 2024, dataset = "metadata")
+head(ice_meta_2024)
+```
+
+The metadata shows file names, descriptions, sizes, and last update dates, making it easy to identify relevant datasets before committing to downloads.
+
+### Accessing ICE Data
+Once you've identified the datasets of interest, you can download them by specifying filter keywords in the `dataset` parameter. The function will download all files matching your criteria and combine them into a single data frame.
+
+```{r ice-basic, eval=T}
+# Get legal description data for 2024
+legal_data <- get_ice_data(years = 2024, dataset = "LegalDescription")
+head(legal_data)
+```
+
+### Filtering by Dataset Type
+The `dataset` parameter accepts keywords that are matched against filenames. This allows you to download specific types of data:
+
+```{r ice-filtering, eval=T}
+# Get insurance plan related data
+plan_data <- get_ice_data(years = 2024, dataset = "InsurancePlan")
+
+# You can also use dataset codes directly
+d00007_data <- get_ice_data(years = 2024, dataset = "D00007")
+```
+
 
 # Caching and Performance
 

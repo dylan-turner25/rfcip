@@ -17,7 +17,6 @@ Suggests:
     webmockr (>= 0.8.0),
     mockery,
     writexl,
-    piggyback,
     gh,
     knitr,
     rmarkdown,
@@ -38,8 +37,9 @@ Imports:
     XML,
     tidyr,
     readr,
-    data.table,
-    arrow
+    arrow,
+    piggyback,
+    data.table
 Depends: 
     R (>= 4.1.0)
 LazyData: true
