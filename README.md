@@ -16,6 +16,7 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 [![Lifecycle:
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
 [![codecov](https://codecov.io/gh/dylan-turner25/rfcip/graph/badge.svg?token=F6ZBMNEHYT)](https://codecov.io/gh/dylan-turner25/rfcip)
+[![Coverage Status](https://coveralls.io/repos/github/dylan-turner25/rfcip/badge.svg?branch=main)](https://coveralls.io/github/dylan-turner25/rfcip?branch=main)
 
 # Coverage Report
 
