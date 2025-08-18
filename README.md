@@ -2,9 +2,9 @@ rfcip (R FCIP)
 ================
 
 - [Introduction](#introduction)
+- [Why use the `rcfip` package?](#why-use-the-rcfip-package)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
-- [Why use the `rcfip` package?](#why-use-the-rcfip-package)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -41,6 +41,22 @@ defacto API wrapper.
 **Disclaimer:** This product uses data provided by the USDA, but is not
 endorsed by or affiliated with USDA or the Federal Government.
 
+# Why use the `rcfip` package?
+
+Although the data that the `rfcip` package provides access to is all
+publicly available, it is often scattered across various files,
+interactive portals, or ftp sites and often comes in different file
+formats or arrives in files that are too large to work with in local
+memory. The `rfcip` package provides a set of functions that make it
+easy to access the data without having to think about these
+complexities. The package also makes it easy to update data for existing
+analysis since the provided functions can be easily integrated into a
+reproducible data pipeline for analysis or visualizations. This is
+particularly pertinent to the FCIP’s primary data source, the Summary of
+Business, which is updated weekly. In short, the `rfcip` is a major time
+saver for anyone working with data related to the FCIP and has the added
+benefit of improving data accuracy and reproducibility.
+
 # Installation
 
 `rfcip` can be installed directly from github using
@@ -52,7 +68,8 @@ The `rfcip` package does not require any special setup or configuration.
 Once downloaded, data can be immediately accessed using any of the
 available functions. For example, the following pulls up RMA’s summary
 of business data for corn in 2022. For a comprehensive introduction of
-the `rfcip` package, please see the [getting
+the `rfcip` package, including a description of available data gathering
+functions, please see the [getting
 started](vignettes/rfcip-introduction.md) vignette.
 
 ``` r
@@ -73,19 +90,3 @@ get_sob_data(year = 2022, crop = "corn")
 #> #   organic_certified_subsidy_amount <dbl>,
 #> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>, …
 ```
-
-# Why use the `rcfip` package?
-
-Although the data that the `rfcip` package provides access to is all
-publicly available, it is often scattered across various files,
-interactive portals, or ftp sites and often comes in different file
-formats or arrives in files that are too large to work with in local
-memory. The `rfcip` package provides a set of functions that make it
-easy to access the data without having to think about these
-complexities. The package also makes it easy to update data for existing
-analysis since the provided functions can be easily integrated into a
-reproducible data pipeline for analysis or visualizations. This is
-particularly pertinent to the FCIP’s primary data source, the Summary of
-Business, which is updated weekly. In short, the `rfcip` is a major time
-saver for anyone working with data related to the FCIP and has the added
-benefit of improving data accuracy and reproducibility.

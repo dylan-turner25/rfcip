@@ -4,7 +4,12 @@
 \alias{get_adm_data}
 \title{Get USDA RMA Actuarial Data Master (ADM) data}
 \usage{
-get_adm_data(year = NULL, dataset = "baserate", show_progress = T)
+get_adm_data(
+  year = NULL,
+  dataset = "baserate",
+  show_progress = T,
+  force = FALSE
+)
 }
 \arguments{
 \item{year}{Numeric or vector. The year(s) of ADM data to retrieve. Can be a single year or vector of years. When multiple years are provided, data is downloaded for each year and row-bound into a single data frame. Defaults to NULL.}
@@ -14,6 +19,8 @@ get_adm_data(year = NULL, dataset = "baserate", show_progress = T)
 underscores are automatically handled.}
 
 \item{show_progress}{Logical value indicating whether a progress download bar should be displayed. Defaults to \code{True}.}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 A data.frame containing the requested ADM data.
@@ -47,6 +54,9 @@ combo_2018 <- get_adm_data(year = 2018, dataset = "comborevenuefactor")
 
 # Get baserate data for multiple years
 baserate_multi <- get_adm_data(year = c(2018, 2019, 2020), dataset = "baserate")
+
+# Force fresh download of 2020 premium data
+price_2020_fresh <- get_adm_data(year = 2020, dataset = "price", force = TRUE)
 }
 
 }

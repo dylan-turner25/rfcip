@@ -8,7 +8,8 @@ get_cached_data(
   name,
   repo = "dylan-turner25/rmaADM",
   tag = NULL,
-  show_progress = T
+  show_progress = T,
+  force = FALSE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ get_cached_data(
 \item{tag}{Character. Which release tag to download from (default: latest)}
 
 \item{show_progress}{Logical value indicating whether a progress download bar should be displayed. Defaults to \code{True}.}
+
+\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
 A data.frame containing the loaded data with properly restored factor levels
@@ -35,6 +38,7 @@ This function:
 \item Automatically detects file format (.rds vs .parquet)
 \item Restores factor levels for parquet files using stored metadata
 \item Maintains backward compatibility with existing RDS files
+\item Supports force parameter to bypass cache and download fresh data
 }
 }
 \keyword{internal}

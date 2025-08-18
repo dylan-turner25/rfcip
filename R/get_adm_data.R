@@ -9,6 +9,7 @@
 #'   "subsidy"). Defaults to "baserate". Dataset names are case-insensitive and
 #'   underscores are automatically handled.
 #' @param show_progress Logical value indicating whether a progress download bar should be displayed. Defaults to `True`.
+#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
 #' @return A data.frame containing the requested ADM data.
 #'
 #' @details
@@ -35,6 +36,9 @@
 #'
 #' # Get baserate data for multiple years
 #' baserate_multi <- get_adm_data(year = c(2018, 2019, 2020), dataset = "baserate")
+#'
+#' # Force fresh download of 2020 premium data
+#' price_2020_fresh <- get_adm_data(year = 2020, dataset = "price", force = TRUE)
 #' }
 #'
 #' @seealso
@@ -42,7 +46,7 @@
 #' \code{\link{list_data_assets}} for listing all available data assets
 #'
 #' @export
-get_adm_data <- function(year = NULL, dataset = "baserate", show_progress = T){
+get_adm_data <- function(year = NULL, dataset = "baserate", show_progress = T, force = FALSE){
 
   # Handle vector of years by looping and row-binding
   if(!is.null(year) && length(year) > 1){
@@ -50,7 +54,7 @@ get_adm_data <- function(year = NULL, dataset = "baserate", show_progress = T){
     for(i in seq_along(year)){
       single_year <- year[i]
       file <- locate_data_asset(single_year, dataset)
-      data_list[[i]] <- get_cached_data(file, show_progress = show_progress)
+      data_list[[i]] <- get_cached_data(file, show_progress = show_progress, force = force)
     }
     # Row-bind all data frames
     data <- dplyr::bind_rows(data_list)
@@ -59,6 +63,6 @@ get_adm_data <- function(year = NULL, dataset = "baserate", show_progress = T){
 
   # Original logic for single year or NULL
   file  <- locate_data_asset(year, dataset)
-  data <- get_cached_data(file, show_progress = show_progress)
+  data <- get_cached_data(file, show_progress = show_progress, force = force)
   return(data)
 }

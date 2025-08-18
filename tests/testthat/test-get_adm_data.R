@@ -144,7 +144,7 @@ test_that("get_adm_data handles show_progress parameter", {
   # Test with show_progress = TRUE
   with_mocked_bindings(
     locate_data_asset = function(...) "mock_file.parquet",
-    get_cached_data = function(file, show_progress = TRUE) {
+    get_cached_data = function(file, show_progress = TRUE, force = FALSE) {
       expect_true(show_progress)
       return(mock_data)
     },
@@ -157,7 +157,7 @@ test_that("get_adm_data handles show_progress parameter", {
   # Test with show_progress = FALSE
   with_mocked_bindings(
     locate_data_asset = function(...) "mock_file.parquet",
-    get_cached_data = function(file, show_progress = FALSE) {
+    get_cached_data = function(file, show_progress = FALSE, force = FALSE) {
       expect_false(show_progress)
       return(mock_data)
     },
@@ -222,8 +222,9 @@ test_that("get_adm_data parameter defaults work correctly", {
       expect_equal(dataset, "baserate")
       return("mock_default.parquet")
     },
-    get_cached_data = function(file, show_progress = TRUE) {
+    get_cached_data = function(file, show_progress = TRUE, force = FALSE) {
       expect_true(show_progress)
+      expect_false(force)  # Should default to FALSE
       return(mock_data)
     },
     {
@@ -293,6 +294,108 @@ test_that("get_adm_data handles large number of years", {
       expect_s3_class(result, "data.frame")
       expect_equal(nrow(result), length(years))
       expect_true(all(years %in% result$year))
+    }
+  )
+})
+
+test_that("get_adm_data handles force parameter correctly", {
+  mock_data <- data.frame(
+    year = c(2020),
+    value = c(100),
+    stringsAsFactors = FALSE
+  )
+  
+  # Test that force parameter is passed to get_cached_data
+  with_mocked_bindings(
+    locate_data_asset = function(...) "mock_file.parquet",
+    get_cached_data = function(file, show_progress = TRUE, force = FALSE) {
+      expect_true(force)  # Should receive force = TRUE
+      return(mock_data)
+    },
+    {
+      result <- get_adm_data(year = 2020, dataset = "baserate", force = TRUE)
+      expect_s3_class(result, "data.frame")
+      expect_equal(result, mock_data)
+    }
+  )
+  
+  # Test that force = FALSE is passed correctly
+  with_mocked_bindings(
+    locate_data_asset = function(...) "mock_file.parquet",
+    get_cached_data = function(file, show_progress = TRUE, force = FALSE) {
+      expect_false(force)  # Should receive force = FALSE
+      return(mock_data)
+    },
+    {
+      result <- get_adm_data(year = 2020, dataset = "baserate", force = FALSE)
+      expect_s3_class(result, "data.frame")
+      expect_equal(result, mock_data)
+    }
+  )
+})
+
+test_that("get_adm_data handles force parameter with multiple years", {
+  mock_data_2020 <- data.frame(
+    year = c(2020),
+    value = c(100),
+    stringsAsFactors = FALSE
+  )
+  
+  mock_data_2021 <- data.frame(
+    year = c(2021),
+    value = c(200),
+    stringsAsFactors = FALSE
+  )
+  
+  # Track calls to ensure force is passed for each year
+  call_count <- 0
+  
+  mock_cached_data <- function(file, show_progress = TRUE, force = FALSE) {
+    call_count <<- call_count + 1
+    expect_true(force)  # force should be TRUE for all calls
+    
+    if (grepl("2020", file)) {
+      return(mock_data_2020)
+    } else if (grepl("2021", file)) {
+      return(mock_data_2021)
+    }
+    return(data.frame())
+  }
+  
+  with_mocked_bindings(
+    locate_data_asset = function(year, dataset) paste0("mock_", year, "_", dataset, ".parquet"),
+    get_cached_data = mock_cached_data,
+    {
+      result <- get_adm_data(year = c(2020, 2021), dataset = "baserate", force = TRUE)
+      
+      expect_s3_class(result, "data.frame")
+      expect_equal(nrow(result), 2)
+      expect_equal(call_count, 2)  # Should have been called twice
+      expect_true(2020 %in% result$year)
+      expect_true(2021 %in% result$year)
+    }
+  )
+})
+
+test_that("get_adm_data maintains backward compatibility without force parameter", {
+  mock_data <- data.frame(
+    year = c(2020),
+    value = c(500),
+    stringsAsFactors = FALSE
+  )
+  
+  # Test that omitting force parameter still works (default should be FALSE)
+  with_mocked_bindings(
+    locate_data_asset = function(...) "mock_file.parquet",
+    get_cached_data = function(file, show_progress = TRUE, force = FALSE) {
+      expect_false(force)  # Should default to FALSE
+      return(mock_data)
+    },
+    {
+      # Call without force parameter
+      result <- get_adm_data(year = 2020, dataset = "baserate")
+      expect_s3_class(result, "data.frame")
+      expect_equal(result, mock_data)
     }
   )
 })

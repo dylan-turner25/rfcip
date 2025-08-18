@@ -686,7 +686,7 @@ locate_data_asset <- function(year, dataset){
 #' @param repo Character. GitHub repository in format "owner/repo"
 #' @param tag Character. Which release tag to download from (default: latest)
 #' @param show_progress Logical value indicating whether a progress download bar should be displayed. Defaults to `True`.
-
+#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
 #' @return A data.frame containing the loaded data with properly restored factor levels
 #'
 #' @details
@@ -697,6 +697,7 @@ locate_data_asset <- function(year, dataset){
 #'   \item Automatically detects file format (.rds vs .parquet)
 #'   \item Restores factor levels for parquet files using stored metadata
 #'   \item Maintains backward compatibility with existing RDS files
+#'   \item Supports force parameter to bypass cache and download fresh data
 #' }
 #'
 #' @importFrom arrow read_parquet
@@ -704,24 +705,47 @@ locate_data_asset <- function(year, dataset){
 get_cached_data <- function(name,
                            repo = "dylan-turner25/rmaADM",
                            tag  = NULL,
-                           show_progress = T) {
+                           show_progress = T,
+                           force = FALSE) {
   dest_dir <- tools::R_user_dir("rfcip", which = "cache")
   if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
 
   dest_file <- file.path(dest_dir, name)
 
-  # Download if not cached
-  if (!file.exists(dest_file)) {
+  # Download if not cached or if force=TRUE
+  if (!file.exists(dest_file) || force) {
     if (!requireNamespace("piggyback", quietly = TRUE)) {
       stop("piggyback package needed for downloading cached data. Please install it: install.packages('piggyback')")
     }
-    piggyback::pb_download(
-      file = name,
-      repo = repo,
-      tag  = tag,
-      dest = dest_dir,
-      show_progress = show_progress
-    )
+    
+    success <- FALSE
+    
+    tryCatch({
+      if (force && file.exists(dest_file)) {
+        cli::cli_alert_info("Forcing fresh download for {name}")
+      }
+      
+      piggyback::pb_download(
+        file = name,
+        repo = repo,
+        tag  = tag,
+        dest = dest_dir,
+        show_progress = show_progress
+      )
+      success <- TRUE
+    }, error = function(e) {
+      # If download failed and force=TRUE, try to use cached data
+      if (force && file.exists(dest_file)) {
+        cli::cli_alert_warning("Download failed for {name}, using cached data")
+        success <<- TRUE
+      } else {
+        stop("Failed to download data file '", name, "' and no cached data available: ", e$message)
+      }
+    })
+    
+    if (!success) {
+      stop("Failed to download data file: ", name)
+    }
   }
 
   # Read based on file extension
