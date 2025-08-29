@@ -1636,6 +1636,66 @@ check_file_status <- function(year_dir, dataset_codes, overwrite = FALSE) {
 }
 
 
+#' Align column types between data frames to ensure consistency
+#'
+#' Takes a target data frame and applies its column types to a source data frame.
+#' This ensures type consistency when combining data frames with rbind operations.
+#'
+#' @param source_df Data frame whose column types should be aligned
+#' @param target_df Data frame with canonical column types to match
+#' @return Data frame with aligned column types
+#' @keywords internal
+align_column_types <- function(source_df, target_df) {
+  # Get the canonical column classes from target
+  target_classes <- sapply(target_df, class)
+  
+  # Process each column in source_df
+  for (col_name in names(source_df)) {
+    if (col_name %in% names(target_classes)) {
+      target_class <- target_classes[[col_name]]
+      
+      # Convert source column to match target class
+      if ("Date" %in% target_class && !inherits(source_df[[col_name]], "Date")) {
+        # Convert to Date with robust parsing
+        source_col <- as.character(source_df[[col_name]])
+        # Try different date parsing approaches
+        tryCatch({
+          # First try standard parsing
+          source_df[[col_name]] <- as.Date(source_col)
+        }, error = function(e) {
+          # If standard parsing fails, try YYYYMMDD format (common in ADM data)
+          tryCatch({
+            source_df[[col_name]] <<- as.Date(source_col, format = "%Y%m%d")
+          }, error = function(e2) {
+            # If all else fails, set to NA and warn
+            warning(paste("Could not convert", col_name, "to Date format, setting to NA"))
+            source_df[[col_name]] <<- as.Date(rep(NA, length(source_col)))
+          })
+        })
+      } else if ("numeric" %in% target_class && !is.numeric(source_df[[col_name]])) {
+        # Convert to numeric
+        source_df[[col_name]] <- as.numeric(as.character(source_df[[col_name]]))
+      } else if ("integer" %in% target_class && !is.integer(source_df[[col_name]])) {
+        # Convert to integer
+        source_df[[col_name]] <- as.integer(as.character(source_df[[col_name]]))
+      } else if ("logical" %in% target_class && !is.logical(source_df[[col_name]])) {
+        # Convert to logical
+        source_df[[col_name]] <- as.logical(source_df[[col_name]])
+      } else if ("factor" %in% target_class && !is.factor(source_df[[col_name]])) {
+        # Convert to factor with same levels as target
+        target_levels <- levels(target_df[[col_name]])
+        source_df[[col_name]] <- factor(as.character(source_df[[col_name]]), levels = target_levels)
+      } else if ("character" %in% target_class && !is.character(source_df[[col_name]])) {
+        # Convert to character
+        source_df[[col_name]] <- as.character(source_df[[col_name]])
+      }
+    }
+  }
+  
+  return(source_df)
+}
+
+
 #' Download and process USDA RMA Actuarial Data Master (ADM) files
 #'
 #' Downloads ADM data files for the specified years from the USDA RMA actuarial data master repository,
@@ -1819,14 +1879,17 @@ download_adm <- function(
       if (chunk_count > 0) {
         temp_files <- file.path(temp_dir, paste0("chunk_", seq_len(chunk_count), ".rds"))
 
-        # Initialize with first chunk
+        # Initialize with first chunk to establish canonical column types
         final_dt <- readRDS(temp_files[1])
         file.remove(temp_files[1])
 
-        # Stream remaining chunks
+        # Stream remaining chunks, aligning types to match final_dt
         for (i in 2:length(temp_files)) {
           chunk_dt <- readRDS(temp_files[i])
-          final_dt <- rbind(final_dt, chunk_dt)
+          # Align chunk column types to match final_dt before combining
+          chunk_dt <- align_column_types(chunk_dt, final_dt)
+          # Use rbindlist for more robust combining
+          final_dt <- data.table::rbindlist(list(final_dt, chunk_dt), fill = TRUE)
           rm(chunk_dt)
           file.remove(temp_files[i])
           gc()
