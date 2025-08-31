@@ -704,7 +704,7 @@ locate_data_asset <- function(year, dataset){
 #' @importFrom arrow read_parquet
 #' @keywords internal
 get_cached_data <- function(name,
-                           repo = "dylan-turner25/rmaADM",
+                           repo = "dylan-turner25/rfcip",
                            tag  = NULL,
                            show_progress = T,
                            force = FALSE) {
@@ -874,6 +874,7 @@ clear_rfcip_cache <- function(function_name = NULL, years = NULL, program = NULL
       "get_col_data" = "^col_",
       "get_livestock_data" = "^livestock_",
       "get_price_data" = "^price_",
+      "get_adm_data" = "(YTD|A\\d{5})",
       stop("Unknown function name: ", function_name)
     )
     cached_files <- cached_files[grepl(pattern, basename(cached_files))]

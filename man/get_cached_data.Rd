@@ -6,7 +6,7 @@
 \usage{
 get_cached_data(
   name,
-  repo = "dylan-turner25/rmaADM",
+  repo = "dylan-turner25/rfcip",
   tag = NULL,
   show_progress = T,
   force = FALSE
