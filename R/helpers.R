@@ -1355,7 +1355,7 @@ list_data_assets <- function(){
   release <- gh::gh(
     "/repos/{owner}/{repo}/releases/latest",
     owner = "dylan-turner25",
-    repo  = "rmaADM"
+    repo  = "rfcip"
   )
 
   # 2. Extract the assets list
