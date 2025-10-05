@@ -19,5 +19,6 @@ Character. Unique cache key suitable for filename.
 \description{
 Creates a unique, filesystem-safe cache key from function parameters.
 Handles NULL values, vectors, and complex parameter combinations.
+Uses MD5 hash for long filenames to avoid filesystem limits.
 }
 \keyword{internal}

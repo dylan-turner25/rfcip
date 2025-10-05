@@ -907,6 +907,7 @@ clear_rfcip_cache <- function(function_name = NULL, years = NULL, program = NULL
 #'
 #' Creates a unique, filesystem-safe cache key from function parameters.
 #' Handles NULL values, vectors, and complex parameter combinations.
+#' Uses MD5 hash for long filenames to avoid filesystem limits.
 #'
 #' @param prefix Character. Function-specific prefix (e.g., "sob", "price").
 #' @param params List. Named list of function parameters.
@@ -916,7 +917,7 @@ clear_rfcip_cache <- function(function_name = NULL, years = NULL, program = NULL
 generate_cache_key <- function(prefix, params, suffix) {
   # Remove NULL parameters
   params <- params[!sapply(params, is.null)]
-  
+
   # Convert parameters to strings
   param_strings <- character(0)
   for (name in names(params)) {
@@ -929,22 +930,109 @@ generate_cache_key <- function(prefix, params, suffix) {
     }
     param_strings <- c(param_strings, paste0(name, "_", value_str))
   }
-  
+
   # Create cache key
   if (length(param_strings) > 0) {
     cache_key <- paste0(prefix, "_", paste(param_strings, collapse = "_"))
   } else {
     cache_key <- prefix
   }
-  
+
   # Make filesystem safe
   cache_key <- gsub("[^A-Za-z0-9._-]", "_", cache_key)
   cache_key <- gsub("_{2,}", "_", cache_key)  # Remove multiple underscores
-  
+
+  # Check if filename would be too long (most filesystems have 255 char limit)
+  # Use 200 as safe threshold to account for extension and path
+  full_key_with_ext <- paste0(cache_key, ".", suffix)
+
+  if (nchar(full_key_with_ext) > 200) {
+    # Create MD5 hash of the full parameter string for uniqueness
+    if (!requireNamespace("digest", quietly = TRUE)) {
+      stop("digest package needed for long cache keys. Please install it: install.packages('digest')")
+    }
+
+    # Generate hash from the original cache key (before extension)
+    param_hash <- digest::digest(cache_key, algo = "md5", serialize = FALSE)
+
+    # Create short cache key with prefix and hash
+    short_key <- paste0(prefix, "_", substr(param_hash, 1, 8))
+
+    # Save metadata for this hash so users can inspect what's cached
+    save_cache_key_metadata(short_key, cache_key, params)
+
+    cache_key <- short_key
+  }
+
   # Add extension
   cache_key <- paste0(cache_key, ".", suffix)
-  
+
   return(cache_key)
+}
+
+
+#' Save cache key metadata for hashed filenames
+#'
+#' Stores metadata mapping short hashed cache keys to their original parameters
+#' so users can inspect what data is cached.
+#'
+#' @param short_key Character. The short hashed cache key (without extension).
+#' @param original_key Character. The original long cache key.
+#' @param params List. Named list of original function parameters.
+#' @return Invisibly returns NULL.
+#' @keywords internal
+save_cache_key_metadata <- function(short_key, original_key, params) {
+  dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+  if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+
+  metadata_file <- file.path(dest_dir, "cache_key_metadata.rds")
+
+  # Load existing metadata or create new
+  if (file.exists(metadata_file)) {
+    metadata <- readRDS(metadata_file)
+  } else {
+    metadata <- list()
+  }
+
+  # Add entry for this cache key
+  metadata[[short_key]] <- list(
+    original_key = original_key,
+    params = params,
+    created = Sys.time()
+  )
+
+  # Save updated metadata
+  saveRDS(metadata, metadata_file, compress = TRUE)
+
+  invisible(NULL)
+}
+
+
+#' Get cache key metadata
+#'
+#' Retrieves the original parameters for a hashed cache key.
+#'
+#' @param short_key Character. The short hashed cache key (without extension).
+#' @return List with original_key, params, and created timestamp, or NULL if not found.
+#' @keywords internal
+get_cache_key_metadata <- function(short_key) {
+  dest_dir <- tools::R_user_dir("rfcip", which = "cache")
+  metadata_file <- file.path(dest_dir, "cache_key_metadata.rds")
+
+  if (!file.exists(metadata_file)) {
+    return(NULL)
+  }
+
+  metadata <- readRDS(metadata_file)
+
+  # Remove extension if present
+  short_key <- sub("\\.[^.]+$", "", short_key)
+
+  if (short_key %in% names(metadata)) {
+    return(metadata[[short_key]])
+  }
+
+  return(NULL)
 }
 
 
@@ -1099,8 +1187,9 @@ load_cached_data <- function(cache_file) {
 #' List cached files with information
 #'
 #' Returns information about all cached files in the rfcip cache directory.
+#' For hashed cache keys, includes the original parameters.
 #'
-#' @return Data frame with columns: filename, size_mb, modified, function_type.
+#' @return Data frame with columns: filename, size_mb, modified, function_type, description.
 #' @export
 #' @examples
 #' \dontrun{
@@ -1109,22 +1198,25 @@ load_cached_data <- function(cache_file) {
 #' }
 get_cache_info <- function() {
   dest_dir <- tools::R_user_dir("rfcip", which = "cache")
-  
+
   if (!dir.exists(dest_dir)) {
     message("No cache directory found")
     return(data.frame())
   }
-  
+
   cached_files <- list.files(dest_dir, full.names = TRUE)
-  
+
+  # Exclude metadata file from listing
+  cached_files <- cached_files[!grepl("cache_key_metadata\\.rds$", cached_files)]
+
   if (length(cached_files) == 0) {
     message("No cached files found")
     return(data.frame())
   }
-  
+
   # Get file info
   file_info <- file.info(cached_files)
-  
+
   # Create result data frame
   result <- data.frame(
     filename = basename(cached_files),
@@ -1132,7 +1224,7 @@ get_cache_info <- function() {
     modified = file_info$mtime,
     stringsAsFactors = FALSE
   )
-  
+
   # Add function type based on filename pattern
   result$function_type <- ifelse(grepl("^sob_", result$filename), "get_sob_data",
                         ifelse(grepl("^sobtpu_", result$filename), "get_sob_data (SOBTPU)",
@@ -1140,10 +1232,35 @@ get_cache_info <- function() {
                         ifelse(grepl("^livestock_", result$filename), "get_livestock_data",
                         ifelse(grepl("^price_", result$filename), "get_price_data",
                         "ADM or other")))))
-  
+
+  # Add description column for hashed cache keys
+  result$description <- ""
+  for (i in seq_len(nrow(result))) {
+    # Check if this looks like a hashed key (prefix_8chars.ext)
+    filename_no_ext <- sub("\\.[^.]+$", "", result$filename[i])
+    if (grepl("^[a-z]+_[a-f0-9]{8}$", filename_no_ext)) {
+      # Try to get metadata
+      metadata <- get_cache_key_metadata(filename_no_ext)
+      if (!is.null(metadata)) {
+        # Create readable description from params
+        param_desc <- sapply(names(metadata$params), function(name) {
+          value <- metadata$params[[name]]
+          if (length(value) > 3) {
+            paste0(name, "=", paste(value[1:3], collapse = ","), "...")
+          } else {
+            paste0(name, "=", paste(value, collapse = ","))
+          }
+        })
+        result$description[i] <- paste(param_desc, collapse = "; ")
+      } else {
+        result$description[i] <- "(hashed key, metadata not found)"
+      }
+    }
+  }
+
   # Sort by modification time (most recent first)
   result <- result[order(result$modified, decreasing = TRUE), ]
-  
+
   return(result)
 }
 

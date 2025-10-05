@@ -7,10 +7,11 @@
 get_cache_info()
 }
 \value{
-Data frame with columns: filename, size_mb, modified, function_type.
+Data frame with columns: filename, size_mb, modified, function_type, description.
 }
 \description{
 Returns information about all cached files in the rfcip cache directory.
+For hashed cache keys, includes the original parameters.
 }
 \examples{
 \dontrun{

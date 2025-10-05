@@ -23,7 +23,7 @@ Suggests:
     ggplot2,
     curl (>= 6.4.0)
 Config/testthat/edition: 3
-Imports: 
+Imports:
     janitor,
     memoise,
     readxl,
@@ -39,7 +39,8 @@ Imports:
     readr,
     arrow,
     piggyback,
-    data.table
+    data.table,
+    digest
 Depends: 
     R (>= 4.1.0)
 LazyData: true
