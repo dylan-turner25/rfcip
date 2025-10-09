@@ -51,11 +51,42 @@ get_adm_data <- function(year = NULL, dataset = "baserate", show_progress = T, f
   # Handle vector of years by looping and row-binding
   if(!is.null(year) && length(year) > 1){
     data_list <- list()
+
+    # First pass: load all data and identify column types
     for(i in seq_along(year)){
       single_year <- year[i]
       file <- locate_data_asset(single_year, dataset)
       data_list[[i]] <- get_cached_data(file, show_progress = show_progress, force = force)
     }
+
+    # Determine which columns should be character vs numeric across all years
+    # A column should be character if it's character/factor in ANY year
+    all_col_names <- unique(unlist(lapply(data_list, names)))
+    char_cols <- character(0)
+
+    for(col_name in all_col_names){
+      col_types <- sapply(data_list, function(df){
+        if(col_name %in% names(df)){
+          class(df[[col_name]])[1]
+        } else {
+          NA_character_
+        }
+      })
+      # If any year has this as factor or character, treat as character
+      if(any(col_types %in% c("factor", "character"), na.rm = TRUE)){
+        char_cols <- c(char_cols, col_name)
+      }
+    }
+
+    # Second pass: standardize column types
+    for(i in seq_along(data_list)){
+      for(col in char_cols){
+        if(col %in% names(data_list[[i]])){
+          data_list[[i]][[col]] <- as.character(data_list[[i]][[col]])
+        }
+      }
+    }
+
     # Row-bind all data frames
     data <- dplyr::bind_rows(data_list)
     return(data)
