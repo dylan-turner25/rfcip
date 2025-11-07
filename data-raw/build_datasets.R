@@ -20,6 +20,7 @@ download_adm(
                     "A00810",  # price
                     "A01100", # yield and T-yield
                     "A00400", # agr commodity, 
+                    "A01220", # guarantee adjustment.
 
 
                     # helper datasets
