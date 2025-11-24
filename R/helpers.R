@@ -1,3 +1,79 @@
+# Package environment to cache parquet backend choice
+.rfcip_env <- new.env(parent = emptyenv())
+
+#' Get the active parquet backend
+#'
+#' Detects which parquet package to use. Prefers arrow for performance,
+#' falls back to nanoparquet if arrow is not available.
+#'
+#' @return Character string: "arrow" or "nanoparquet"
+#' @keywords internal
+#' @noRd
+get_parquet_backend <- function() {
+  # Return cached result if available
+  if (exists("parquet_backend", envir = .rfcip_env)) {
+    return(get("parquet_backend", envir = .rfcip_env))
+  }
+
+  # Check for arrow first (preferred for performance)
+  if (requireNamespace("arrow", quietly = TRUE)) {
+    backend <- "arrow"
+  } else {
+    # Fall back to nanoparquet (always available as hard dependency)
+    backend <- "nanoparquet"
+  }
+
+  # Cache the result
+  assign("parquet_backend", backend, envir = .rfcip_env)
+
+  return(backend)
+}
+
+
+#' Read parquet file with available backend
+#'
+#' Wrapper function that uses arrow if available, otherwise nanoparquet.
+#'
+#' @param file Path to parquet file
+#' @param ... Additional arguments passed to read_parquet
+#' @return data.frame
+#' @keywords internal
+#' @noRd
+read_parquet_compat <- function(file, ...) {
+  backend <- get_parquet_backend()
+
+  if (backend == "arrow") {
+    return(arrow::read_parquet(file, ...))
+  } else {
+    return(nanoparquet::read_parquet(file, ...))
+  }
+}
+
+
+#' Write parquet file with available backend
+#'
+#' Wrapper function that uses arrow if available, otherwise nanoparquet.
+#'
+#' @param x data.frame to write
+#' @param sink Path to write parquet file
+#' @param compression Compression method (default "gzip")
+#' @param ... Additional arguments passed to write_parquet
+#' @return NULL (invisibly)
+#' @keywords internal
+#' @noRd
+write_parquet_compat <- function(x, sink, compression = "gzip", ...) {
+  backend <- get_parquet_backend()
+
+  if (backend == "arrow") {
+    arrow::write_parquet(x, sink, compression = compression, ...)
+  } else {
+    nanoparquet::write_parquet(x, sink, compression = compression, ...)
+  }
+
+  invisible(NULL)
+}
+
+
 #' Internal helper to download and verify a ZIP file
 #'
 #' Attempts to download a ZIP archive from a given URL up to a specified number of times,
@@ -701,7 +777,6 @@ locate_data_asset <- function(year, dataset){
 #'   \item Supports force parameter to bypass cache and download fresh data
 #' }
 #'
-#' @importFrom arrow read_parquet
 #' @keywords internal
 get_cached_data <- function(name,
                            repo = "dylan-turner25/rfcip",
@@ -757,7 +832,7 @@ get_cached_data <- function(name,
     data <- readRDS(dest_file)
   } else if (file_ext == "parquet") {
     # New parquet files
-    data <- arrow::read_parquet(dest_file)
+    data <- read_parquet_compat(dest_file)
 
     # Restore factor levels if metadata exists
     data <- restore_factor_levels(data, name)
@@ -1141,13 +1216,9 @@ cache_processed_data <- function(data, cache_key) {
   if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
   
   dest_file <- file.path(dest_dir, cache_key)
-  
+
   # Save as parquet with compression
-  if (!requireNamespace("arrow", quietly = TRUE)) {
-    stop("arrow package needed for parquet caching. Please install it: install.packages('arrow')")
-  }
-  
-  arrow::write_parquet(data, dest_file, compression = "gzip")
+  write_parquet_compat(data, dest_file, compression = "gzip")
   return(dest_file)
 }
 
@@ -1165,12 +1236,9 @@ load_cached_data <- function(cache_file) {
   }
   
   file_ext <- tools::file_ext(cache_file)
-  
+
   if (file_ext == "parquet") {
-    if (!requireNamespace("arrow", quietly = TRUE)) {
-      stop("arrow package needed for parquet loading. Please install it: install.packages('arrow')")
-    }
-    return(arrow::read_parquet(cache_file))
+    return(read_parquet_compat(cache_file))
   } else if (file_ext == "rds") {
     return(readRDS(cache_file))
   } else if (file_ext == "xml") {
@@ -2109,7 +2177,6 @@ is_numeric_convertible <- function(x, col_name = NULL) {
 #'   \item Writes compressed parquet file
 #' }
 #'
-#' @importFrom arrow write_parquet
 #' @importFrom data.table setDT
 #' @export
 compress_adm <- function(df, output_path, metadata_key) {
@@ -2165,7 +2232,7 @@ compress_adm <- function(df, output_path, metadata_key) {
   }
 
   # Write as parquet file with better compression
-  arrow::write_parquet(df, output_path, compression = "gzip")
+  write_parquet_compat(df, output_path, compression = "gzip")
 
   return(df)
 }

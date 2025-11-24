@@ -21,8 +21,20 @@ if(getRversion() >= "2.15.1") {
   get_col_data <<- memoise::memoise(get_col_data)
   get_price_data <<- memoise::memoise(get_price_data)
   get_livestock_data <<- memoise::memoise(get_livestock_data)
-  
+
   # memoise functions from merged rmaADM (with renamed function)
   locate_adm_download_link <<- memoise::memoise(locate_adm_download_link)
-  
+
+}
+
+.onAttach <- function(libname, pkgname) {
+  # Detect and report parquet backend
+  backend <- get_parquet_backend()
+
+  if (backend == "arrow") {
+    packageStartupMessage("rfcip: Using arrow for parquet files")
+  } else {
+    packageStartupMessage("rfcip: Using nanoparquet for parquet files")
+    packageStartupMessage("Tip: Install arrow for lower peak memory usage on large files: install.packages('arrow')")
+  }
 }
