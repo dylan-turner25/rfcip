@@ -33,7 +33,8 @@ download_adm(
                     "A00420", # commodity
                     "A00430", # commodity type
                     "A00540",  # Type"
-                    "A00460" # Insurance plan
+                    "A00460",  # Insurance plan
+                    "A00570"# Insurance options
   ),
   overwrite = FALSE,
   keep_source_files = TRUE
