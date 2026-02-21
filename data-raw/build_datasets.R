@@ -3,6 +3,7 @@ devtools::load_all()
 
 
 # download the ADM files to data-raw
+# download the ADM files to data-raw
 download_adm(
   years = 2011:2026,
   dataset_codes = c("A01010", # base rate
@@ -21,8 +22,8 @@ download_adm(
                     "A01100", # yield and T-yield
                     "A00400", # agr commodity, 
                     "A01220", # guarantee adjustment.
-
-
+                    
+                    
                     # helper datasets
                     "A01090", # unit discount
                     "A00500", # organic practice,
@@ -34,11 +35,14 @@ download_adm(
                     "A00430", # commodity type
                     "A00540",  # Type"
                     "A00460",  # Insurance plan
-                    "A00570"# Insurance options
+                    "A00570",# Insurance options
+                    "A01060", #OptionRate
+                    "A01140" #HipRate
   ),
   overwrite = FALSE,
   keep_source_files = TRUE
 )
+
 
 
 
