@@ -22,3 +22,4 @@ vignettes/*_files/
 cache/
 # Top-level figures (should be in vignettes/figures/)
 /figures/
+.DS_Store

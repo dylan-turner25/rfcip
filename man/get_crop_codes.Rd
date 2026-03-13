@@ -4,7 +4,7 @@
 \alias{get_crop_codes}
 \title{Lookup crop codes for FCIP commodities}
 \source{
-Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
+Data is sourced from the USDA RMA Actuarial Data Master commodity table (A00420).
 }
 \usage{
 get_crop_codes(
@@ -14,14 +14,14 @@ get_crop_codes(
 )
 }
 \arguments{
-\item{year}{A single numeric value, or vector of numeric values, indicating what years of the summary of business should be used to get crop names and crop codes. Defaults to the current year.}
+\item{year}{A single numeric value, or vector of numeric values, indicating what years of the ADM commodity table should be used to get crop names and crop codes. Defaults to the current year.}
 
 \item{crop}{A vector of either character strings with commodity names (not case sensitive) or a vector with numeric crop codes. Can be left NULL to return crop codes for all commodities.}
 
 \item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
-Returns a tibble containing the relevant commodity year, commodity codes and commodity names.
+Returns a data frame containing commodity_year, commodity_code, commodity_name, commodity_abbreviation, and annual_planting_code.
 }
 \description{
 Lookup crop codes for FCIP commodities

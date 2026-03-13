@@ -10,7 +10,7 @@ Description: This package provides a set of tools to access public data on the F
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Suggests:
     testthat (>= 3.0.0),
     vcr (>= 0.6.0),

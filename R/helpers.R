@@ -462,6 +462,105 @@ locate_livestock_links <- function(url = "https://www.rma.usda.gov/tools-reports
 }
 
 
+#' Locate download links for livestock ADM data
+#'
+#' Scrapes the USDA RMA FTP directory listing for livestock actuarial data
+#' master files, extracting filenames, URLs, dataset codes, and file dates.
+#'
+#' @param years Numeric vector. The year(s) to search for.
+#' @param base_url Character. Base URL of the livestock ADM FTP directory.
+#'
+#' @return A data frame with columns: year, dataset_code, filename, url,
+#'   file_date, size_bytes.
+#'
+#' @importFrom stringr str_match_all str_extract
+#' @keywords internal
+#' @noRd
+locate_livestock_adm_links <- function(
+    years,
+    base_url = "https://pubfs-rma.fpac.usda.gov/pub/References/adm_livestock/"
+) {
+
+  all_results <- list()
+
+  for (y in years) {
+    year_url <- paste0(base_url, y, "/")
+
+    html <- tryCatch(
+      suppressWarnings(paste0(readLines(year_url), collapse = "\n")),
+      error = function(e) {
+        cli::cli_alert_warning("Could not access livestock ADM data for year {y}: {e$message}")
+        return(NULL)
+      }
+    )
+
+    if (is.null(html)) next
+
+    # Extract the <pre> block where file info resides
+    pre_block <- stringr::str_extract(html, "<pre>.*?</pre>")
+    if (is.na(pre_block)) next
+
+    # Extract date, time, size, and filename from each line
+    # Same regex pattern as locate_adm_download_link()
+    matches <- stringr::str_match_all(
+      pre_block,
+      "(\\d{2}/\\d{2}/\\d{4})\\s+(\\d{2}:\\d{2}\\s+[AP]M)\\s+(\\d+)\\s+<a href=\"\\./([^\"]*)\""
+    )[[1]]
+
+    if (nrow(matches) == 0) next
+
+    file_info <- data.frame(
+      year = y,
+      filename = matches[, 5],
+      size_bytes = as.numeric(matches[, 4]),
+      stringsAsFactors = FALSE
+    )
+
+    # Filter to only .zip files
+    file_info <- file_info[grepl("\\.zip$", file_info$filename, ignore.case = TRUE), ]
+    if (nrow(file_info) == 0) next
+
+    # Extract dataset code from filename
+    # Two patterns: "A00831" style codes or "ADMLivestockLgm"/"ADMLivestockLrp"
+    file_info$dataset_code <- ifelse(
+      grepl("A\\d{5}", file_info$filename),
+      stringr::str_extract(file_info$filename, "A\\d{5}"),
+      stringr::str_extract(file_info$filename, "ADMLivestock[A-Za-z]+")
+    )
+
+    # Extract file date from filename (the YYYYMMDD portion, not the year prefix)
+    # Filenames like: 2025_A00835_ADMDrpFmmoPricingFactor_Yearly_20250119.zip
+    # We want the date near the end, before .zip
+    file_info$file_date <- as.Date(
+      stringr::str_extract(file_info$filename, "\\d{8}(?=(_Qtr\\d)?\\.zip$)"),
+      format = "%Y%m%d"
+    )
+
+    # Build full URL
+    file_info$url <- paste0(year_url, file_info$filename)
+
+    # Remove rows with missing dataset_code or file_date
+    file_info <- file_info[!is.na(file_info$dataset_code) & !is.na(file_info$file_date), ]
+
+    if (nrow(file_info) > 0) {
+      all_results <- append(all_results, list(file_info))
+    }
+  }
+
+  if (length(all_results) == 0) {
+    return(data.frame(
+      year = integer(0),
+      filename = character(0),
+      size_bytes = numeric(0),
+      dataset_code = character(0),
+      file_date = as.Date(character(0)),
+      url = character(0),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  dplyr::bind_rows(all_results)
+}
 
 
 #' adds & separator to url if necessary
@@ -1422,6 +1521,53 @@ process_livestock_zip <- function(zip_file, program) {
   unlink(temp_dir, recursive = TRUE)
   
   return(data)
+}
+
+
+#' Process a livestock ADM ZIP file
+#'
+#' Extracts and processes data from a livestock ADM ZIP file. Reads the
+#' pipe-delimited text file inside, cleans column names and data types
+#' using the same pipeline as crop ADM data.
+#'
+#' @param zip_file Character. Path to the ZIP file.
+#' @return A data.frame with cleaned livestock ADM data.
+#' @keywords internal
+#' @noRd
+process_livestock_adm_zip <- function(zip_file) {
+  if (!file.exists(zip_file)) {
+    stop("ZIP file not found: ", zip_file)
+  }
+
+  # Create temporary directory for extraction
+  temp_dir <- tempfile()
+  dir.create(temp_dir)
+
+  # Unzip the file
+  utils::unzip(zipfile = zip_file, exdir = temp_dir)
+
+  # Find the .txt file inside
+  txt_files <- list.files(temp_dir, pattern = "\\.txt$", full.names = TRUE)
+  if (length(txt_files) == 0) {
+    unlink(temp_dir, recursive = TRUE)
+    stop("No .txt file found inside ZIP: ", zip_file)
+  }
+
+  # Read pipe-delimited data (all as character for clean_adm_data to handle)
+  data <- data.table::fread(
+    input = txt_files[1],
+    sep = "|",
+    colClasses = "character",
+    showProgress = FALSE
+  )
+
+  # Clean using the same pipeline as crop ADM
+  data <- clean_adm_data(data)
+
+  # Clean up
+  unlink(temp_dir, recursive = TRUE)
+
+  return(as.data.frame(data))
 }
 
 
