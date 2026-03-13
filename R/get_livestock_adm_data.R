@@ -47,7 +47,7 @@ LIVESTOCK_ADM_DATASETS <- list(
 #'
 #' Available datasets and their update frequencies:
 #' \describe{
-#'   \item{drp_draw}{DRP indemnity draw data (quarterly, 2019+)}
+#'   \item{drp_draw}{DRP draw data (quarterly, 2019+)}
 #'   \item{drp_milk_yield}{DRP state-level milk yield data (quarterly, 2019+)}
 #'   \item{drp_daily_price}{DRP expected commodity prices (daily, 2019+)}
 #'   \item{drp_actual_price}{DRP settled/actual prices (quarterly, 2019+)}

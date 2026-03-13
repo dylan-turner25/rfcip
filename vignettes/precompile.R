@@ -25,9 +25,19 @@ precompile_vignette <- function(orig_file, output_file = NULL) {
   message("Precompiling: ", basename(orig_file))
   message("Output: ", basename(rmd_file))
   
-  # Set figure path for this vignette (relative to vignettes directory)
+  # Set figure path for this vignette
+  # fig.path controls BOTH the file write path AND the markdown ![](ref).
+  # The markdown ref must be relative to the .Rmd (which lives in vignettes/),
+  # so fig.path stays as "figures/..." — we use base.dir to steer the actual
+  # file write into vignettes/.
   fig_path <- file.path("figures", gsub("\\.Rmd.*$", "", basename(orig_file)))
-  
+
+  if (basename(getwd()) == "vignettes") {
+    opts_knit$set(base.dir = getwd())
+  } else {
+    opts_knit$set(base.dir = file.path(getwd(), "vignettes"))
+  }
+
   # Configure knitr options
   opts_chunk$set(
     echo = TRUE,

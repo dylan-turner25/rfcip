@@ -27,7 +27,7 @@ library(rfcip)
 ```
 
 # Introduction
-This vignette provides an introduction to the `rfcip` package which provides tools for accessing publicly available data related to the Federal Crop Insurance Program (FCIP). The package includes functions for accessing data from RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) reports, [Cause of Loss](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) files, [Price Discovery](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/) application, [Reinsurance Agreements](https://www.rma.usda.gov/tools-reports/reinsurance-reports), [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports, [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) datasets, and [Insurance Control Elements (ICE)](https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/) data.
+This vignette provides an introduction to the `rfcip` package which provides tools for accessing publicly available data related to the Federal Crop Insurance Program (FCIP). The package includes functions for accessing data from RMA's [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) reports, [Cause of Loss](https://www.rma.usda.gov/tools-reports/summary-business/cause-loss) files, [Price Discovery](https://public-rma.fpac.usda.gov/apps/PriceDiscovery/) application, [Reinsurance Agreements](https://www.rma.usda.gov/tools-reports/reinsurance-reports), [Livestock and Dairy Participation](https://www.rma.usda.gov/tools-reports/summary-of-business/livestock-dairy-participation) reports, [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) datasets, [Livestock ADM](https://pubfs-rma.fpac.usda.gov/pub/References/adm_livestock/) datasets, and [Insurance Control Elements (ICE)](https://pubfs-rma.fpac.usda.gov/pub/References/insurance_control_elements/PASS/) data.
 
 # Supported Data Sources
 
@@ -47,7 +47,7 @@ get_sob_data(year = 2022, crop = "corn")
 ```
 In the above example, the data set was filtered to a single crop, "corn". This potentially raises the question of what other values can be passed to the arguments that control the filters. For arguments with limited options, the options are explained in the functions help file (again, accessed via `help(get_sob_data)`). For some arguments that have many options, there are dedicated functions for pulling up values than can be passed to these arguments. 
 
-The `get_crop_codes` function will return the commodity_code and commodity_name for a supplied year. Note that the `commodity_code` and `commodity_name` can be used interchangeably as values for the `crop` argument in `get_sob_data`. If there is a crop that is suspected to be an option, the `comm` argument can also be specified which will return just that specified crop if it exists. 
+The `get_crop_codes` function will return the commodity codes and names for a supplied year. This function pulls from the ADM Commodity table (A00420) and includes both crop and livestock commodities. Note that the `commodity_code` and `commodity_name` can be used interchangeably as values for the `crop` argument in `get_sob_data`. If there is a crop that is suspected to be an option, the `crop` argument can also be specified which will return just that specified crop if it exists.
 ```{r crop-codes}
 # get all crop codes and crop names for 2024
 get_crop_codes(2024)
@@ -60,6 +60,9 @@ get_crop_codes(2024, crop = "corn")
 # below are other ways to call the same data
 get_crop_codes(2024, crop = "CORN")
 get_crop_codes(2024, crop = 41)
+
+# livestock commodities are also included
+get_crop_codes(2024, crop = "Feeder Cattle")
 ```
 
 
@@ -99,7 +102,7 @@ print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
 
 A unique property of the summary of business data set is that its continuously updated (one per week) as new information is reported to USDA by [approved insurance providers](https://cropinsuranceinamerica.org/who-are-approved-insurance-providers-aips/). This means that analysis using the summary of business can quickly become outdated. One advantage of the the `rfcip` package is that it allows the raw data source to be directly integrated into the analysis. For example, the chart below plots indemnities for each crop year from 2015 up to the current year. The plot will automatically update with the latest data every time the plot is regenerated. Note that functions in `rfcip` are [memoised](https://en.wikipedia.org/wiki/Memoization) for the duration of the R session. This means that calling the same function with the same arguments will return a previously cached data set. In other words, in the below example, the data would not update if the code was run multiple times in the same R session, regaurdless of if the underlying data source changed. 
 
-```{r plot1, include=T, cache=TRUE}
+```{r plot1, include=T, cache=F}
 library(rfcip)
 library(dplyr)
 library(ggplot2)
@@ -217,6 +220,55 @@ drp_data <- get_livestock_data(year = 2020:2022, program = "DRP")
 lgm_data <- get_livestock_data(year = 2020:2022, program = "LGM")
 
 ```
+
+## Livestock Actuarial Data Master (ADM)
+
+RMA's [Livestock ADM](https://pubfs-rma.fpac.usda.gov/pub/References/adm_livestock/) contains the actuarial reference data used for livestock insurance programs, including Dairy Revenue Protection (DRP), Livestock Risk Protection (LRP), and Livestock Gross Margin (LGM). The `get_livestock_adm_data()` function provides access to these datasets for years 2014-2026.
+
+### Available Datasets
+
+- **lrp** (default): Livestock Risk Protection actual ending values (daily, 2014+)
+- **lgm**: Livestock Gross Margin data (daily, 2014+)
+- **drp_daily_price**: DRP expected commodity prices (daily, 2019+)
+- **drp_draw**: DRP draw data (quarterly, 2019+)
+- **drp_milk_yield**: DRP state-level milk yield data (quarterly, 2019+)
+- **drp_actual_price**: DRP settled/actual prices (quarterly, 2019+)
+- **drp_fmmo_pricing**: DRP FMMO pricing factors (yearly, 2019+)
+
+### Basic Usage
+
+```{r livestock-adm-basic, eval=FALSE}
+# Get the latest LRP data for 2025
+lrp_2025 <- get_livestock_adm_data(year = 2025, dataset = "lrp")
+
+# Get LGM data for multiple years
+lgm_data <- get_livestock_adm_data(year = 2020:2025, dataset = "lgm")
+
+# Get DRP FMMO pricing factors
+fmmo <- get_livestock_adm_data(year = 2020:2024, dataset = "drp_fmmo_pricing")
+```
+
+For LRP and LGM datasets, commodity names are automatically merged into the results using the `get_crop_codes()` lookup table, so you'll see `commodity_name` alongside `commodity_code` in the returned data.
+
+### The `date` Parameter
+
+For daily datasets (LRP, LGM, DRP daily price), each file on the server represents a snapshot for a specific date. The `date` parameter controls which file(s) to download:
+
+- **`"latest"`** (default): Download only the most recent file for each year.
+- **`NULL`**: Download all files for the year and combine them into a full time series. This can involve many files and may take a while.
+- **A specific date string**: Download the file with the closest date on or before the specified date.
+
+```{r livestock-adm-date, eval=FALSE}
+# Get only the latest LRP snapshot for 2025 (default)
+lrp_latest <- get_livestock_adm_data(year = 2025, dataset = "lrp")
+
+# Get the full daily time series for 2024
+lrp_all_2024 <- get_livestock_adm_data(year = 2024, dataset = "lrp", date = NULL)
+
+# Get LRP data as of a specific date
+lrp_aug <- get_livestock_adm_data(year = 2025, dataset = "lrp", date = "2025-08-01")
+```
+
 ## Actuarial Data Master (ADM)
 
 RMA's [Actuarial Data Master (ADM)](https://pubfs-rma.fpac.usda.gov/pub/References/actuarial_data_master/) contains the detailed actuarial data that underlies crop insurance rate-making and premium calculations. This data includes base rates, price discovery information, subsidy schedules, and reference information for all crops, counties, and insurance plans offered through the Federal Crop Insurance Program. Although publicly available, the data is difficult to access primarily due to the size of the raw files which overwhelms the memory on typical hardware. The `rfcip` package addresses this by pre-procssing the ADM data into smaller, more manageable data sets and applying compression techniques to reduce to total file size. The `get_adm_data()` function provides access to these processed ADM datasets which are stored as a [GitHub release](https://github.com/dylan-turner25/rfcip/releases).
