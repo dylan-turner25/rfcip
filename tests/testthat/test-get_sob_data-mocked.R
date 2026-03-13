@@ -55,12 +55,18 @@ test_that("get_sob_data handles different parameter combinations", {
   mock_excel <- create_mock_excel_file(mock_data)
   on.exit(unlink(mock_excel))
 
+  # Mock get_insurance_plan_codes to prevent the download.file mock from
+  # intercepting its internal download.file call (which would feed it SOB data
+  # instead of insurance plan data).
+  mock_plan_data <- create_mock_insurance_plan_data()
+
   with_mocked_bindings(
     download.file = function(url, destfile, ...) {
       file.copy(mock_excel, destfile)
       invisible(0)
     },
     cache_processed_data = function(...) invisible(NULL),
+    get_insurance_plan_codes = function(...) mock_plan_data,
     {
       # Test with different parameters - tests URL construction
       expect_no_error({
@@ -187,11 +193,20 @@ test_that("get_sob_data URL construction with different parameters", {
     expect_true(nchar(url1) > 0)
   })
 
-  expect_no_error({
-    url2 <- get_sob_url(year = 2023, state = "IL", insurance_plan = "RP")
-    expect_type(url2, "character")
-    expect_true(nchar(url2) > 0)
-  })
+  # Mock get_insurance_plan_codes since it uses download.file internally
+  # and we want this test to work without network access
+  mock_plan_data <- create_mock_insurance_plan_data()
+
+  with_mocked_bindings(
+    get_insurance_plan_codes = function(...) mock_plan_data,
+    {
+      expect_no_error({
+        url2 <- get_sob_url(year = 2023, state = "IL", insurance_plan = "RP")
+        expect_type(url2, "character")
+        expect_true(nchar(url2) > 0)
+      })
+    }
+  )
 })
 
 test_that("get_sob_data type conversion pipeline works", {
