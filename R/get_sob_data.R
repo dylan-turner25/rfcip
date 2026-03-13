@@ -107,7 +107,7 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
       
           temp_data <- tempfile(fileext = ".xlsx")
       
-          utils::download.file(url, destfile = temp_data, mode = "wb", quiet = T)
+          download.file(url, destfile = temp_data, mode = "wb", quiet = T)
       
           data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data)))
       

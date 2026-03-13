@@ -50,6 +50,17 @@ create_mock_excel_file <- function(data = create_mock_sob_data()) {
   return(temp_file)
 }
 
+# Create a mock download.file function that writes a mock Excel file to destfile.
+# Used to replace utils::download.file in tests since webmockr cannot intercept
+# download.file (it only supports httr/crul/httr2 clients).
+create_sob_download_mock <- function(mock_data = create_mock_sob_data()) {
+  mock_excel <- create_mock_excel_file(mock_data)
+  function(url, destfile, ...) {
+    file.copy(mock_excel, destfile)
+    invisible(0)
+  }
+}
+
 # Setup webmockr for SOB URL patterns
 setup_sob_url_mock <- function(mock_data = create_mock_sob_data(), status_code = 200) {
   if (!requireNamespace("webmockr", quietly = TRUE)) {
