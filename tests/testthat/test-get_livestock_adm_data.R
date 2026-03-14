@@ -9,10 +9,13 @@ test_that("get_livestock_adm_data input validation works", {
   expect_error(get_livestock_adm_data(dataset = c("lrp", "lgm")), "must be a single character string")
 
   # Test invalid date
-  expect_error(get_livestock_adm_data(date = "not-a-date"), "must be NULL.*or a valid date string")
+  expect_error(get_livestock_adm_data(date = "not-a-date"), 'must be "all", "latest", or a valid date string')
 
   # Test date vector
-  expect_error(get_livestock_adm_data(date = c("2024-01-01", "2024-02-01")), "must be NULL.*or a single date string")
+  expect_error(get_livestock_adm_data(date = c("2024-01-01", "2024-02-01")), 'must be "all", "latest", or a single date string')
+
+  # Test NULL date gives helpful error
+  expect_error(get_livestock_adm_data(date = NULL), 'cannot be NULL.*Use "all"')
 })
 
 test_that("get_livestock_adm_data handles default parameters correctly", {
@@ -26,8 +29,8 @@ test_that("get_livestock_adm_data handles default parameters correctly", {
   # Test default dataset is "lrp"
   expect_equal(formals_list$dataset, "lrp")
 
-  # Test default date is "latest"
-  expect_equal(formals_list$date, "latest")
+  # Test default date is "all"
+  expect_equal(formals_list$date, "all")
 
   # Test default force is FALSE
   expect_equal(formals_list$force, FALSE)

@@ -29,9 +29,9 @@ LIVESTOCK_ADM_DATASETS <- list(
 #'   \code{"lrp"}. Defaults to \code{"lrp"}.
 #' @param date Controls which file version(s) to download for each year:
 #'   \itemize{
-#'     \item \code{"latest"} (default): Download only the most recent file per year.
-#'     \item \code{NULL}: Download ALL files for the year and combine them
+#'     \item \code{"all"} (default): Download ALL files for the year and combine them
 #'       (full time series for daily datasets).
+#'     \item \code{"latest"}: Download only the most recent file per year.
 #'     \item A date string (e.g., \code{"2024-03-01"}): Download the file with the
 #'       closest date on or before the specified date.
 #'   }
@@ -57,8 +57,8 @@ LIVESTOCK_ADM_DATASETS <- list(
 #' }
 #'
 #' For daily datasets, each file is a snapshot for a specific date. Using
-#' \code{date = NULL} downloads all files and combines them into a full time
-#' series, which may be large.
+#' \code{date = "all"} (the default) downloads all files and combines them into
+#' a full time series, which may be large.
 #'
 #' @examples
 #' \dontrun{
@@ -68,8 +68,8 @@ LIVESTOCK_ADM_DATASETS <- list(
 #' # Get DRP FMMO pricing factors for 2020-2024
 #' fmmo <- get_livestock_adm_data(year = 2020:2024, dataset = "drp_fmmo_pricing")
 #'
-#' # Get full daily price time series for 2024
-#' daily_prices <- get_livestock_adm_data(year = 2024, dataset = "drp_daily_price", date = NULL)
+#' # Get full daily price time series for 2024 (this is also the default)
+#' daily_prices <- get_livestock_adm_data(year = 2024, dataset = "drp_daily_price")
 #'
 #' # Get LRP data as of a specific date
 #' lrp_aug <- get_livestock_adm_data(year = 2025, dataset = "lrp", date = "2025-08-01")
@@ -79,7 +79,7 @@ LIVESTOCK_ADM_DATASETS <- list(
 get_livestock_adm_data <- function(
     year = as.numeric(format(Sys.Date(), "%Y")),
     dataset = "lrp",
-    date = "latest",
+    date = "all",
     force = FALSE
 ) {
 
@@ -98,24 +98,29 @@ get_livestock_adm_data <- function(
   }
 
   # Validate date parameter
+  if (is.null(date)) {
+    stop(
+      '`date` cannot be NULL. Use "all" to download all files, ',
+      '"latest" for only the most recent file, or a date string (e.g., "2024-03-01").'
+    )
+  }
+  if (!is.character(date) || length(date) != 1) {
+    stop('`date` must be "all", "latest", or a single date string (e.g., "2024-03-01").')
+  }
+
   target_date <- NULL
-  if (!is.null(date)) {
-    if (!is.character(date) || length(date) != 1) {
-      stop("`date` must be NULL, \"latest\", or a single date string (e.g., \"2024-03-01\").")
-    }
-    if (date != "latest") {
-      target_date <- tryCatch(
-        as.Date(date),
-        error = function(e) stop("`date` must be NULL, \"latest\", or a valid date string. Got: '", date, "'")
-      )
-      if (is.na(target_date)) {
-        stop("`date` must be NULL, \"latest\", or a valid date string. Got: '", date, "'")
-      }
+  if (!date %in% c("all", "latest")) {
+    target_date <- tryCatch(
+      as.Date(date),
+      error = function(e) stop('`date` must be "all", "latest", or a valid date string. Got: \'', date, "'")
+    )
+    if (is.na(target_date)) {
+      stop('`date` must be "all", "latest", or a valid date string. Got: \'', date, "'")
     }
   }
 
   dataset_code <- LIVESTOCK_ADM_DATASETS[[dataset]]
-  date_mode <- if (is.null(date)) "all" else if (date == "latest") "latest" else "specific"
+  date_mode <- if (date == "all") "all" else if (date == "latest") "latest" else "specific"
 
   # --- Scrape FTP listing ---
   cli::cli_alert_info("Locating livestock ADM download links.")

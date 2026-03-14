@@ -7,7 +7,7 @@
 get_livestock_adm_data(
   year = as.numeric(format(Sys.Date(), "\%Y")),
   dataset = "lrp",
-  date = "latest",
+  date = "all",
   force = FALSE
 )
 }
@@ -22,9 +22,9 @@ get_livestock_adm_data(
 
 \item{date}{Controls which file version(s) to download for each year:
 \itemize{
-\item \code{"latest"} (default): Download only the most recent file per year.
-\item \code{NULL}: Download ALL files for the year and combine them
+\item \code{"all"} (default): Download ALL files for the year and combine them
 (full time series for daily datasets).
+\item \code{"latest"}: Download only the most recent file per year.
 \item A date string (e.g., \code{"2024-03-01"}): Download the file with the
 closest date on or before the specified date.
 }}
@@ -58,8 +58,8 @@ Available datasets and their update frequencies:
 }
 
 For daily datasets, each file is a snapshot for a specific date. Using
-\code{date = NULL} downloads all files and combines them into a full time
-series, which may be large.
+\code{date = "all"} (the default) downloads all files and combines them into
+a full time series, which may be large.
 }
 \examples{
 \dontrun{
@@ -69,8 +69,8 @@ lrp_2025 <- get_livestock_adm_data(year = 2025, dataset = "lrp")
 # Get DRP FMMO pricing factors for 2020-2024
 fmmo <- get_livestock_adm_data(year = 2020:2024, dataset = "drp_fmmo_pricing")
 
-# Get full daily price time series for 2024
-daily_prices <- get_livestock_adm_data(year = 2024, dataset = "drp_daily_price", date = NULL)
+# Get full daily price time series for 2024 (this is also the default)
+daily_prices <- get_livestock_adm_data(year = 2024, dataset = "drp_daily_price")
 
 # Get LRP data as of a specific date
 lrp_aug <- get_livestock_adm_data(year = 2025, dataset = "lrp", date = "2025-08-01")

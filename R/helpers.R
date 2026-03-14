@@ -2495,6 +2495,17 @@ clean_adm_data <- function(df){
   # enforce data types
   df <- suppressMessages(readr::type_convert(df))
 
+  # Force code columns to remain character (they may have been
+  # incorrectly converted to numeric by type_convert)
+  code_patterns <- c("_code$", "_id$", "class_code", "sub_class")
+  for (col in names(df)) {
+    if (any(grepl(paste(code_patterns, collapse = "|"), col, ignore.case = TRUE))) {
+      if (!is.character(df[[col]])) {
+        df[[col]] <- as.character(df[[col]])
+      }
+    }
+  }
+
   # identify date
   date_cols <- grep("date", names(df), value = TRUE)
 
