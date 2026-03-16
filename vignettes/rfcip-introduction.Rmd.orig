@@ -263,7 +263,7 @@ For daily datasets (LRP, LGM, DRP daily price), each file on the server represen
 lrp_latest <- get_livestock_adm_data(year = 2025, dataset = "lrp")
 
 # Get the full daily time series for 2024
-lrp_all_2024 <- get_livestock_adm_data(year = 2024, dataset = "lrp", date = NULL)
+lrp_all_2024 <- get_livestock_adm_data(year = 2024, dataset = "lrp", date = "all")
 
 # Get LRP data as of a specific date
 lrp_aug <- get_livestock_adm_data(year = 2025, dataset = "lrp", date = "2025-08-01")
