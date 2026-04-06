@@ -592,6 +592,7 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
   # clean crop entry
   if (!is.null(crop)) {
     crop <- data.frame(get_crop_codes(crop = crop))[, "commodity_code"]
+    crop <- sprintf("%04d", as.numeric(crop))
   }
 
   # clean insurance plan entry

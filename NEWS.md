@@ -1,6 +1,12 @@
 # NEWS
 
-## rfcip 1.0.1 (development version)
+## rfcip 1.0.2 (2026-04-06)
+
+### BUG FIXES
+
+* Fixed HTTP 500 error when using `get_sob_data()` with the `crop` parameter. The RMA server now requires zero-padded 4-digit commodity codes (e.g., `0041` instead of `41`).
+
+## rfcip 1.0.1
 
 ### BUG FIXES
 
