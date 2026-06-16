@@ -18,11 +18,19 @@ test_that("valid_state returns expected output",{
 })
 
 test_that("get_sob_url also returns state when group_by county is selected", {
-  expect_equal(grepl("ST=17",get_sob_url(year = 2023, 
-                                         crop = "corn",
-                                         insurance_plan = 1,
-                                         state = "IL", 
-                                         group_by = "county")), TRUE)
+  # Mock the two lookups so this URL-construction test does not hit RMA's servers
+  # (get_crop_codes uses httr; get_insurance_plan_codes uses download.file).
+  with_mocked_bindings(
+    get_crop_codes = function(...) data.frame(commodity_code = "0041", stringsAsFactors = FALSE),
+    get_insurance_plan_codes = function(...) data.frame(insurance_plan_code = "1", stringsAsFactors = FALSE),
+    {
+      expect_equal(grepl("ST=17", get_sob_url(year = 2023,
+                                              crop = "corn",
+                                              insurance_plan = 1,
+                                              state = "IL",
+                                              group_by = "county")), TRUE)
+    }
+  )
 })
 
 test_that("include_and works correctly", {

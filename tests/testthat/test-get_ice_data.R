@@ -3,11 +3,11 @@ test_that("get_ice_data returns metadata when requested", {
   skip_if_not(curl::has_internet(), "No internet connection")
   
   # Test metadata functionality
-  result <- get_ice_data(years = 2024, dataset = "metadata")
-  
+  result <- skip_if_rma_unreachable(get_ice_data(years = 2024, dataset = "metadata"))
+
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
-  
+
   # Check expected columns are present
   expected_cols <- c("year", "filename", "description", "size_bytes", "size_mb", "date", "time", "datetime", "url")
   expect_true(all(expected_cols %in% names(result)))
@@ -24,11 +24,11 @@ test_that("get_ice_data handles multiple years for metadata", {
   skip_if_not(curl::has_internet(), "No internet connection")
   
   # Test with multiple years
-  result <- get_ice_data(years = c(2023, 2024), dataset = "metadata")
-  
+  result <- skip_if_rma_unreachable(get_ice_data(years = c(2023, 2024), dataset = "metadata"))
+
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
-  
+
   # Should have data for both years
   years_present <- unique(result$year)
   expect_true(2023 %in% years_present)
@@ -56,11 +56,11 @@ test_that("locate_ice_download_links works correctly", {
   skip_if_not(curl::has_internet(), "No internet connection")
   
   # Test the helper function directly
-  result <- rfcip:::locate_ice_download_links(year = 2024)
-  
+  result <- skip_if_rma_unreachable(rfcip:::locate_ice_download_links(year = 2024))
+
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
-  
+
   # Check expected columns
   expected_cols <- c("year", "filename", "description", "size_bytes", "size_mb", "date", "time", "datetime", "url")
   expect_true(all(expected_cols %in% names(result)))

@@ -61,6 +61,42 @@ create_sob_download_mock <- function(mock_data = create_mock_sob_data()) {
   }
 }
 
+# download.file mock that writes an insurance-plan-codes Excel fixture to destfile.
+# get_insurance_plan_codes() uses download.file (which webmockr cannot intercept),
+# so these tests must replace it directly with with_mocked_bindings().
+create_insurance_plan_download_mock <- function(mock_data = create_mock_insurance_plan_data()) {
+  mock_excel <- create_mock_excel_file(mock_data)
+  function(url, destfile, ...) {
+    file.copy(mock_excel, destfile, overwrite = TRUE)
+    invisible(0)
+  }
+}
+
+# cache_raw_data() shim for offline tests. The real function copies the downloaded
+# file into the user cache and the caller then unlinks the original temp file, so
+# the shim returns a fresh surviving copy rather than the soon-to-be-deleted input.
+cache_raw_data_passthrough <- function(data, ...) {
+  p <- tempfile(fileext = ".xlsx")
+  file.copy(data, p, overwrite = TRUE)
+  p
+}
+
+# Run a live RMA fetch but skip the test (rather than fail) when the endpoint is
+# unreachable or returns nothing. RMA's public servers occasionally throttle or
+# block CI runners (notably Windows), which is environmental, not a code defect.
+skip_if_rma_unreachable <- function(expr) {
+  res <- tryCatch(
+    force(expr),
+    error = function(e) {
+      testthat::skip(paste("RMA endpoint unreachable:", conditionMessage(e)))
+    }
+  )
+  if (is.null(res) || (is.data.frame(res) && nrow(res) == 0)) {
+    testthat::skip("RMA endpoint returned no data")
+  }
+  res
+}
+
 # Setup webmockr for SOB URL patterns
 setup_sob_url_mock <- function(mock_data = create_mock_sob_data(), status_code = 200) {
   if (!requireNamespace("webmockr", quietly = TRUE)) {

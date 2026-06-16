@@ -65,7 +65,7 @@ test_that("locate_livestock_adm_links returns valid structure", {
   skip_on_cran()
   skip_if_offline()
 
-  links <- locate_livestock_adm_links(years = 2025)
+  links <- skip_if_rma_unreachable(locate_livestock_adm_links(years = 2025))
   expect_s3_class(links, "data.frame")
   expect_true(nrow(links) > 0)
   expect_true(all(c("year", "dataset_code", "url", "file_date", "filename", "size_bytes")
@@ -88,7 +88,7 @@ test_that("locate_livestock_adm_links handles early years (2014)", {
   skip_on_cran()
   skip_if_offline()
 
-  links <- locate_livestock_adm_links(years = 2014)
+  links <- skip_if_rma_unreachable(locate_livestock_adm_links(years = 2014))
   expect_s3_class(links, "data.frame")
   expect_true(nrow(links) > 0)
 
