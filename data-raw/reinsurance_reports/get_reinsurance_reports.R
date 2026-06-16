@@ -283,9 +283,17 @@ convert_fund_types <- function(df, abb_col, name_col) {
 
 # download the data -------------------------------------
 
+# create the output subdirectories the download function saves into (the
+# data-raw tree is gitignored, so these do not exist on a fresh clone). Without
+# them, saveRDS() throws and is silently swallowed by tryCatch, yielding empty
+# datasets.
+for (d in c("standard/NationalFund", "standard/StateFund", "livestock")) {
+  dir.create(file.path("data-raw/reinsurance_reports", d), recursive = TRUE, showWarnings = FALSE)
+}
+
 # download and save national reinsurance reports for standard reinsurance agreement
-mapply(FUN = download_reinsurance_reports, 
-       year = 1998:as.numeric(format(Sys.Date(),"%Y")), 
+mapply(FUN = download_reinsurance_reports,
+       year = 1998:as.numeric(format(Sys.Date(),"%Y")),
        MoreArgs = list(geography = "national", type = "standard"))
 
 # download and save state reinsurance reports for standard reinsurance agreement
@@ -296,18 +304,17 @@ mapply(FUN = download_reinsurance_reports,
 download_reinsurance_reports(2020, geography = "state", type = "standard")
 # download and save national reinsurance reports for livestock reinsurance agreement
 
-# links for the livestock reinsurance report excel files. Must be periodically updated if new data is available (typically once per year).
-# Automatically web scraping the most recent links would be a good feature upgrade later. 
-livestock_links <- list("2014" = "https://www.rma.usda.gov/sites/default/files/2024-06/Livestock%20Reinsurance%20Report_2014-xls.xls",
-                        "2015" = "https://www.rma.usda.gov/sites/default/files/2024-06/Livestock%20Reinsurance%20Report_2015-xls.xls",
-                        "2016" = "https://www.rma.usda.gov/sites/default/files/2024-06/Livestock%20Reinsurance%20Report_2016-xls.xls",
-                        "2017" = "https://www.rma.usda.gov/sites/default/files/2024-06/Livestock%20Reinsurance%20Report_2017-xls.xls",
-                        "2018" = "https://www.rma.usda.gov/sites/default/files/2024-06/Livestock%20Reinsurance%20Report_2018-xls.xlsx",
-                        "2019" = "https://www.rma.usda.gov/sites/default/files/2024-06/Livestock%20Reinsurance%20Report_2019-xls.xls",
-                        "2020" = "https://www.rma.usda.gov/sites/default/files/2024-08/Livestock%20Reinsurance%20Report_2020.xls",
-                        "2021" = "https://www.rma.usda.gov/sites/default/files/2025-03/Livestock%20Reinsurance%20Report_2021.xls",
-                        "2022" = "https://www.rma.usda.gov/sites/default/files/2025-02/Livestock%20Reinsurance%20Report_2022.xls",
-                        "2023" = "https://www.rma.usda.gov/sites/default/files/2025-02/Livestock%20Reinsurance%20Report_2023.xls")
+# links for the livestock reinsurance report excel files. RMA publishes these in
+# a listable directory, so scrape the index to build the year -> url map
+# automatically (covers 2014 to the most recent year, no manual updates needed).
+lpra_dir <- "https://pubfs-rma.fpac.usda.gov/pub/Web_Data_Files/Reinsurance_Reports/livestock_price_reinsurance_agreement_reports/"
+lpra_index <- paste(readLines(lpra_dir, warn = FALSE), collapse = "\n")
+lpra_files <- unique(unlist(regmatches(
+  lpra_index,
+  gregexpr("Livestock_Reinsurance_Report_[0-9]{4}\\.xlsx?", lpra_index)
+)))
+lpra_years <- sub(".*_([0-9]{4})\\.xlsx?$", "\\1", lpra_files)
+livestock_links <- as.list(stats::setNames(paste0(lpra_dir, lpra_files), lpra_years))
 
 # apply the download function to the livestock links
 mapply(FUN = download_reinsurance_reports, 
