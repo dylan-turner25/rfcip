@@ -1,0 +1,5 @@
+# Manually curated AIP roster for years RMA PASS does not cover (pre-2011).
+# Source: https://pubfs-rma.fpac.usda.gov/pub/Miscellaneous_Files/ (Policy Issuing Companies / AIP zips).
+# One row per provider per year. aip_code is the stable 2-char code; aip_name is the legal underwriting entity name.
+# Rows added here are merged into get_ice_data(dataset = "IceAip") output for the requested years.
+reinsurance_year,aip_code,aip_name

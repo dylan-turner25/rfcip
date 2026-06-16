@@ -21,7 +21,9 @@ When multiple years are provided, data is downloaded for each year and row-bound
 specific ICE datasets (e.g., "LegalDescription", "InsurancePlan"). Case-insensitive matching.
 Must match exactly one file - multiple matches will throw an error since different ICE
 datasets have incompatible column structures. Use get_ice_data(dataset = "metadata")
-to explore available files first.}
+to explore available files first. When dataset = "IceAip" (the Approved Insurance
+Providers roster), the result is returned as a cleaned, code-keyed panel rather than the
+raw file (see Details).}
 
 \item{ice_url}{Character. Base URL for the ICE repository. Defaults to the public USDA RMA FTP URL.}
 
@@ -51,6 +53,20 @@ This function serves as the main interface for accessing ICE data. It:
 
 ICE files contain insurance control elements such as legal descriptions, insurance plan details,
 commodity information, and other regulatory data used in the Federal Crop Insurance Program.
+
+\strong{Approved Insurance Providers (AIP) panel.} When \code{dataset = "IceAip"}, the function
+returns a tidy historical panel of Approved Insurance Providers with columns
+\code{reinsurance_year}, \code{aip_code}, and \code{aip_name}, keyed on the stable two-character
+\code{aip_code}. The raw roster is cleaned by:
+\itemize{
+\item dropping the \code{AA} placeholder code and any "Test" provider names,
+\item dropping mid-year exits (rows with a non-blank deleted date).
+}
+RMA PASS only covers reinsurance years 2011 onward. Earlier years are supplied from a curated,
+hand-maintained template shipped with the package (\code{inst/extdata/aip_pre2011.csv}); any rows
+it contains for the requested years are merged into the result. Where a year/code pair is present
+in both sources, the PASS data takes precedence. After cleaning, the 2025 roster contains exactly
+12 providers (codes CM, CP, EF, FA, FH, GA, HU, NA, PL, PS, RH, WN).
 }
 \examples{
 \dontrun{
@@ -65,6 +81,9 @@ plan_data <- get_ice_data(years = c(2023, 2024), dataset = "InsurancePlan")
 
 # Force fresh download of 2024 data
 fresh_data <- get_ice_data(years = 2024, dataset = "LegalDescription", force = TRUE)
+
+# Get the Approved Insurance Providers (AIP) panel across all available years
+aips <- get_ice_data(years = 2011:2027, dataset = "IceAip")
 }
 
 }

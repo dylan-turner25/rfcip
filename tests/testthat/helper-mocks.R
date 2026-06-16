@@ -403,11 +403,66 @@ setup_insurance_plan_codes_url_mock_error <- function(status_code = 500, error_m
   if (!requireNamespace("webmockr", quietly = TRUE)) {
     skip("webmockr not available")
   }
-  
+
   stub <- webmockr::stub_request("get", "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel")
   stub <- webmockr::wi_th(stub, query = list(.pattern = TRUE))
   webmockr::to_return(stub,
     status = status_code,
     body = error_message
   )
+}
+
+# Create a realistic pipe-delimited AIP (IceAip) roster file mirroring the RMA
+# PASS file. Includes the AA "Test" placeholder, the valid "NA" code (NAU
+# Country - which naive parsers coerce to a missing value), and a deleted
+# (mid-year exit) row that must be dropped during cleaning.
+create_mock_aip_file <- function(year = 2025) {
+  header <- "Reinsurance Year|Record Type Code|AIP Code|AIP Name|Released Date|Last Released Date|Deleted Date"
+  providers <- list(
+    c("AA", "Test Insurance Provider", ""),
+    c("CM", "Country Mutual Insurance Company", ""),
+    c("CP", "Clear Blue Insurance Company", ""),
+    c("EF", "Rural Community Insurance Company", ""),
+    c("FA", "American Agricultural Insurance Company", ""),
+    c("FH", "Farmers Mutual Hail Insurance Company of Iowa", ""),
+    c("GA", "Great American Insurance Company", ""),
+    c("HU", "Hudson Insurance Company", ""),
+    c("NA", "NAU Country Insurance Company", ""),
+    c("PL", "Producers Agriculture Insurance Company", ""),
+    c("PS", "Palomar Specialty Insurance Company", ""),
+    c("RH", "Ace American Insurance Company", ""),
+    c("WN", "American Agri-Business Insurance Company", ""),
+    c("ZZ", "Exited Provider Company", "20260601")  # deleted mid-year, must drop
+  )
+  rows <- vapply(providers, function(p) {
+    paste(year, "D00100", p[1], p[2], "20260415", "20260224", p[3], sep = "|")
+  }, character(1))
+
+  temp_file <- tempfile(fileext = ".txt")
+  writeLines(c(header, rows), temp_file)
+  temp_file
+}
+
+# Mock locate_ice_download_links() result pointing at the AIP file
+create_mock_aip_links <- function(year = 2025) {
+  data.frame(
+    year = year,
+    filename = paste0(year, "_D00100_IceAip_YTD.txt"),
+    description = "Ice Aip",
+    size_bytes = 1000,
+    size_mb = 0.001,
+    date = "01/01/2026",
+    time = "12:00 PM",
+    datetime = NA,
+    url = paste0("https://example.test/", year, "_D00100_IceAip_YTD.txt"),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Mock utils::download.file that copies a prepared fixture to destfile
+create_aip_download_mock <- function(fixture_file) {
+  function(url, destfile, ...) {
+    file.copy(fixture_file, destfile, overwrite = TRUE)
+    invisible(0)
+  }
 }
