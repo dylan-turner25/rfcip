@@ -166,9 +166,12 @@ test_that("load_aip_pre2011 reads, filters, and handles missing/blank files", {
   expect_equal(nrow(res_missing), 0)
   expect_equal(names(res_missing), c("reinsurance_year", "aip_code", "aip_name"))
 
-  # Shipped blank template -> empty
-  res_blank <- rfcip:::load_aip_pre2011(2008)
-  expect_equal(nrow(res_blank), 0)
+  # Shipped curated roster -> covers 2003-2010, empty outside that range
+  res_shipped <- rfcip:::load_aip_pre2011(2008)
+  expect_true(nrow(res_shipped) > 0)
+  expect_equal(names(res_shipped), c("reinsurance_year", "aip_code", "aip_name"))
+  expect_true("NA" %in% res_shipped$aip_code)  # NAU Country literal code preserved
+  expect_equal(nrow(rfcip:::load_aip_pre2011(2002)), 0)  # uncovered year
 })
 
 test_that("get_aip_panel merges curated rows with PASS precedence and dedups", {

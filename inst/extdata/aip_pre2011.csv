@@ -3,3 +3,134 @@
 # One row per provider per year. aip_code is the stable 2-char code; aip_name is the legal underwriting entity name.
 # Rows added here are merged into get_ice_data(dataset = "IceAip") output for the requested years.
 reinsurance_year,aip_code,aip_name
+2003,BH,Farmers Alliance Mutual Insurance Company
+2003,CM,Country Mutual Insurance Company
+2003,CR,Fireman's Fund Insurance Company
+2003,EF,Rural Community Insurance Company
+2003,FA,American Agricultural Insurance Company
+2003,FH,Farmers Mutual Hail Insurance of Iowa
+2003,FI,Farm Bureau Mutual Insurance Company
+2003,FN,Farm Bureau Insurance Company of Nebraska
+2003,GA,Great American Insurance Company
+2003,GI,"XL Reinsurance America, Inc."
+2003,HF,Hartford Fire Insurance Company
+2003,NI,Alliance Insurance Company
+2003,PL,Producers Lloyds Insurance Company
+2003,RH,Ace Property and Casualty Insurance Company
+2003,RI,American Growers
+2003,WN,Western National Mutual Insurance Company
+2003,ZC,ZC Insurance Company
+2003,NA,NAU Country Insurance Company
+2004,CM,Country Mutual Insurance Company
+2004,EF,Rural Community Insurance Company
+2004,FA,American Agricultural Insurance Company
+2004,FH,Farmers Mutual Hail Insurance of Iowa
+2004,FI,Farm Bureau Mutual Insurance Company
+2004,GA,Great American Insurance Company
+2004,GI,"XL Reinsurance America, Inc."
+2004,HF,The Hartford Fire Insurance Company
+2004,NI,Farmers Alliance Insurance Company
+2004,PL,Producers Lloyds Insurance Company
+2004,RH,Ace Property and Casualty Insurance Company
+2004,WN,American Agri-Business Insurance Company
+2004,NA,NAU Country Insurance Company
+2005,AU,Austin Mutual Insurance Company
+2005,CM,Country Mutual Insurance Company
+2005,EF,Rural Community Insurance Company
+2005,FA,American Agricultural Insurance Company
+2005,FH,Farmers Mutual Hail Insurance of Iowa
+2005,FI,Farm Bureau Mutual Insurance Company
+2005,GA,Great American Insurance Company
+2005,GI,"XL Reinsurance America, Inc."
+2005,HF,The Hartford Fire Insurance Company
+2005,NI,Farmers Alliance Insurance Company
+2005,OX,Occidental Fire and Casualty Company of NC
+2005,PL,Producers Lloyds Insurance Company
+2005,RH,Ace Property and Casualty Insurance Company
+2005,ST,Stonington Insurance Company
+2005,WF,Westfield Insurance Company
+2005,WN,American Agri-Business Insurance Company
+2005,NA,NAU Country Insurance Company
+2006,AN,"AgriServe, Inc."
+2006,AU,Austin Mutual Insurance Company
+2006,CM,Country Mutual Insurance Company
+2006,EF,Rural Community Insurance Company
+2006,FA,American Agricultural Insurance Company
+2006,FH,Farmers Mutual Hail Insurance of Iowa
+2006,FI,Farm Bureau Mutual Insurance Company
+2006,GA,Great American Insurance Company
+2006,GI,"XL Reinsurance America, Inc."
+2006,NI,Alliance Insurance Company
+2006,OX,Occidental Fire and Casualty Company of NC
+2006,PL,Producers Lloyds Insurance Company
+2006,RH,Ace Property and Casualty Insurance Company
+2006,ST,Stonington Insurance Company
+2006,WF,Westfield Insurance Company
+2006,WN,Western National Mutual Insurance Company
+2006,NA,NAU Country Insurance Company
+2007,AN,"AgriServe, Inc."
+2007,AU,Austin Mutual Insurance Company
+2007,CM,Country Mutual Insurance Company
+2007,CW,Clearwater Insurance Company
+2007,EF,Rural Community Insurance Company
+2007,FA,American Agricultural Insurance Company
+2007,FH,Farmers Mutual Hail Insurance of Iowa
+2007,FI,Farm Bureau Mutual Insurance Company
+2007,GA,Great American Insurance Company
+2007,GI,"XL Reinsurance America, Inc."
+2007,PL,Producers Lloyds Insurance Company
+2007,RH,Ace Property and Casualty Ins. Co.
+2007,ST,Stonington Insurance Company
+2007,WF,Westfield Insurance Company
+2007,WN,American Agri-Business Insurance Company
+2007,NA,NAU Country Insurance Company
+2008,AN,Aginational Insurance Company
+2008,AU,Austin Mutual Insurance Company
+2008,CM,Country Mutual Insurance Company
+2008,CW,Clearwater Insurance Company
+2008,EF,Rural Community Insurance Company
+2008,FA,American Agricultural Insurance Company
+2008,FH,Farmers Mutual Hail Insurance of Iowa
+2008,GA,Great American Insurance Company
+2008,GI,"XL Reinsurance America, Inc."
+2008,PL,Producers Agriculture Insurance Co.
+2008,RH,Ace Property and Casualty Insurance Company
+2008,ST,Stonington Insurance Company
+2008,WA,Western Agricultural Insurance Company
+2008,WF,Westfield Insurance Company
+2008,WN,American Agri-Business Insurance Company
+2008,NA,NAU Country Insurance Company
+2009,AN,Aginational Insurance Company
+2009,AU,Austin Mutual Insurance Company
+2009,CC,Casualty Underwriters Insurance Company
+2009,CM,Country Mutual Insurance Company
+2009,EF,Rural Community Insurance Company
+2009,FA,American Agricultural Insurance Company
+2009,FH,Farmers Mutual Hail Insurance of Iowa
+2009,GA,Great American Insurance Company
+2009,GI,"XL Reinsurance America, Inc."
+2009,HU,Hudson Insurance Company
+2009,PE,Insurance Company of the State of Pennsylvania
+2009,PL,Producers Agriculture Insurance Co.
+2009,RH,Ace Property and Casualty Insurance Company
+2009,ST,Stonington Insurance Company
+2009,WA,Western Agricultural Insurance Company
+2009,WN,American Agri-Business Insurance Company
+2009,NA,NAU Country Insurance Company
+2010,AN,Aginational Insurance Company
+2010,AU,Austin Mutual Insurance Company
+2010,CC,Casualty Underwriters Insurance Company
+2010,CM,Country Mutual Insurance Company
+2010,EF,Rural Community Insurance Company
+2010,FA,American Agricultural Insurance Company
+2010,FH,Farmers Mutual Hail Insurance of Iowa
+2010,GA,Great American Insurance Company
+2010,GI,"XL Reinsurance America, Inc."
+2010,HU,Hudson Insurance Company
+2010,OX,Occidental Fire and Casualty Company of NC
+2010,PE,Insurance Company of the State of Pennsylvania
+2010,PL,Producers Agriculture Insurance Co.
+2010,RH,Ace Property and Casualty Insurance Company
+2010,ST,Stonington Insurance Company
+2010,WN,American Agri-Business Insurance Company
+2010,NA,NAU Country Insurance Company
