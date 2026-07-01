@@ -5,7 +5,7 @@ devtools::load_all()
 # download the ADM files to data-raw
 # download the ADM files to data-raw
 download_adm(
-  years = 2011:2026,
+  years = 2025:2027,
   dataset_codes = c("A01010", # base rate
                     "A01040", # coverage level differential
                     "A00030", # insurance offer
@@ -71,7 +71,7 @@ piggyback::pb_upload(
 
 
 # build county yield history
-build_county_yield_history(years = 2011:2025)
+build_county_yield_history(years = 2011:2027)
 
 #upload  .rds files into that release
 files <- list.files("data-raw", "county_yield_history.parquet$",
