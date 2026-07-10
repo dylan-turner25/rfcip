@@ -640,7 +640,7 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
 
   # delivery type
   if (!is.null(delivery_type)) {
-    parameter_string <- paste0(parameter_string, "ST=", paste(delivery_type, collapse = ","), "&")
+    parameter_string <- paste0(parameter_string, "DT=", paste(delivery_type, collapse = ","), "&")
     ORD <- append(ORD, "DT")
   }
 
@@ -668,33 +668,8 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
   }
 
 
-  # paste ORD parameter together
-  ORD <- paste0("ORD=", paste(ORD, collapse = ","))
-
-  
-  # remove any group_by variables that already have filters specified
-  # (data will already be grouped by these)
-  for(g in group_by){
-    
-    # check if the group_by variable is not NULL
-    if(!is.null(eval(parse(text = g)))){
-      group_by <- group_by[-which(group_by == g)]
-    }
-    
-    # if all group_by variables are removed, set group_by to NULL
-    if(length(group_by) == 0){
-      group_by = NULL
-    }
-  }
-  
-  # add additional grouping parameters if specified 
+  # add additional grouping parameters if specified
   if (!is.null(group_by)) {
-    
-    # if group by includes county, ensure state is also included
-    if("county" %in% group_by & ("state" %in% group_by == F)){
-      group_by <- c(group_by,"state")
-    }
-    
 
     group_by_codes <- c(
       "CY" = "year",
@@ -706,8 +681,30 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
       "CVL" = "cov_lvl"
     )
 
-    ORD <- paste0(ORD, ",", paste0(names(group_by_codes[which(group_by_codes %in% group_by)]), collapse = ","))
+    # "fips" is an alias for grouping by state and county
+    if ("fips" %in% group_by) {
+      group_by <- unique(c(group_by[group_by != "fips"], "state", "county"))
+    }
+
+    invalid_group_by <- setdiff(group_by, group_by_codes)
+    if (length(invalid_group_by) > 0) {
+      stop(paste0(
+        "Invalid group_by value(s): ", paste(invalid_group_by, collapse = ", "),
+        ". Valid values are: ", paste(c(unname(group_by_codes), "fips"), collapse = ", "), "."
+      ))
+    }
+
+    # if group by includes county, ensure state is also included
+    if ("county" %in% group_by & ("state" %in% group_by == F)) {
+      group_by <- c(group_by, "state")
+    }
+
+    ORD <- append(ORD, names(group_by_codes)[group_by_codes %in% group_by])
   }
+
+  # paste ORD parameter together, dropping codes already added by filters
+  # (a duplicated or empty code in ORD makes the RMA server return a 500)
+  ORD <- paste0("ORD=", paste(unique(ORD), collapse = ","))
 
   return(paste0(prefix, parameter_string, ORD, suffix))
 }

@@ -33,6 +33,35 @@ test_that("get_sob_url also returns state when group_by county is selected", {
   )
 })
 
+test_that("get_sob_url does not duplicate ORD codes when a filter and group_by overlap", {
+  # a state filter adds ST to ORD; group_by county must not add it again
+  # (RMA's server returns a 500 on ORD=CY,ST,ST,CT)
+  url <- get_sob_url(year = 2023, crop = NULL, state = "IL", group_by = "county")
+  expect_true(grepl("ORD=CY,ST,CT&", url, fixed = TRUE))
+
+  url <- get_sob_url(year = 2023, crop = NULL, state = "IL", group_by = c("state", "county"))
+  expect_true(grepl("ORD=CY,ST,CT&", url, fixed = TRUE))
+})
+
+test_that("get_sob_url treats group_by fips as state plus county", {
+  url <- get_sob_url(year = 2023, crop = NULL, group_by = "fips")
+  expect_true(grepl("ORD=CY,ST,CT&", url, fixed = TRUE))
+})
+
+test_that("get_sob_url rejects invalid group_by values", {
+  # an unknown value used to produce a trailing comma in ORD and a server 500
+  expect_error(
+    get_sob_url(year = 2023, crop = NULL, group_by = "not_a_column"),
+    "Invalid group_by value"
+  )
+})
+
+test_that("get_sob_url puts delivery_type in the DT parameter, not ST", {
+  url <- get_sob_url(year = 2023, crop = NULL, delivery_type = "RBUP")
+  expect_true(grepl("DT=RBUP&", url, fixed = TRUE))
+  expect_false(grepl("ST=RBUP", url, fixed = TRUE))
+})
+
 test_that("include_and works correctly", {
   expect_equal(include_and("http://example.com?"), "http://example.com?")
   expect_equal(include_and("http://example.com"), "http://example.com&")
