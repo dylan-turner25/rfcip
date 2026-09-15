@@ -2,6 +2,26 @@
 
 ## Development version
 
+* Added `log = FALSE` to `get_sob_data()`. Set `log = TRUE` to show each year's
+  API request and success, bulk fallback, bulk download or cache use, and retry
+  details. Progress bars and warnings remain available with logging disabled.
+
+* Added `sob_version = "sobcov"` for direct state/county/crop/coverage-level bulk
+  retrieval from 1989 onward. It returns detailed filtered rows without contacting
+  the interactive API, and reuses validated annual ZIPs across filters.
+* Default SOB calls now fall back to SOB COV independently for each year after
+  retryable API failures exhaust attempts or the wait budget. Every subsequent
+  year starts with the API again. Bulk years are aggregated to the API query's
+  grouping, including separate quantity units, and have compatible column names
+  and types. Source-fallback warnings identify affected years; `rfcip_sources`
+  attributes record the per-year sources. Missing years never silently disappear.
+* Bulk results can differ in publication/program coverage. Unavailable API fields
+  and unknown aggregates remain NA; ratios are recomputed from aggregates. Mixed
+  API/bulk results do not overwrite API report caches. Explicit SOB COV grouping
+  and S/L commodity-category filtering are unsupported and error clearly.
+* SOB COV downloads use bounded retries and safe cache replacement. Cache clearing
+  and inspection now recognize `sobcov_` files. Existing SOBTPU behavior is unchanged.
+
 * Removed the extra memory caches from `get_sob_data()` and
   `get_insurance_plan_codes()`. Repeated forced calls now reach retrieval, and
   clearing SOB's disk cache cannot leave a hidden SOB result in memory.

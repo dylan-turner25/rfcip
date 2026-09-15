@@ -1,10 +1,10 @@
 rfcip (R FCIP)
 ================
 
-- [Introduction](#introduction)
-- [Why use the `rcfip` package?](#why-use-the-rcfip-package)
-- [Installation](#installation)
-- [Getting Started](#getting-started)
+-   [Introduction](#introduction)
+-   [Why use the `rfcip` package?](#why-use-the-rfcip-package)
+-   [Installation](#installation)
+-   [Getting Started](#getting-started)
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -41,7 +41,7 @@ defacto API wrapper.
 **Disclaimer:** This product uses data provided by the USDA, but is not
 endorsed by or affiliated with USDA or the Federal Government.
 
-# Why use the `rcfip` package?
+# Why use the `rfcip` package?
 
 Although the data that the `rfcip` package provides access to is all
 publicly available, it is often scattered across various files,
@@ -64,29 +64,52 @@ benefit of improving data accuracy and reproducibility.
 
 # Getting Started
 
-The `rfcip` package does not require any special setup or configuration.
-Once downloaded, data can be immediately accessed using any of the
-available functions. For example, the following pulls up RMA’s summary
-of business data for corn in 2022. For a comprehensive introduction of
-the `rfcip` package, including a description of available data gathering
-functions, please see the [getting
-started](vignettes/rfcip-introduction.md) vignette.
+Load the package and choose the years and filters you need. The year
+argument is `year`, including when requesting several years.
 
 ``` r
-
-# get summary of business data for corn in 2022
 library(rfcip)
-get_sob_data(year = 2022, crop = "corn")
-#> ℹ Loading data from cache
-#> # A tibble: 1 × 23
-#>   commodity_year commodity_code commodity_name policies_sold
-#>            <dbl>          <int> <chr>                  <dbl>
-#> 1           2022             41 Corn                  590774
-#> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>,
-#> #   units_earning_prem <dbl>, units_indemnified <dbl>, quantity <dbl>,
-#> #   quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
-#> #   total_prem <dbl>, subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>,
-#> #   addnl_subsidy <dbl>, state_subsidy <dbl>, pccp_state_matching_amount <dbl>,
-#> #   organic_certified_subsidy_amount <dbl>,
-#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>, …
+
+# Summary of Business for corn in 2022
+data <- get_sob_data(year = 2022, crop = "corn")
+
+# Multiple years, with optional details about requests, retries, and sources
+data <- get_sob_data(year = 2008:2020, log = TRUE)
 ```
+
+By default, `get_sob_data()` uses a matching cached API report when
+available. Otherwise, it tries RMA’s interactive report API for each
+year. Temporary failures such as HTTP 503 are retried up to four total
+attempts. If those attempts or the retry wait budget are exhausted, it
+tries the coverage-level bulk files for that year; the next year starts
+with the API again. Set `log = TRUE` to follow this process. The default
+is `log = FALSE`; progress bars, warnings, and errors still appear.
+
+To download bulk files directly, without trying the interactive API:
+
+``` r
+data <- get_sob_data(year = 2008:2020, sob_version = "sobcov")
+
+# Detailed coverage-level records for corn in Iowa
+corn <- get_sob_data(
+  year = 2024, crop = "corn", state = "IA", sob_version = "sobcov"
+)
+```
+
+Explicit `"sobcov"` calls return detailed
+state/county/crop/plan/coverage rows. Automatic bulk backup instead
+matches the API query’s grouping and compatible columns. Bulk
+publication and program coverage can differ from the API, and
+unavailable fields remain `NA`, so totals are not guaranteed to match. A
+warning identifies each year using backup. Type/practice/unit detail
+remains available through `sob_version = "sobtpu"`.
+
+Repeated calls reuse available cached data. To request an update, use
+`get_sob_data(year = 2024, crop = "corn", force = TRUE)`. A failed
+refresh can return usable cached data with a warning; `force = TRUE`
+does not guarantee that RMA will supply fresh data.
+
+See the [getting-started vignette](vignettes/rfcip-introduction.md) for
+filters, source limitations, cache management, and the package’s other
+data sources, or run `help(get_sob_data)` for the full function
+reference.

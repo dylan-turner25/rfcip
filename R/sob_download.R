@@ -1,4 +1,4 @@
-# Transport policy applies only to the SOB application, not ADM or SOBTPU.
+# Shared transport policy for SOB application and SOB COV, not ADM or SOBTPU.
 sob_timeout <- function(seconds = getOption("timeout", 60)) {
   if (!is.numeric(seconds) || length(seconds) != 1L || is.na(seconds) ||
       !is.finite(seconds) || seconds < 0.001 || seconds > .Machine$integer.max / 1000) {
@@ -35,29 +35,41 @@ sob_retry_after <- function(headers, now) {
 }
 
 sob_download_error <- function(year, url, attempts, status = NULL,
-                               reason, parent = NULL) {
+                               reason, parent = NULL, source = "SOB export",
+                               error_class = "rfcip_sob_download_error") {
   structure(list(
-    message = paste0("SOB export failed for year ", year,
+    message = paste0(source, " failed", if (!is.null(year)) paste0(" for year ", year),
                      if (!is.null(status)) paste0(" (HTTP ", status, ")"),
                      " after ", attempts, " attempt", if (attempts != 1L) "s",
                      ": ", reason),
     call = NULL, year = year, url = url, attempts = attempts,
     status = status, parent = parent
-  ), class = c("rfcip_sob_download_error", "error", "condition"))
+  ), class = c(error_class, "error", "condition"))
 }
 
 sob_http_download <- function(url, year, path, timeout = sob_timeout(),
                               request = sob_http_request, sleep = Sys.sleep,
-                              now = Sys.time, jitter = function() stats::runif(1, 0, 0.25)) {
+                              now = Sys.time, jitter = function() stats::runif(1, 0, 0.25),
+                              log = FALSE) {
+  rfcip_http_download(url, year, path, timeout, request, sleep, now, jitter, log = log)
+}
+
+rfcip_http_download <- function(url, year, path, timeout = sob_timeout(),
+                                request = sob_http_request, sleep = Sys.sleep,
+                                now = Sys.time, jitter = function() stats::runif(1, 0, 0.25),
+                                source = "SOB export", error_class = "rfcip_sob_download_error",
+                                log = FALSE) {
   timeout <- sob_timeout(timeout)
+  fail <- function(attempts, status = NULL, reason, parent = NULL) {
+    stop(sob_download_error(year, url, attempts, status, reason, parent, source, error_class))
+  }
   completed <- FALSE
   on.exit(if (!completed) unlink(path), add = TRUE)
   slept <- 0
   for (attempt in seq_len(4L)) {
     # A failed transfer may have left an error page or a partial workbook.
     if (file.exists(path) && unlink(path) != 0L) {
-      stop(sob_download_error(year, url, attempt - 1L,
-                             reason = "Could not remove the temporary response file."))
+      fail(attempt - 1L, reason = "Could not remove the temporary response file.")
     }
     response <- tryCatch(request(url, path, timeout), error = function(e) e)
     status <- NULL
@@ -79,16 +91,18 @@ sob_http_download <- function(url, year, path, timeout = sob_timeout(),
       required_wait <- if (retry) sob_retry_after(httr::headers(response), now) else 0
     }
     if (!retry || attempt == 4L) {
-      stop(sob_download_error(year, url, attempt, status, reason, parent))
+      fail(attempt, status, reason, parent)
     }
     delay <- max(2^(attempt - 1L) + jitter(), required_wait)
     if (delay > 60 - slept) {
-      stop(sob_download_error(year, url, attempt, status,
-                             "The required retry delay exceeds the remaining 60-second wait budget.",
-                             parent))
+      fail(attempt, status, "The required retry delay exceeds the remaining 60-second wait budget.",
+           parent)
     }
-    cli::cli_alert_info(paste0(
-      "SOB year ", year, ": ", if (is.null(status)) "transfer failed" else paste0("HTTP ", status),
+    if (log) cli::cli_alert_info(paste0(
+      if (source == "SOB export") paste0("SOB year ", year) else
+        paste0(source, if (!is.null(year)) paste0(" year ", year)),
+      ": ", if (source == "SOB export") "API ",
+      if (is.null(status)) "transfer failed" else paste0("HTTP ", status),
       " (attempt ", attempt, "/4); retrying in ", format(round(delay, 2), trim = TRUE), " seconds."
     ))
     sleep(delay)

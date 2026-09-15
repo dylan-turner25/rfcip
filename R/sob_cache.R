@@ -44,10 +44,10 @@ load_usable_sob_cache <- function(path) {
            error = function(e) NULL)
 }
 
-download_sob_year <- function(url, year, timeout = sob_timeout()) {
+download_sob_year <- function(url, year, timeout = sob_timeout(), log = FALSE) {
   path <- tempfile(fileext = ".xlsx")
   on.exit(unlink(path), add = TRUE)
-  transfer <- sob_http_download(url, year, path, timeout)
+  transfer <- sob_http_download(url, year, path, timeout, log = log)
   tryCatch({
     data <- suppressMessages(janitor::clean_names(readxl::read_excel(path)))
     if (ncol(data) >= 2L && names(data)[2L] == "x2") {

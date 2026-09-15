@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_sob_data.R
 \name{get_sob_data}
 \alias{get_sob_data}
-\title{Downloads and imports data from RMA's summary of buisness app}
+\title{Download Summary of Business data from RMA}
 \source{
 Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
 }
@@ -20,7 +20,8 @@ get_sob_data(
   dest_file = NULL,
   group_by = NULL,
   sob_version = "sob",
-  force = FALSE
+  force = FALSE,
+  log = FALSE
 )
 }
 \arguments{
@@ -52,25 +53,35 @@ dis-aggregated by year only where. The function call
 \code{get_sob_data(year = 2023:2024, group_by = c("insurance_plan","cov_lvl"))} will
 return the same data, but further dissagregated by insurance plan and coverage level}
 
-\item{sob_version}{a character string indicating the version of the summary of business to use. The default is "sob" which uses the summary of business app. The alternative is "sobtpu" which downloads the summary of business by type, practice, and unit structure.}
+\item{sob_version}{Data source. Default \code{"sob"} tries the interactive API for
+each year, then uses coverage-level bulk files if eligible retries are exhausted.
+\code{"sobcov"} reads state/county/crop/coverage bulk files directly (1989 onward),
+returning detailed rows without trying the API. \code{"sobtpu"} reads the existing
+type/practice/unit-structure files.}
 
 \item{force}{Logical (default FALSE). Each TRUE call attempts fresh retrieval.
-For SOB exports, a failed download or invalid response falls back to a usable
-matching disk cache with an \code{rfcip_cache_fallback} warning.}
+For default SOB calls, API retry exhaustion first attempts the yearly SOB COV
+backup, forwarding force. A failed forced retrieval can return a usable matching
+disk cache with an \code{rfcip_cache_fallback} warning.}
+
+\item{log}{Logical (default FALSE). If TRUE, show detailed per-year API and
+SOB COV source, cache, success, and retry messages. Progress bars, warnings,
+errors, and existing messages from other data sources are unaffected.}
 }
 \value{
 Returns a tibble
 }
 \description{
-Downloads and imports data from RMA's summary of buisness app
+Download Summary of Business data from RMA
 }
 \details{
 SOB results are cached on disk for the exact query. A successful
-refresh replaces that cache after all requested years have been validated.
+API refresh replaces that cache after all requested years have been validated.
+Results containing bulk-backed years do not replace the API report cache.
 If saving fresh data fails, the fresh result is returned with an
 \code{rfcip_cache_write_warning}; the previous usable cache is preserved.
 Invalid arguments are errors, not reasons to return cached results.
-Insurance-plan filters resolve through the ADM A00460 lookup for the
+For API queries, insurance-plan filters resolve through the ADM A00460 lookup for the
 requested years (2011 for earlier years) and receive the refresh intent.
 Errors from the ADM lookup retain their own source and fallback behavior.
 Crop lookup remains separately memoised and does not gain a guaranteed
@@ -83,8 +94,10 @@ or 504 and recognized transient connection/transfer errors. Retry waits are
 approximately 1, 2, and 4 seconds with jitter. A server's \code{Retry-After}
 delay (seconds or HTTP date) is respected, including on 503. Total retry
 sleep is limited to 60 seconds per year; a longer required delay stops
-retrieval rather than retrying early. After failure, the usual forced-call
-cache fallback applies. Interruptions propagate immediately.
+retrieval rather than retrying early. An exhausted eligible API failure triggers
+SOB COV backup for that year only; the next year starts with the API again.
+If backup also fails, the usual forced-call report-cache fallback applies.
+Interruptions propagate immediately.
 
 Each transfer uses the R \code{timeout} option, explicitly passed to httr.
 It must be a finite numeric number of seconds between 0.001 and
@@ -95,12 +108,56 @@ errors, and invalid workbooks are not retried. Typed transport errors are
 recognized with curl 6.0.0 or later; older untyped errors fail immediately.
 An \code{rfcip_sob_download_error} retains \code{year}, \code{status} (when available),
 \code{attempts}, \code{url}, and the underlying \code{parent} condition (when available).
-These retries apply only to SOB exports, not ADM lookup or SOBTPU downloads.
+These retries apply to SOB exports and SOB COV downloads/discovery, not ADM
+lookup or SOBTPU downloads. Terminal API errors and invalid workbooks retain
+their error/cache behavior without switching to bulk.
+
+Automatic backup uses the resolved API filters and grouping, including
+filter-induced groups and separate quantity units. It retains successful API
+years and emits an \code{rfcip_source_fallback} warning identifying each bulk year.
+Mixed results have a \code{rfcip_sources} attribute with \code{year} and \code{source} columns
+(\code{api}, \code{sobcov}, or \code{sobcov_cache}). Every requested year must have a usable
+source; a missing year never silently produces partial results.
+
+Bulk publication and program coverage can differ from the API, and suppressed
+or unavailable detail cannot be reconstructed. In automatic backup, full plan
+names and the PCCP state matching/organic subsidy fields unavailable in the
+bulk source are NA. Missing components propagate to aggregated counts/amounts.
+Loss ratio and earned premium rate are calculated from aggregated components,
+truncated to six decimals as in the API exports; a zero or missing denominator gives NA. Quantities
+with different units are never added together. Backup supplies compatible
+grouping and columns, not a guarantee of identical API totals.
+
+Explicit \code{"sobcov"} returns all published dimensions and measures, with local
+crop, insurance-plan, state, county/FIPS, coverage-level and delivery-type
+filters. It supports \code{RBUP}, \code{RCAT}, \code{FBUP}, and \code{FCAT}; NULL retains all delivery
+types as separate rows. \code{group_by} must be NULL for explicit calls. SOB COV
+supports only \code{comm_cat = "B"}, meaning all published bulk records; S/L
+classification is unavailable, including for automatic backup. Historical zero
+coverage levels and special county codes are preserved. A valid filter
+intersection with no matching records returns a typed empty tibble.
+
+Native bulk columns use descriptive names such as \code{state_abbreviation},
+\code{insurance_plan_abbreviation}, \code{coverage_level_percent}, \code{net_reported_quantity},
+\code{endorsed_companion_acres}, \code{liability_amount}, \code{total_premium_amount},
+\code{subsidy_amount}, and \code{indemnity_amount}. All 28 published fields are retained;
+\code{fips} is added as a five-character state/county identifier. State and county
+components remain padded character strings. Blank/NUL values become NA.
+
+Complete validated annual ZIPs are shared across bulk filters and automatic
+backup. A normal usable bulk-cache read needs no discovery or download.
+Explicit crop names/codes and plan codes/abbreviations resolve from the files;
+full plan names can require ADM/GitHub. Explicit bulk results also have the
+\code{rfcip_sources} attribute. Clear these files through
+\code{clear_rfcip_cache(function_name = "get_sob_data")}.
 }
 \examples{
 \dontrun{
 get_sob_data(year = 2023)
 get_sob_data(year = 2015:2020, crop = "corn")
 get_sob_data(year = 2022, crop = c(41, 81), group_by = "state")
+get_sob_data(year = 2008:2020, sob_version = "sobcov")
+get_sob_data(year = 2008:2020, log = TRUE)
+get_sob_data(year = 2024, crop = "corn", state = "IA", sob_version = "sobcov")
 }
 }

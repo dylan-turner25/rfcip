@@ -55,11 +55,14 @@ local_sob_download <- function(.env = parent.frame()) {
   }
   http_download <- sob_http_download
   testthat::local_mocked_bindings(
+    # Existing cache/transport regressions exercise final failure with both
+    # sources unavailable. SOB COV success has its own integration tests.
+    locate_sobcov_links = function(...) stop("Bulk source unavailable in this test"),
     sob_http_request = download,
-    sob_http_download = function(url, year, path, timeout) {
+    sob_http_download = function(url, year, path, timeout, log = FALSE) {
       http_download(url, year, path, timeout, sleep = function(seconds) {
         state$sleeps <- c(state$sleeps, seconds)
-      }, jitter = function() 0)
+      }, jitter = function() 0, log = log)
     },
                                   .package = "rfcip", .env = .env)
   state

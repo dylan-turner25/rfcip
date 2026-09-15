@@ -23,266 +23,176 @@ This vignette provides an introduction to the `rfcip` package which provides too
 # Supported Data Sources
 
 ## Summary of Business
-The [Summary of Business](https://www.rma.usda.gov/tools-reports/summary-of-business) files produced by the USDA Risk Management Agency contains crop insurance participation measures and outcomes by state, county, crop, and insurance policy choices. Insured acres, collected premiums, disbursed subsides, liabilities, number of policies sold, number of indemnified policies, and loss ratios are all available from the summary of business. 
 
-Accessing data from the summary of business can be done using the `get_sob_data`. With no arguments specified, the `get_sob_data` function will default to downloading data from [RMA's summary of business report generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator) for the current year, at the highest level aggregation. 
+`get_sob_data()` retrieves crop insurance participation and outcomes, including
+policies, insured quantities, liabilities, premiums, subsidies, and indemnities.
+Choose a source with `sob_version`:
+
+| `sob_version` | Retrieval | Returned data |
+|---|---|---|
+| `"sob"` (default) | Interactive report API, with coverage-level bulk backup after eligible failures | API query grouping and compatible columns |
+| `"sobcov"` | Coverage-level bulk files directly; no interactive API request | Detailed state/county/crop/plan/coverage rows |
+| `"sobtpu"` | Type/practice/unit bulk files directly | Detailed type/practice/unit rows |
+
+### Requesting and grouping data
+
+With no arguments, `get_sob_data()` requests the current crop year. Use `year`
+for either a single year or a vector; `years` is not an argument.
 
 
 ``` r
 library(rfcip)
+
 get_sob_data()
-#> # A tibble: 10 × 21
-#>    commodity_year policies_sold policies_earning_prem policies_indemnified units_earning_prem units_indemnified    quantity
-#>             <dbl>         <dbl>                 <dbl>                <dbl>              <dbl>             <dbl>       <dbl>
-#>  1           2026         63501                 16521                 1560              55219              1560    29281321
-#>  2           2026            69                    36                    0                 96                 0   439739004
-#>  3           2026           888                   288                  122               3204               122    54929897
-#>  4           2026            94                    76                    0                117                 0    16893256
-#>  5           2026          8778                  6702                    0              29795                 0     3686988
-#>  6           2026          1614                  1614                  300              15084               433 44319120123
-#>  7           2026       2692075                239657                 5721             888006              8573   352846825
-#>  8           2026          2772                  1951                   10               3333                14           0
-#>  9           2026            35                    20                    0                 20                 0    18198000
-#> 10           2026          2554                  2087                    2               3277                 2    43593353
-#> # ℹ 14 more variables: quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>, total_prem <dbl>,
-#> #   subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
-#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>, organic_transitional_subsidy_amount <dbl>,
-#> #   earn_prem_rate <dbl>, loss_ratio <dbl>
-```
-
-Most of the arguments for the `get_sob_data` function filter the returned data. For example, specifying the `year = 2022` and `crop = "corn"` will return data for corn in crop year 2022. For a description of all the arguments that can be supplied to `get_sob_data` see the help file for the function using `help(get_sob_data)`
-
-``` r
 get_sob_data(year = 2022, crop = "corn")
-#> # A tibble: 1 × 23
-#>   commodity_year commodity_code commodity_name policies_sold policies_earning_prem policies_indemnified units_earning_prem
-#>            <dbl>          <int> <chr>                  <dbl>                 <dbl>                <dbl>              <dbl>
-#> 1           2022             41 Corn                  590757                388010               106764             733235
-#> # ℹ 16 more variables: units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>,
-#> #   liabilities <dbl>, total_prem <dbl>, subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>,
-#> #   state_subsidy <dbl>, pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>,
-#> #   organic_transitional_subsidy_amount <dbl>, earn_prem_rate <dbl>, loss_ratio <dbl>
-```
-In the above example, the data set was filtered to a single crop, "corn". This potentially raises the question of what other values can be passed to the arguments that control the filters. For arguments with limited options, the options are explained in the functions help file (again, accessed via `help(get_sob_data)`). For some arguments that have many options, there are dedicated functions for pulling up values than can be passed to these arguments. 
-
-The `get_crop_codes` function will return the commodity codes and names for a supplied year. This function pulls from the ADM Commodity table (A00420) and includes both crop and livestock commodities. Note that the `commodity_code` and `commodity_name` can be used interchangeably as values for the `crop` argument in `get_sob_data`. If there is a crop that is suspected to be an option, the `crop` argument can also be specified which will return just that specified crop if it exists.
-
-``` r
-# get all crop codes and crop names for 2024
-get_crop_codes(2024)
-#> # A tibble: 129 × 3
-#>    commodity_year commodity_code commodity_name        
-#>    <chr>          <chr>          <chr>                 
-#>  1 2024           0107           Alfalfa Seed          
-#>  2 2024           0211           All Other Citrus Trees
-#>  3 2024           0028           Almonds               
-#>  4 2024           0332           Annual Forage         
-#>  5 2024           1191           Apiculture            
-#>  6 2024           0184           Apple Trees           
-#>  7 2024           0054           Apples                
-#>  8 2024           0212           Avocado Trees         
-#>  9 2024           0019           Avocados              
-#> 10 2024           0255           Banana                
-#> # ℹ 119 more rows
+get_sob_data(year = 2008:2020)
 ```
 
+Filters select records, while `group_by` adds dimensions to the API report.
+For example, this requests corn results broken out by county:
+
+
 ``` r
-
-# double check that "corn" is a valid crop
-get_crop_codes(2024, crop = "corn")
-#> # A tibble: 1 × 3
-#>   commodity_year commodity_code commodity_name
-#>   <chr>          <chr>          <chr>         
-#> 1 2024           0041           Corn
-
-# below are other ways to call the same data
-get_crop_codes(2024, crop = "CORN")
-#> # A tibble: 1 × 3
-#>   commodity_year commodity_code commodity_name
-#>   <chr>          <chr>          <chr>         
-#> 1 2024           0041           Corn
-get_crop_codes(2024, crop = 41)
-#> # A tibble: 1 × 3
-#>   commodity_year commodity_code commodity_name
-#>   <chr>          <chr>          <chr>         
-#> 1 2024           0041           Corn
-
-# livestock commodities are also included
-get_crop_codes(2024, crop = "Feeder Cattle")
-#> # A tibble: 129 × 3
-#>    commodity_year commodity_code commodity_name        
-#>    <chr>          <chr>          <chr>                 
-#>  1 2024           0107           Alfalfa Seed          
-#>  2 2024           0211           All Other Citrus Trees
-#>  3 2024           0028           Almonds               
-#>  4 2024           0332           Annual Forage         
-#>  5 2024           1191           Apiculture            
-#>  6 2024           0184           Apple Trees           
-#>  7 2024           0054           Apples                
-#>  8 2024           0212           Avocado Trees         
-#>  9 2024           0019           Avocados              
-#> 10 2024           0255           Banana                
-#> # ℹ 119 more rows
+county_data <- get_sob_data(
+  year = 2022, crop = "corn", group_by = "county"
+)
 ```
 
+Even a year-only query keeps quantity types separate: acres and tons are not
+added together. See `help(get_sob_data)` for all filters and grouping choices.
 
+### API retries, bulk backup, and logging
 
-The `get_insurance_plan_codes` function works analogously to the `get_crop_codes` function and helps identiy valid names of insurance plans. 
+A matching cached API report is used when available, unless `force = TRUE`.
+When retrieval is needed, each year starts with the API. HTTP 429, 502, 503, and
+504 responses and recognized temporary connection failures receive up to four
+total attempts, with increasing waits. Server-requested `Retry-After` delays
+are respected within a 60-second cumulative retry-wait budget per HTTP request;
+this budget does not include transfer time.
+
+If eligible API failures exhaust the attempts or wait budget, the function tries
+SOB COV bulk data for that year. The next year tries the API first again. For
+example, a failed 2010 export can use bulk data while 2009 and 2011 use successful
+API exports. Invalid arguments, malformed successful exports, and non-retryable
+errors do not trigger bulk backup. Requested years are not silently omitted if
+retrieval fails.
+
+Detailed logging is optional and defaults to `FALSE`:
+
 
 ``` r
-# return all insurance plans avaliable in 2024
+# Normal progress output
+data <- get_sob_data(year = 2008:2020)
+
+# Show each year's requests, successes, retries/waits, and bulk or cache use
+data <- get_sob_data(year = 2008:2020, log = TRUE)
+```
+
+`log` changes messages only. Progress bars, warnings, and errors remain visible
+with `log = FALSE`. A cache hit can finish without an API request; use
+`force = TRUE` when you want to attempt fresh retrieval.
+
+Automatic backup applies the API query's filters and grouping to bulk rows and
+returns compatible column names and types. Publication timing and program
+coverage can differ between the sources, so backup does not guarantee identical
+API totals. Unavailable API fields, such as full insurance-plan names and certain
+subsidy fields, remain `NA`. An aggregate with a missing component remains `NA`;
+ratios are recomputed from the aggregates, and different quantity units stay
+separate. Bulk backup cannot support `comm_cat = "S"` or `"L"` queries.
+
+Each year using backup produces a warning. For results containing bulk data,
+inspect the source of each year with:
+
+
+``` r
+attr(data, "rfcip_sources")
+```
+
+This attribute has `year` and `source` columns. Sources are `"api"`, `"sobcov"`,
+or `"sobcov_cache"`. It is also present on explicit SOB COV results, but is `NULL`
+for results obtained entirely from the API or its report cache.
+
+### Downloading coverage-level bulk data directly
+
+RMA publishes annual coverage-level files from 1989 onward on its
+[state/county/crop Summary of Business page](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business).
+Set `sob_version = "sobcov"` to use these files without trying the interactive API:
+
+
+``` r
+data <- get_sob_data(year = 2008:2020, sob_version = "sobcov")
+
+corn <- get_sob_data(
+  year = 2024, crop = "corn", state = "IA", insurance_plan = "RP",
+  cov_lvl = 0.75, sob_version = "sobcov", log = TRUE
+)
+```
+
+Explicit calls retain all 28 published fields and add a five-character `fips`
+column. Column names follow the bulk layout, including `state_abbreviation`,
+`coverage_level_percent`, `net_reported_quantity`, `liability_amount`,
+`total_premium_amount`, and `indemnity_amount`. These differ from the API-style
+names used by automatic backup.
+
+Crop, insurance-plan, state, county/FIPS, coverage-level, and delivery-type
+filters are applied locally. County names require a state; alternatively use a
+full county FIPS code. `delivery_type` accepts `RBUP`, `RCAT`, `FBUP`, and `FCAT`;
+leaving it `NULL` retains separate rows for all published types. `group_by` must
+be `NULL`, and `comm_cat` must be `"B"` (all published bulk records). Aggregate
+these detailed rows yourself if needed, keeping quantity units separate and
+accounting for missing values.
+
+The full annual file is downloaded before filtering, so narrower filters do not
+reduce the initial download size. SOB COV downloads and directory discovery use
+the same bounded retry policy as the API exports. Later calls reuse validated
+annual files across filters. Crop names/codes and plan codes/abbreviations resolve from these
+files; full plan names may require a separate ADM lookup. Missing files cause an
+error, while a valid combination of filters with no matching rows returns an
+empty tibble.
+
+### Finding crop and insurance-plan identifiers
+
+`get_crop_codes()` uses the ADM Commodity table (A00420), which includes crop and
+livestock commodities. Names and codes can be used for `crop`:
+
+
+``` r
+get_crop_codes(year = 2024)
+get_crop_codes(year = 2024, crop = "corn")
+get_crop_codes(year = 2024, crop = 41)
+```
+
+`get_insurance_plan_codes()` uses the ADM Insurance Plan table (A00460), served
+through the package's GitHub release assets independently of the interactive SOB
+application. Plan names, abbreviations, and codes are accepted:
+
+
+``` r
 get_insurance_plan_codes(year = 2024)
-#> # A tibble: 35 × 4
-#>    commodity_year insurance_plan_code insurance_plan                                    insurance_plan_abbrv
-#>    <chr>          <chr>               <chr>                                             <chr>               
-#>  1 2024           90                  APH                                               APH                 
-#>  2 2024           91                  APH Price Component                               APHPC               
-#>  3 2024           43                  Aquaculture Dollar                                AQDOL               
-#>  4 2024           47                  Actual Revenue History                            ARH                 
-#>  5 2024           05                  Area Revenue Protection                           ARP                 
-#>  6 2024           06                  Area Revenue Protection - Harvest Price Exclusion ARP - HPE           
-#>  7 2024           04                  Area Yield Protection                             AYP                 
-#>  8 2024           50                  Dollar Amount Of Insurance                        DO                  
-#>  9 2024           83                  Dairy Revenue Protection                          DRP                 
-#> 10 2024           88                  Enhanced Cov Opt - Rev Prot                       ECO-RP              
-#> # ℹ 25 more rows
-
-# return the insurance plan code for the revenue projection plan
 get_insurance_plan_codes(year = 2024, plan = "revenue protection")
-#> # A tibble: 1 × 4
-#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
-#>   <chr>          <chr>               <chr>              <chr>               
-#> 1 2024           02                  Revenue Protection RP
-
-# below are other ways to call the same data
-get_insurance_plan_codes(year = 2024, plan = 2)
-#> # A tibble: 1 × 4
-#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
-#>   <chr>          <chr>               <chr>              <chr>               
-#> 1 2024           02                  Revenue Protection RP
 get_insurance_plan_codes(year = 2024, plan = "RP")
-#> # A tibble: 1 × 4
-#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
-#>   <chr>          <chr>               <chr>              <chr>               
-#> 1 2024           02                  Revenue Protection RP
-get_insurance_plan_codes(year = 2024, plan = "reVeNue PrOtEcTiOn")
-#> # A tibble: 1 × 4
-#>   commodity_year insurance_plan_code insurance_plan     insurance_plan_abbrv
-#>   <chr>          <chr>               <chr>              <chr>               
-#> 1 2024           02                  Revenue Protection RP
+get_insurance_plan_codes(year = 2024, plan = 2)
 ```
 
-
-As was previously stated above, most arguments for the `get_sob_data` function are for filtering the returned data. One exception is the `group_by` argument which does not filter the data being returned, but instead alters the level of aggregation. Taking the above example that returns data for corn in 2022 and setting `group_by = "county"` will return the same underlying as above, but decomposed by county. 
-
-``` r
-get_sob_data(year = 2022, crop = "corn", group_by = "county")
-#> # A tibble: 2,405 × 27
-#>    commodity_year commodity_code commodity_name        state_code state_abbrv county_code county_name        policies_sold
-#>             <dbl>          <int> <chr>                 <chr>      <chr>       <chr>       <chr>                      <dbl>
-#>  1           2022           9999 All Other Commodities 01         AL          999         All Other Counties             2
-#>  2           2022           9999 All Other Commodities 01         AL          007         Bibb                           6
-#>  3           2022           9999 All Other Commodities 01         AL          013         Butler                        25
-#>  4           2022           9999 All Other Commodities 01         AL          023         Choctaw                       12
-#>  5           2022           9999 All Other Commodities 01         AL          025         Clarke                         3
-#>  6           2022           9999 All Other Commodities 01         AL          027         Clay                           1
-#>  7           2022           9999 All Other Commodities 01         AL          029         Cleburne                       6
-#>  8           2022           9999 All Other Commodities 01         AL          057         Fayette                       16
-#>  9           2022           9999 All Other Commodities 01         AL          075         Lamar                         10
-#> 10           2022           9999 All Other Commodities 01         AL          093         Marion                        16
-#> # ℹ 2,395 more rows
-#> # ℹ 19 more variables: policies_earning_prem <dbl>, policies_indemnified <dbl>, units_earning_prem <dbl>,
-#> #   units_indemnified <dbl>, quantity <dbl>, quantity_type <chr>, companion_endorsed_acres <dbl>, liabilities <dbl>,
-#> #   total_prem <dbl>, subsidy <dbl>, indemnity <dbl>, efa_prem_discount <dbl>, addnl_subsidy <dbl>, state_subsidy <dbl>,
-#> #   pccp_state_matching_amount <dbl>, organic_certified_subsidy_amount <dbl>, organic_transitional_subsidy_amount <dbl>,
-#> #   earn_prem_rate <dbl>, loss_ratio <dbl>
-```
-
-We can confirm `get_sob_data(year = 2022, crop = "corn")` and `get_sob_data(year = 2022, crop = "corn", group_by = "county")` return the same underlying data by summing up one of individual columns in the county level data. 
-
-``` r
-national_data <- get_sob_data(year = 2022, crop = "corn")
-print(paste("Liabilities from national data: ",sum(national_data$liabilities)))
-#> [1] "Liabilities from national data:  67668956552"
-
-county_data <- get_sob_data(year = 2022, crop = "corn", group_by = "county")
-print(paste("Liabilities from county data:   ",sum(county_data$liabilities)))
-#> [1] "Liabilities from county data:    67668956552"
-```
-
-
-
-A unique property of the summary of business data set is that its continuously updated (one per week) as new information is reported to USDA by [approved insurance providers](https://cropinsuranceinamerica.org/who-are-approved-insurance-providers-aips/). This means that analysis using the summary of business can quickly become outdated. One advantage of the the `rfcip` package is that it allows the raw data source to be directly integrated into the analysis. For example, the chart below plots indemnities for each crop year from 2015 up to the current year. The plot will automatically update with the latest data every time the plot is regenerated. Note that functions in `rfcip` are [memoised](https://en.wikipedia.org/wiki/Memoization) for the duration of the R session. This means that calling the same function with the same arguments will return a previously cached data set. In other words, in the below example, the data would not update if the code was run multiple times in the same R session, regaurdless of if the underlying data source changed. 
-
-
-``` r
-library(rfcip)
-library(dplyr)
-library(ggplot2)
-
-get_sob_data(year = 2015:as.numeric(format(Sys.Date(), "%Y"))) %>%
-select(commodity_year, indemnity) %>%
-group_by(commodity_year) %>%
-summarize(indemnity = sum(indemnity)) %>%
-mutate(indemnity = indemnity/1000000000) %>%
-  ggplot(., aes(y = indemnity, x = commodity_year)) +
-  geom_bar(stat = "identity", fill = "firebrick4") +
-  xlab("") + ylab("USD (Billions)") +
-  ggtitle(paste0("FCIP Indemnities by Year: 2015 - ",format(Sys.Date(), "%Y"))) +
-  scale_y_continuous(labels = scales::dollar) +
-  theme_minimal()
-```
-
-![plot of chunk plot1](figures/rfcip-introduction/plot1-1.png)
+Plan lookups for years before 2011 use the 2011 table with a warning. The returned
+`commodity_year` identifies the ADM lookup year; it does not establish historical
+participation in a plan. Different plan filters share the same annual lookup
+file.
 
 ### Summary of Business by Type, Practice, and Unit Structure
-The default behavior of the `get_sob_data()`function is to pull data from [RMA's summary of business report generator](https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator). Although this allows for server side filtering of data before it gets to your local machine it does not allow access to the most granular version of the data know as the [Summary of Business by Type, Practice, and Unit Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business). By setting the optional parameter `sob_version = "sobtpu"` the behavior of the `get_sob_data()` function will change to pull data from the [Summary of Business by Type, Practice, and Unit Structure](https://www.rma.usda.gov/tools-reports/summary-of-business/state-county-crop-summary-business). Note that when `sob_version = "sobtpu"`, the arguments `delivery_type`, `comm_cat`, and `group_by` are not applicable and will be ignored. Otherwise, the function behaves the same as when `sob_version = "sob"` (the default). 
+
+Use `sob_version = "sobtpu"` for RMA's detailed type/practice/unit files:
 
 
 ``` r
-# get the summary of business by type, practice, and unit structure
 data <- get_sob_data(year = 2022, crop = "corn", sob_version = "sobtpu")
-
 head(data)
-#>   commodity_year state_code state_name state_abbreviation county_code county_name commodity_code commodity_name
-#> 1           2022          1    Alabama                 AL           1     Autauga             41           Corn
-#> 2           2022          1    Alabama                 AL           1     Autauga             41           Corn
-#> 3           2022          1    Alabama                 AL           1     Autauga             41           Corn
-#> 4           2022          1    Alabama                 AL           1     Autauga             41           Corn
-#> 5           2022          1    Alabama                 AL           1     Autauga             41           Corn
-#> 6           2022          1    Alabama                 AL           1     Autauga             41           Corn
-#>   insurance_plan_code insurance_plan_abbreviation coverage_type_code coverage_level_percent delivery_id type_code
-#> 1                   1                          YP                  C                   0.50           R         0
-#> 2                   2                          RP                  A                   0.60           R        16
-#> 3                   2                          RP                  A                   0.65           R         0
-#> 4                   2                          RP                  A                   0.70           R         0
-#> 5                   2                          RP                  A                   0.70           R        16
-#> 6                   2                          RP                  A                   0.70           R        16
-#>           type_name practice_code         practice_name unit_structure_code unit_structure_name net_reporting_level_amount
-#> 1 No Type Specified             0 No Practice Specified                  OU       Optional Unit                          0
-#> 2             Grain             3         Non-Irrigated                  BU          Basic Unit                         76
-#> 3 No Type Specified             0 No Practice Specified                  OU       Optional Unit                          0
-#> 4 No Type Specified             0 No Practice Specified                  OU       Optional Unit                          0
-#> 5             Grain             2             Irrigated                  OU       Optional Unit                        355
-#> 6             Grain             3         Non-Irrigated                  OU       Optional Unit                         51
-#>   reporting_level_type liability_amount total_premium_amount subsidy_amount indemnity_amount loss_ratio
-#> 1                Acres                0                    0              0                0       0.00
-#> 2                Acres            33327                 3520           2253                0       0.00
-#> 3                Acres                0                    0              0                0       0.00
-#> 4                Acres                0                    0              0                0       0.00
-#> 5                Acres           319499                22646          13361            81213       3.59
-#> 6                Acres            21822                 4094           2416            11644       2.84
-#>   endorsed_commodity_reporting_level_amount
-#> 1                                         0
-#> 2                                         0
-#> 3                                         0
-#> 4                                         0
-#> 5                                         0
-#> 6                                         0
 ```
 
-Once consideration when using `sob_version = "sobtpu"` is that the data is only accessible via bulk download by year. This means there will be little to no performance advantage from filtering data via the function arguments since the full data set must be downloaded before the filters are applied. However, the function does apply the filters to each year-specific file as they are read in to minimize memory usage to the extent possible.
-
+This option downloads full annual files and then applies its supported filters.
+`delivery_type`, `comm_cat`, and `group_by` are ignored for SOBTPU. Its existing
+retrieval behavior is unchanged; the new retry policy and per-year automatic
+bulk backup described above do not apply to SOBTPU.
 
 
 ## Cause of Loss Files
@@ -638,124 +548,69 @@ d00007_data <- get_ice_data(years = 2024, dataset = "D00007")
 
 # Caching and Performance
 
-The `rfcip` package implements a caching system designed to minimizing redundant data downloads. This system combines session-level memoization with disk caching to provide performance benefits and reduce host server load.
+Downloaded data is stored in your user cache directory, which you can locate with
+`tools::R_user_dir("rfcip", "cache")`. Reusing cached data avoids unnecessary
+downloads, but cached results do not automatically reflect later source updates.
 
-## How Caching Works
+## Summary of Business cache and refresh
 
-### Two-Tier Caching System
+For default SOB requests, a cache entry belongs to the complete query, including
+the year vector, filters, and grouping. Repeating the same query can reuse its
+API report. Changing the year range creates a different query; it does not reuse
+individual years from a previous API report. `log` does not affect cache matching.
 
-1. **Session-Level Memoization**: All data functions are memoized using the `memoise` package, meaning that repeated calls with identical arguments within the same R session return cached results immediately without any disk I/O.
+Explicit SOB COV calls reuse complete annual files across filters and year ranges.
+Those files also serve automatic backup. A result containing backup data does
+not replace the API report cache, so a later default call without a matching
+API report still tries the API first.
 
-2. **Persistent Disk Caching**: Downloaded data is cached to disk in the package's installed location (view that location using `tools::R_user_dir("rfcip", "cache")` ). 
-
-The caching system  handles partial data requests. For example, if you previously downloaded data for 2020-2022 and later request 2020-2023, the system will:
-- Load 2020-2022 data from cache
-- Only download the new 2023 data
-- Combine both cached and fresh data in the returned data
-
-Below is a demonstration of the performance increases that come from caching the data.
 
 ``` r
-library(rfcip)
+# Reuse a matching API report when available
+data <- get_sob_data(year = 2024, crop = "corn")
 
-# First call - downloads and caches data (will take several seconds)
-system.time({
-  col_data1 <- get_col_data(year = 2020:2022)
-})
-#   user  system elapsed 
-#  2.156   0.234  15.423 
+# Attempt an update, even if the same forced call ran earlier in this session
+data <- get_sob_data(year = 2024, crop = "corn", force = TRUE, log = TRUE)
 
-# Subsequent call - loads from cache (much faster!)
-system.time({
-  col_data2 <- get_col_data(year = 2020:2022)
-})
-#   user  system elapsed 
-#  0.023   0.008   0.156 
-
-# Verify data is identical
-identical(col_data1, col_data2)
-# [1] TRUE
+# Refresh annual coverage-level bulk files directly
+bulk <- get_sob_data(year = 2024, sob_version = "sobcov", force = TRUE)
 ```
 
-Since the above example already downloaded data for 2020 - 2022, the following only downloads 2023 data. 
+A successful complete API refresh replaces the old report after validation.
+If retrieval fails during a forced refresh, a usable matching prior report can
+be returned with a warning. Explicit SOB COV refreshes similarly retain usable
+annual files when a download fails. A warning also reports when fresh data was
+retrieved but could not be saved to the cache. `force = TRUE` requests an update;
+it cannot guarantee a fresh result during an outage.
+
+`get_sob_data()` and `get_insurance_plan_codes()` no longer keep an additional
+memoised result in memory. Some other functions, including `get_crop_codes()`,
+`get_col_data()`, `get_price_data()`, and `get_livestock_data()`, still do. Their
+existing cache behavior is unchanged, and clearing disk files does not clear
+those separate session results.
+
+## Inspecting and clearing the cache
 
 
 ``` r
-# Request additional year - only downloads 2023, loads 2020-2022 from cache
-col_data3 <- get_col_data(year = 2020:2023)
-
-# The function automatically:
-# 1. Identifies that 2020-2022 are already cached
-# 2. Loads cached data for these years
-# 3. Downloads only the missing 2023 data
-# 4. Combines all data into a single data frame
+get_cache_info()
+tools::R_user_dir("rfcip", "cache")
 ```
 
-Functions that utilize server-side data processing use the unique parameters of the function call to create unique cache entries. This means that different parameters will result in different cache entries. 
+Use `clear_rfcip_cache()` when you want to remove stored files. Routine refreshes
+can use `force = TRUE` instead, preserving a fallback if retrieval fails.
 
 
 ``` r
-# These create separate cache entries due to different parameters
-price_data_corn <- get_price_data(year = 2023, crop = "corn", state = "IL")
-price_data_soy <- get_price_data(year = 2023, crop = "soybeans", state = "IL")
-price_data_ia <- get_price_data(year = 2023, crop = "corn", state = "IA")
-```
+# Clear Summary of Business files, including SOB, SOB COV, and SOBTPU
+clear_rfcip_cache(function_name = "get_sob_data")
 
-## Force Parameter and Cache Refresh
+# Clear insurance-plan lookup files
+clear_rfcip_cache(function_name = "get_insurance_plan_codes")
 
-All caching functions include a `force` parameter for refreshing cached data.
-
-
-``` r
-# Force refresh - attempts fresh download, falls back to cache on failure
-col_data_fresh <- get_col_data(year = 2020:2022, force = TRUE)
-
-# If download fails due to network issues, you'll see:
-# Warning: Download failed for year 2021, using cached data
-```
-
-
-## Cache Management
-
-### Viewing Cache Information
-
-Use `get_cache_info()` to inspect your cached data:
-
-
-``` r
-# View all cached files
-cache_info <- get_cache_info()
-print(cache_info)
-#      filename size_mb            modified    function_type
-# 1  col_2023.zip    45.2 2024-01-15 14:23:01     get_col_data
-# 2  col_2022.zip    43.8 2024-01-15 14:22:45     get_col_data
-# 3 price_abc123.parquet 2.1 2024-01-15 14:20:15  get_price_data
-```
-
-### Clearing Cache
-
-Use `clear_rfcip_cache()` with various filtering options:
-
-
-``` r
-# Clear all cached data
-clear_rfcip_cache()
-
-# Clear only cause of loss data
-clear_rfcip_cache(function_name = "get_col_data")
-
-# Clear specific years
+# Clear files matching selected years
 clear_rfcip_cache(years = c(2023, 2024))
 
-# Clear livestock data for specific program
-clear_rfcip_cache(function_name = "get_livestock_data", program = "LRP")
+# Clear all disk caches
+clear_rfcip_cache()
 ```
-
-
-
-
-
-
-
-
-

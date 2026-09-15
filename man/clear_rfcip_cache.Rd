@@ -26,7 +26,8 @@ or filter by function type, specific years, or other criteria.
 \details{
 Plan-code clearing removes A00460 assets and legacy
 \code{insurance_plans_} Excel caches. Clearing SOB results does not clear plan
-lookup assets. Other package functions may retain separate memoised results.
+lookup assets. The \code{get_sob_data} selector includes API report caches, SOBTPU,
+and SOB COV annual ZIPs. Other package functions may retain separate memoised results.
 }
 \examples{
 \dontrun{

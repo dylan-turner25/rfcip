@@ -1015,7 +1015,8 @@ restore_factor_levels <- function(data, filename) {
 #' @export
 #' @details Plan-code clearing removes A00460 assets and legacy
 #' `insurance_plans_` Excel caches. Clearing SOB results does not clear plan
-#' lookup assets. Other package functions may retain separate memoised results.
+#' lookup assets. The `get_sob_data` selector includes API report caches, SOBTPU,
+#' and SOB COV annual ZIPs. Other package functions may retain separate memoised results.
 #'
 #' @examples
 #' \dontrun{
@@ -1055,7 +1056,7 @@ clear_rfcip_cache <- function(function_name = NULL, years = NULL, program = NULL
   # Filter by function name
   if (!is.null(function_name)) {
     pattern <- switch(function_name,
-      "get_sob_data" = "^(sob_|sobtpu_)",
+      "get_sob_data" = "^(sob_|sobtpu_|sobcov_)",
       "get_insurance_plan_codes" = "^(insurance_plans_|[0-9]{4}_A00460(_|[.]))",
       "get_col_data" = "^col_",
       "get_livestock_data" = "^livestock_",
@@ -1411,10 +1412,11 @@ get_cache_info <- function() {
   # Add function type based on filename pattern
   result$function_type <- ifelse(grepl("^sob_", result$filename), "get_sob_data",
                         ifelse(grepl("^sobtpu_", result$filename), "get_sob_data (SOBTPU)",
+                        ifelse(grepl("^sobcov_", result$filename), "get_sob_data (SOB COV)",
                         ifelse(grepl("^col_", result$filename), "get_col_data",
                         ifelse(grepl("^livestock_", result$filename), "get_livestock_data",
                         ifelse(grepl("^price_", result$filename), "get_price_data",
-                        "ADM or other")))))
+                        "ADM or other"))))))
 
   # Add description column for hashed cache keys
   result$description <- ""

@@ -18,18 +18,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(cache = FALSE,
-                      echo = TRUE,
-                        fig.path = "man/figures/")
-library(knitr)
-library(dplyr)
-library(devtools)
-load_all()
-```
-
 [![R-CMD-check](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dylan-turner25/rfcip/actions/workflows/R-CMD-check.yaml)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
@@ -51,7 +39,7 @@ load_all()
 
 **Disclaimer:** This product uses data provided by the USDA, but is not endorsed by or affiliated with USDA or the Federal Government.
 
-# Why use the `rcfip` package?
+# Why use the `rfcip` package?
 
 Although the data that the `rfcip` package provides access to is all publicly available, it is often scattered across various files, interactive portals, or ftp sites and often comes in different file formats or arrives in files that are too large to work with in local memory. The `rfcip` package provides a set of functions that make it easy to access the data without having to think about these complexities. The package also makes it easy to update data for existing analysis since the provided functions can be easily integrated into a reproducible data pipeline for analysis or visualizations. This is particularly pertinent to the FCIP's primary data source, the Summary of Business, which is updated weekly. In short, the `rfcip` is a major time saver for anyone working with data related to the FCIP and has the added benefit of improving data accuracy and reproducibility. 
 
@@ -60,14 +48,51 @@ Although the data that the `rfcip` package provides access to is all publicly av
 `rfcip` can be installed directly from github using `remotes::install_github("https://github.com/dylan-turner25/rfcip")`
 
 # Getting Started
-The `rfcip` package does not require any special setup or configuration. Once downloaded, data can be immediately accessed using any of the available functions. For example, the following pulls up RMA's summary of business data for corn in 2022. For a comprehensive introduction of the `rfcip` package, including a description of available data gathering functions, please see the [getting started](vignettes/rfcip-introduction.md) vignette.
 
-```{r, basic-usage, include=T}
+Load the package and choose the years and filters you need. The year argument is
+`year`, including when requesting several years.
 
-# get summary of business data for corn in 2022
+```{r basic-usage, eval=FALSE}
 library(rfcip)
-get_sob_data(year = 2022, crop = "corn")
 
+# Summary of Business for corn in 2022
+data <- get_sob_data(year = 2022, crop = "corn")
 
+# Multiple years, with optional details about requests, retries, and sources
+data <- get_sob_data(year = 2008:2020, log = TRUE)
 ```
 
+By default, `get_sob_data()` uses a matching cached API report when available.
+Otherwise, it tries RMA's interactive report API for each year. Temporary failures
+such as HTTP 503 are retried up to four total attempts. If those attempts or the
+retry wait budget are exhausted, it tries the coverage-level bulk files for that
+year; the next year starts with the API again. Set `log = TRUE` to follow this
+process. The default is `log = FALSE`; progress bars, warnings, and errors still
+appear.
+
+To download bulk files directly, without trying the interactive API:
+
+```{r bulk-usage, eval=FALSE}
+data <- get_sob_data(year = 2008:2020, sob_version = "sobcov")
+
+# Detailed coverage-level records for corn in Iowa
+corn <- get_sob_data(
+  year = 2024, crop = "corn", state = "IA", sob_version = "sobcov"
+)
+```
+
+Explicit `"sobcov"` calls return detailed state/county/crop/plan/coverage rows.
+Automatic bulk backup instead matches the API query's grouping and compatible
+columns. Bulk publication and program coverage can differ from the API, and
+unavailable fields remain `NA`, so totals are not guaranteed to match. A warning
+identifies each year using backup. Type/practice/unit detail remains available
+through `sob_version = "sobtpu"`.
+
+Repeated calls reuse available cached data. To request an update, use
+`get_sob_data(year = 2024, crop = "corn", force = TRUE)`. A failed refresh can
+return usable cached data with a warning; `force = TRUE` does not guarantee that
+RMA will supply fresh data.
+
+See the [getting-started vignette](vignettes/rfcip-introduction.md) for filters,
+source limitations, cache management, and the package's other data sources, or
+run `help(get_sob_data)` for the full function reference.
