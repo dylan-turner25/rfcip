@@ -1,5 +1,8 @@
 
 test_that("valid_crop returns expected output", {
+  local_mocked_bindings(get_crop_codes = function(...) {
+    data.frame(commodity_code = c(41, 81), commodity_name = c("Corn", "Soybeans"))
+  })
   expect_equal(valid_crop("corn"), T)
   expect_equal(valid_crop("not a crop"), F)
   expect_equal(valid_crop(41), T)
@@ -19,7 +22,7 @@ test_that("valid_state returns expected output",{
 
 test_that("get_sob_url also returns state when group_by county is selected", {
   # Mock the two lookups so this URL-construction test does not hit RMA's servers
-  # (get_crop_codes uses httr; get_insurance_plan_codes uses download.file).
+  # Both lookups resolve through ADM; their transport is irrelevant to this test.
   with_mocked_bindings(
     get_crop_codes = function(...) data.frame(commodity_code = "0041", stringsAsFactors = FALSE),
     get_insurance_plan_codes = function(...) data.frame(insurance_plan_code = "1", stringsAsFactors = FALSE),
@@ -87,5 +90,4 @@ test_that("is_numeric_convertible correctly identifies convertible values", {
   expect_false(is_numeric_convertible(c("10", "20", "30"), "state_code"))
   expect_false(is_numeric_convertible(c("1", "2"), "insurance_plan_code"))
 })
-
 

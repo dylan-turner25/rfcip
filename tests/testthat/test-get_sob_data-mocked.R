@@ -1,233 +1,215 @@
-# Mocked tests for get_sob_data
-# These tests focus on HTTP request logic, file I/O, and data processing
-#
-# Note: get_sob_data() uses download.file() which webmockr cannot intercept
-# (webmockr only supports httr/crul/httr2). These tests use with_mocked_bindings
-# to replace download.file with a function that writes a mock Excel file.
+# Exercise the public function loaded through .onLoad, with real isolated caches.
 
-# Skip all tests if required packages not available
-skip_if_not_installed("mockery")
-skip_if_not_installed("writexl")
-
-# Test basic SOB version path with successful download
-test_that("get_sob_data works with mocked HTTP request for sob version", {
-  mock_data <- create_mock_sob_data()
-  mock_excel <- create_mock_excel_file(mock_data)
-  on.exit(unlink(mock_excel))
-
-  with_mocked_bindings(
-    download.file = function(url, destfile, ...) {
-      file.copy(mock_excel, destfile)
-      invisible(0)
-    },
-    cache_processed_data = function(...) invisible(NULL),
-    {
-      result <- get_sob_data(year = 2023, sob_version = "sob")
-    }
-  )
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
+test_that("SOB ordinary calls reuse disk and clearing causes another download", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  first <- get_sob_data(2024)
+  expect_equal(length(state$urls), 1)
+  expect_length(list.files(cache, pattern = "parquet$"), 1)
+  expect_equal(get_sob_data(2024), first)
+  expect_equal(length(state$urls), 1)
+  clear_rfcip_cache(function_name = "get_sob_data")
+  get_sob_data(2024)
+  expect_equal(length(state$urls), 2)
+  clear_rfcip_cache()
+  get_sob_data(2024)
+  expect_equal(length(state$urls), 3)
+  expect_false(any(file.exists(state$paths)))
 })
 
-test_that("get_sob_data handles multiple years with mocked requests", {
-  mock_data <- create_mock_sob_data()
-  mock_excel <- create_mock_excel_file(mock_data)
-  on.exit(unlink(mock_excel))
-
-  with_mocked_bindings(
-    download.file = function(url, destfile, ...) {
-      file.copy(mock_excel, destfile)
-      invisible(0)
-    },
-    cache_processed_data = function(...) invisible(NULL),
-    {
-      result <- get_sob_data(year = c(2022, 2023), sob_version = "sob")
-    }
-  )
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
+test_that("every forced call downloads and fresh data replaces the disk cache", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  get_sob_data(2024)
+  state$marker <- 5
+  fresh <- get_sob_data(2024, force = TRUE)
+  get_sob_data(2024, force = TRUE)
+  expect_equal(length(state$urls), 3)
+  expect_true(all(fresh$total_prem == 5))
+  saved <- read_parquet_compat(list.files(cache, pattern = "parquet$", full.names = TRUE))
+  expect_true(all(saved$total_prem == 5))
+  expect_equal(get_sob_data(2024), fresh)
+  expect_equal(length(state$urls), 3)
 })
 
-test_that("get_sob_data handles different parameter combinations", {
-  mock_data <- create_mock_sob_data()
-  mock_excel <- create_mock_excel_file(mock_data)
-  on.exit(unlink(mock_excel))
-
-  # Mock get_insurance_plan_codes to prevent the download.file mock from
-  # intercepting its internal download.file call (which would feed it SOB data
-  # instead of insurance plan data).
-  mock_plan_data <- create_mock_insurance_plan_data()
-
-  with_mocked_bindings(
-    download.file = function(url, destfile, ...) {
-      file.copy(mock_excel, destfile)
-      invisible(0)
-    },
-    cache_processed_data = function(...) invisible(NULL),
-    get_insurance_plan_codes = function(...) mock_plan_data,
-    {
-      # Test with different parameters - tests URL construction
-      expect_no_error({
-        get_sob_data(year = 2023, crop = "corn", sob_version = "sob")
-      })
-
-      expect_no_error({
-        get_sob_data(year = 2023, state = "IL", sob_version = "sob")
-      })
-
-      expect_no_error({
-        get_sob_data(year = 2023, insurance_plan = "RP", sob_version = "sob")
-      })
-    }
-  )
+test_that("forced failure returns a detectable fallback and recovery is retried", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  original <- get_sob_data(2024)
+  file <- list.files(cache, pattern = "parquet$", full.names = TRUE)
+  before <- readBin(file, "raw", n = file.info(file)$size)
+  state$fail <- TRUE
+  expect_warning(fallback <- get_sob_data(2024, force = TRUE), class = "rfcip_cache_fallback")
+  expect_equal(fallback, original)
+  expect_identical(readBin(file, "raw", n = file.info(file)$size), before)
+  state$fail <- FALSE
+  state$marker <- 9
+  expect_true(all(get_sob_data(2024, force = TRUE)$total_prem == 9))
+  expect_equal(length(state$urls), 6)
+  expect_equal(state$sleeps, c(1, 2, 4))
+  expect_false(any(file.exists(state$paths)))
 })
 
-test_that("get_sob_data Excel export functionality works", {
-  mock_data <- create_mock_sob_data()
-  mock_excel <- create_mock_excel_file(mock_data)
-  on.exit(unlink(mock_excel))
-
-  temp_file <- tempfile(fileext = ".xlsx")
-
-  with_mocked_bindings(
-    download.file = function(url, destfile, ...) {
-      file.copy(mock_excel, destfile)
-      invisible(0)
-    },
-    cache_processed_data = function(...) invisible(NULL),
-    {
-      expect_no_error({
-        get_sob_data(year = 2023, dest_file = temp_file, sob_version = "sob")
-      })
-    }
-  )
-
-  # File should exist
-  expect_true(file.exists(temp_file) || TRUE)  # Allow for mock limitations
-
-  # Clean up
-  if (file.exists(temp_file)) unlink(temp_file)
+test_that("malformed workbooks cannot replace a usable SOB cache", {
+  local_sob_cache()
+  state <- local_sob_download()
+  original <- get_sob_data(2024)
+  state$bad_content <- TRUE
+  expect_warning(result <- get_sob_data(2024, force = TRUE), class = "rfcip_cache_fallback")
+  expect_equal(result, original)
+  expect_equal(get_sob_data(2024), original)
+  clear_rfcip_cache()
+  expect_error(get_sob_data(2024), class = "rfcip_sob_download_error")
+  expect_false(any(file.exists(state$paths)))
 })
 
-# Note: Testing writexl error handling is difficult due to mocking limitations
-# The conditional logic is tested in the unit tests instead
-
-test_that("get_sob_data sobtpu version calls helper function", {
-  # Mock the get_sobtpu_data function to return data
-  mock_sobtpu_data <- create_mock_sob_data()
-
-  # Test that sobtpu path works
-  with_mocked_bindings(
-    get_sobtpu_data = function(...) mock_sobtpu_data,
-    {
-      result <- get_sob_data(year = 2023, crop = "corn", sob_version = "sobtpu")
-      expect_s3_class(result, "data.frame")
-      expect_true(nrow(result) > 0)
-    }
-  )
-})
-
-test_that("get_sob_data handles invalid sob_version parameter", {
-  # Test with invalid sob_version - the function currently has a bug where it tries to type_convert NULL
-  # This test documents the current behavior and tests error handling
-  expect_error(
-    get_sob_data(year = 2023, sob_version = "invalid"),
-    "is.data.frame"
-  )
-})
-
-test_that("get_sob_data temporary file cleanup works", {
-  mock_data <- create_mock_sob_data()
-  mock_excel <- create_mock_excel_file(mock_data)
-  on.exit(unlink(mock_excel))
-
-  # Get initial temp file count
-  temp_dir <- tempdir()
-  initial_files <- list.files(temp_dir, pattern = "\\.xlsx$", full.names = TRUE)
-
-  with_mocked_bindings(
-    download.file = function(url, destfile, ...) {
-      file.copy(mock_excel, destfile)
-      invisible(0)
-    },
-    cache_processed_data = function(...) invisible(NULL),
-    {
-      expect_no_error({
-        get_sob_data(year = 2023, sob_version = "sob")
-      })
-    }
-  )
-
-  # The function should clean up its temp files
-  # (This tests the unlink() call in the function)
-  expect_no_error(TRUE)  # Just verify no errors occurred
-})
-
-test_that("get_sob_data progress bar functionality doesn't cause errors", {
-  mock_data <- create_mock_sob_data()
-  mock_excel <- create_mock_excel_file(mock_data)
-  on.exit(unlink(mock_excel))
-
-  with_mocked_bindings(
-    download.file = function(url, destfile, ...) {
-      file.copy(mock_excel, destfile)
-      invisible(0)
-    },
-    cache_processed_data = function(...) invisible(NULL),
-    {
-      # Test that progress bar doesn't cause errors with multiple years
-      expect_no_error({
-        get_sob_data(year = c(2022, 2023), sob_version = "sob")
-      })
-    }
-  )
-})
-
-test_that("get_sob_data URL construction with different parameters", {
-  # Test the get_sob_url helper function directly
-  expect_no_error({
-    url1 <- get_sob_url(year = 2023, crop = "corn")
-    expect_type(url1, "character")
-    expect_true(nchar(url1) > 0)
+test_that("cache write failure returns fresh data and retains the old file", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  get_sob_data(2024)
+  state$marker <- 8
+  local_mocked_bindings(write_parquet_compat = function(x, sink, ...) {
+    writeLines("partial parquet", sink)
+    stop("disk write failed")
   })
-
-  # Mock get_insurance_plan_codes since it uses download.file internally
-  # and we want this test to work without network access
-  mock_plan_data <- create_mock_insurance_plan_data()
-
-  with_mocked_bindings(
-    get_insurance_plan_codes = function(...) mock_plan_data,
-    {
-      expect_no_error({
-        url2 <- get_sob_url(year = 2023, state = "IL", insurance_plan = "RP")
-        expect_type(url2, "character")
-        expect_true(nchar(url2) > 0)
-      })
-    }
-  )
+  expect_warning(fresh <- get_sob_data(2024, force = TRUE), class = "rfcip_cache_write_warning")
+  expect_true(all(fresh$total_prem == 8))
+  expect_true(all(get_sob_data(2024)$total_prem == 1))
+  expect_length(list.files(cache), 1)
 })
 
-test_that("get_sob_data type conversion pipeline works", {
-  # Test the type conversion logic with mock data
-  mock_data <- create_mock_sob_data()
+test_that("replacement failure preserves a valid SOB cache", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  get_sob_data(2024)
+  state$marker <- 7
+  local_mocked_bindings(replace_sob_cache_file = function(...) stop("rename failed"))
+  expect_warning(fresh <- get_sob_data(2024, force = TRUE), class = "rfcip_cache_write_warning")
+  expect_true(all(fresh$total_prem == 7))
+  expect_true(all(get_sob_data(2024)$total_prem == 1))
+  expect_length(list.files(cache), 1)
+})
 
-  # Convert all to character (as done in function)
-  char_data <- dplyr::mutate(mock_data, dplyr::across(dplyr::everything(), as.character))
+test_that("corrupt caches are unavailable, never successful fallback", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  get_sob_data(2024)
+  path <- list.files(cache, full.names = TRUE)[1]
+  writeLines("not parquet", path)
+  state$marker <- 3
+  expect_true(all(get_sob_data(2024)$total_prem == 3))
+  expect_equal(length(state$urls), 2)
+  writeLines("corrupt again", path)
+  state$fail <- TRUE
+  expect_error(get_sob_data(2024, force = TRUE), class = "rfcip_sob_download_error")
+  expect_error(get_sob_data(2024), class = "rfcip_sob_download_error")
+})
 
-  # Apply type conversion (as done in function)
-  result <- suppressMessages(
-    readr::type_convert(
-      char_data,
-      col_types = readr::cols(
-        commodity_code = readr::col_integer(),
-        insurance_plan_code = readr::col_integer()
-      )
-    )
-  )
+test_that("a multi-year request only caches after all years succeed", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  state$fail_year <- 2024
+  expect_error(get_sob_data(2023:2024), "year 2024")
+  expect_length(list.files(cache), 0)
+  state$fail_year <- NULL
+  original <- get_sob_data(2023:2024)
+  expect_setequal(original$commodity_year, 2023:2024)
+  state$marker <- 6
+  state$fail_year <- 2024
+  expect_warning(fallback <- get_sob_data(2023:2024, force = TRUE), class = "rfcip_cache_fallback")
+  expect_equal(fallback, original)
+  expect_equal(get_sob_data(2023:2024), original)
+  expect_false(any(file.exists(state$paths)))
+})
 
-  expect_s3_class(result, "data.frame")
-  expect_true(is.integer(result$commodity_code))
-  expect_true(is.character(result$commodity_name))
+test_that("different filters keep separate report caches and invalid inputs error", {
+  local_sob_cache()
+  state <- local_sob_download()
+  get_sob_data(2024)
+  get_sob_data(2024, state = "IA")
+  expect_equal(length(state$urls), 2)
+  expect_match(state$urls[2], "ST=19")
+  expect_error(get_sob_data(2024, group_by = "bad", force = TRUE), "Invalid group_by")
+  expect_error(get_sob_data(2024, sob_version = "invalid"), "arg")
+  expect_error(get_sob_data(numeric()), "whole years")
+  expect_error(get_sob_data(c(2024, NA)), "whole years")
+  expect_error(get_sob_data(2024.5), "whole years")
+  expect_error(get_sob_data(2024, force = NA), "force")
+  expect_equal(length(state$urls), 2)
+})
+
+test_that("cached SOB results still create each requested Excel export", {
+  local_sob_cache()
+  state <- local_sob_download()
+  path <- withr::local_tempfile(fileext = ".xlsx")
+  get_sob_data(2024, dest_file = path)
+  expect_true(file.exists(path))
+  unlink(path)
+  get_sob_data(2024, dest_file = path)
+  expect_true(file.exists(path))
+  expect_equal(nrow(readxl::read_excel(path)), 3)
+  expect_equal(length(state$urls), 1)
+})
+
+test_that("plan lookup resolves once using requested years and refresh intent", {
+  local_sob_cache()
+  state <- local_sob_download()
+  lookups <- list()
+  local_mocked_bindings(get_adm_data = function(year, dataset, show_progress, force) {
+    lookups[[length(lookups) + 1L]] <<- list(year = year, dataset = dataset, force = force)
+    mock_plan_adm(year)
+  })
+  get_sob_data(2023:2024, insurance_plan = "RP", force = TRUE)
+  expect_length(lookups, 1)
+  expect_equal(lookups[[1]], list(year = 2023:2024, dataset = "A00460", force = TRUE))
+  expect_length(state$urls, 2)
+  expect_true(all(grepl("IP=2&", state$urls)))
+  get_sob_data(2023:2024, insurance_plan = "RP")
+  expect_length(lookups, 1)
+  expect_length(state$urls, 2)
+  expect_error(get_sob_data(2023:2024, insurance_plan = c("RP", "bad"), force = TRUE), "not valid")
+  expect_length(state$urls, 2)
+})
+
+test_that("pre-2011 plan lookup never changes the requested report year", {
+  local_sob_cache()
+  state <- local_sob_download()
+  calls <- list()
+  local_mocked_bindings(get_adm_data = function(year, ...) {
+    calls[[length(calls) + 1L]] <<- year
+    mock_plan_adm(year)
+  })
+  expect_warning(get_sob_data(c(1990, 1991), insurance_plan = 2), class = "rfcip_lookup_year_fallback")
+  expect_equal(calls, list(2011))
+  expect_match(state$urls[1], "CY=1990")
+  expect_match(state$urls[2], "CY=1991")
+})
+
+test_that("cache replacement rolls back on platforms without overwrite rename", {
+  dir <- withr::local_tempdir()
+  old <- file.path(dir, "cache")
+  fresh <- file.path(dir, "staged")
+  writeLines("old", old)
+  writeLines("new", fresh)
+  n <- 0L
+  rename <- function(from, to) {
+    n <<- n + 1L
+    if (n == 2L) return(FALSE)
+    file.rename(from, to)
+  }
+  expect_error(replace_sob_cache_file(fresh, old, windows = TRUE, rename = rename), "Could not replace")
+  expect_equal(readLines(old), "old")
+  expect_equal(readLines(fresh), "new")
+  n <- 0L
+  throwing_rename <- function(from, to) {
+    n <<- n + 1L
+    if (n == 2L) stop("commit failed")
+    file.rename(from, to)
+  }
+  expect_error(replace_sob_cache_file(fresh, old, windows = TRUE, rename = throwing_rename),
+               "Could not replace")
+  expect_equal(readLines(old), "old")
+  replace_sob_cache_file(fresh, old, windows = TRUE)
+  expect_equal(readLines(old), "new")
+  expect_length(list.files(dir), 1)
 })

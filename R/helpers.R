@@ -162,7 +162,9 @@ get_sobtpu_data <- function(year = NULL,
   
   # clean insurance plan entry
   if (!is.null(insurance_plan)) {
-    insurance_plan <- as.numeric(data.frame(get_insurance_plan_codes(plan = insurance_plan))[, "insurance_plan_code"])
+    insurance_plan <- unique(get_insurance_plan_codes(
+      year = year, plan = insurance_plan, force = force
+    )$insurance_plan_code)
   }
   
   # clean state county and fips code
@@ -581,7 +583,7 @@ include_and <- function(url){
 #' @keywords internal
 #' @importFrom usmap fips
 #'
-get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", group_by = NULL) {
+get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", group_by = NULL, force = FALSE, .insurance_plan_codes = NULL) {
   # define the prefix and suffix of the URL string (i.e. these are constant)
   prefix <- "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?"
 
@@ -597,7 +599,11 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
 
   # clean insurance plan entry
   if (!is.null(insurance_plan)) {
-    insurance_plan <- data.frame(get_insurance_plan_codes(plan = insurance_plan))[, "insurance_plan_code"]
+    insurance_plan <- if (!is.null(.insurance_plan_codes)) {
+      unique(.insurance_plan_codes)
+    } else {
+      unique(get_insurance_plan_codes(year = year, plan = insurance_plan, force = force)$insurance_plan_code)
+    }
   }
 
   # clean state county and fips code
@@ -1000,12 +1006,16 @@ restore_factor_levels <- function(data, filename) {
 #' or filter by function type, specific years, or other criteria.
 #'
 #' @param function_name Character. Optional function name to clear cache for 
-#'   (e.g., "get_sob_data", "get_col_data"). If NULL, clears all cache.
-#' @param years Numeric vector. Optional years to clear from cache.
+#'   (e.g., "get_sob_data", "get_col_data", "get_insurance_plan_codes"). If NULL, clears all cache.
+#' @param years Numeric vector. Optional years to clear from cache. For
+#'   `get_insurance_plan_codes`, pre-2011 years also clear the effective 2011 ADM asset.
 #' @param program Character. Optional program to clear (for livestock data).
 #' @return Invisibly returns `NULL`. A message is printed indicating which
 #'   files were cleared.
 #' @export
+#' @details Plan-code clearing removes A00460 assets and legacy
+#' `insurance_plans_` Excel caches. Clearing SOB results does not clear plan
+#' lookup assets. Other package functions may retain separate memoised results.
 #'
 #' @examples
 #' \dontrun{
@@ -1014,6 +1024,9 @@ restore_factor_levels <- function(data, filename) {
 #' 
 #' # Clear only SOB data cache
 #' clear_rfcip_cache(function_name = "get_sob_data")
+#'
+#' # Clear ADM plan lookup assets and legacy plan caches
+#' clear_rfcip_cache(function_name = "get_insurance_plan_codes")
 #' 
 #' # Clear specific years
 #' clear_rfcip_cache(years = 2023)
@@ -1043,19 +1056,24 @@ clear_rfcip_cache <- function(function_name = NULL, years = NULL, program = NULL
   if (!is.null(function_name)) {
     pattern <- switch(function_name,
       "get_sob_data" = "^(sob_|sobtpu_)",
+      "get_insurance_plan_codes" = "^(insurance_plans_|[0-9]{4}_A00460(_|[.]))",
       "get_col_data" = "^col_",
       "get_livestock_data" = "^livestock_",
       "get_price_data" = "^price_",
       "get_adm_data" = "(YTD|A\\d{5})",
       stop("Unknown function name: ", function_name)
     )
-    cached_files <- cached_files[grepl(pattern, basename(cached_files))]
+    cached_files <- cached_files[grepl(pattern, basename(cached_files), ignore.case = TRUE)]
   }
   
   # Filter by years
   if (!is.null(years)) {
     year_pattern <- paste0("(", paste(years, collapse = "|"), ")")
-    cached_files <- cached_files[grepl(year_pattern, basename(cached_files))]
+    matches <- grepl(year_pattern, basename(cached_files))
+    if (identical(function_name, "get_insurance_plan_codes") && any(years < 2011)) {
+      matches <- matches | grepl("^2011_A00460(_|[.])", basename(cached_files), ignore.case = TRUE)
+    }
+    cached_files <- cached_files[matches]
   }
   
   # Filter by program (for livestock)

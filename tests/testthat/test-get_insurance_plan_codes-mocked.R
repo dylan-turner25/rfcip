@@ -1,269 +1,163 @@
-# Offline tests for get_insurance_plan_codes
-#
-# get_insurance_plan_codes() downloads an Excel file with download.file(), which
-# webmockr CANNOT intercept (it only supports httr/crul/httr2). Earlier versions
-# of these tests set up webmockr and silently fell through to a real network
-# request, which passed on Linux/macOS runners but failed intermittently on
-# Windows when RMA throttled the runner. These tests now mock download.file
-# directly (like the SOB and COL mocked tests) so they are fully offline.
-#
-# force = TRUE is used so the mocked download path is always exercised regardless
-# of any pre-existing cache, and cache_raw_data is shimmed so nothing is written
-# to the user cache.
+# A00460 lookup tests: no requests to the SOB application.
 
-skip_if_not_installed("writexl")
-
-test_that("get_insurance_plan_codes basic functionality with mocked download", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      expect_no_error({
-        result <- get_insurance_plan_codes(year = 2023, force = TRUE)
-      })
-      expect_s3_class(result, "data.frame")
-    }
-  )
+test_that("plan lookup maps ADM fields and accepts mixed identifiers and aliases", {
+  local_mocked_bindings(get_adm_data = function(year, ...) mock_plan_adm(year))
+  data <- get_insurance_plan_codes(2024)
+  expect_s3_class(data, "tbl_df")
+  expect_named(data, c("commodity_year", "insurance_plan_code", "insurance_plan", "insurance_plan_abbrv"))
+  expect_type(data$insurance_plan_code, "integer")
+  expect_equal(data$commodity_year, rep(2024L, 3))
+  expect_equal(get_insurance_plan_codes(2024, "rp")$insurance_plan_code, 2L)
+  expect_equal(get_insurance_plan_codes(2024, "Revenue Protection")$insurance_plan_code, 2L)
+  expect_equal(get_insurance_plan_codes(2024, 2)$insurance_plan_code, 2L)
+  expect_equal(get_insurance_plan_codes(2024, "02")$insurance_plan_code, 2L)
+  expect_equal(get_insurance_plan_codes(2024, "RP-HPE")$insurance_plan_code, 3L)
+  expect_equal(get_insurance_plan_codes(2024, "Revenue Protection with Harvest Price Exclusion")$insurance_plan_code, 3L)
+  expect_equal(get_insurance_plan_codes(2024, c("RP", "Yield Protection", "3"))$insurance_plan_code, 1:3)
+  expect_error(get_insurance_plan_codes(2024, c("RP", "bad")), "not valid: bad")
 })
 
-test_that("get_insurance_plan_codes handles multiple years with mocked download", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      expect_no_error({
-        result <- get_insurance_plan_codes(year = c(2022, 2023), force = TRUE)
-      })
-    }
-  )
+test_that("factor-backed ADM identifiers and names retain their actual values", {
+  local_mocked_bindings(get_adm_data = function(year, ...) {
+    x <- mock_plan_adm(year)
+    x[] <- lapply(x, factor)
+    x$insurance_plan_code <- factor(c("1", "2", "3"), levels = c("3", "1", "2"))
+    x
+  })
+  expect_equal(get_insurance_plan_codes(2024, "RP")$insurance_plan_code, 2L)
+  expect_equal(get_insurance_plan_codes(2024)$commodity_year, rep(2024L, 3))
 })
 
-test_that("get_insurance_plan_codes handles x2 header detection and skip logic", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(create_mock_insurance_plan_data_with_x2_header()),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      expect_no_error({
-        result <- get_insurance_plan_codes(year = 2023, force = TRUE)
-      })
-    }
-  )
+test_that("plan years and force reach ADM on every direct call", {
+  calls <- list()
+  local_mocked_bindings(get_adm_data = function(year, dataset, show_progress, force) {
+    calls[[length(calls) + 1L]] <<- list(year = year, dataset = dataset, force = force)
+    expect_false(show_progress)
+    mock_plan_adm(year)
+  })
+  get_insurance_plan_codes(2023:2024, force = TRUE)
+  get_insurance_plan_codes(2023:2024, force = TRUE)
+  expect_equal(calls, rep(list(list(year = 2023:2024, dataset = "A00460", force = TRUE)), 2))
+  expect_warning(data <- get_insurance_plan_codes(c(1990, 2000, 2011, 2024)), class = "rfcip_lookup_year_fallback")
+  expect_equal(calls[[3]]$year, c(2011, 2024))
+  expect_setequal(data$commodity_year, c(2011, 2024))
 })
 
-test_that("get_insurance_plan_codes plan filtering by abbreviation works", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      result <- get_insurance_plan_codes(year = 2023, plan = "RP", force = TRUE)
-      expect_s3_class(result, "data.frame")
-
-      # case insensitive filtering
-      result <- get_insurance_plan_codes(year = 2023, plan = c("rp", "YP"), force = TRUE)
-      expect_s3_class(result, "data.frame")
-    }
-  )
+test_that("invalid inputs fail before retrieval and missing contemporary assets do not substitute", {
+  requests <- 0L
+  local_mocked_bindings(get_adm_data = function(year, ...) {
+    requests <<- requests + 1L
+    stop("ADM asset unavailable for year ", year)
+  })
+  expect_error(get_insurance_plan_codes(NA_real_), "whole years")
+  expect_error(get_insurance_plan_codes(2024, NA), "plan")
+  expect_error(get_insurance_plan_codes(2024, character()), "plan")
+  expect_error(get_insurance_plan_codes(2024, force = NA), "force")
+  expect_equal(requests, 0)
+  expect_error(get_insurance_plan_codes(2025), "ADM asset unavailable for year 2025")
+  expect_equal(requests, 1)
 })
 
-test_that("get_insurance_plan_codes plan filtering by full name works", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      result <- get_insurance_plan_codes(year = 2023, plan = "Revenue Protection", force = TRUE)
-      expect_s3_class(result, "data.frame")
-
-      result <- get_insurance_plan_codes(year = 2023, plan = c("revenue protection", "YIELD PROTECTION"), force = TRUE)
-      expect_s3_class(result, "data.frame")
-    }
-  )
-})
-
-test_that("get_insurance_plan_codes plan filtering by numeric codes works", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      result <- get_insurance_plan_codes(year = 2023, plan = 2, force = TRUE)
-      expect_s3_class(result, "data.frame")
-
-      result <- get_insurance_plan_codes(year = 2023, plan = c(1, 2), force = TRUE)
-      expect_s3_class(result, "data.frame")
-    }
-  )
-})
-
-test_that("get_insurance_plan_codes handles invalid plan names/codes with error", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      expect_error(
-        get_insurance_plan_codes(year = 2023, plan = "invalid_plan_name", force = TRUE),
-        "One or more of the entered insurance plan codes or insurance plan names is not valid"
-      )
-      expect_error(
-        get_insurance_plan_codes(year = 2023, plan = 99999, force = TRUE),
-        "One or more of the entered insurance plan codes or insurance plan names is not valid"
-      )
-    }
-  )
-})
-
-test_that("get_insurance_plan_codes data structure and column processing", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      result <- get_insurance_plan_codes(year = 2023, force = TRUE)
-
-      expect_true("commodity_year" %in% names(result))
-      expect_true("insurance_plan_code" %in% names(result))
-      expect_true("insurance_plan" %in% names(result))
-      expect_true("insurance_plan_abbrv" %in% names(result))
-      expect_s3_class(result, "data.frame")
-      expect_true(nrow(result) > 0)
-      expect_equal(ncol(result), 4)
-    }
-  )
-})
-
-test_that("get_insurance_plan_codes distinct() removes duplicates", {
-  mock_data_with_dupes <- data.frame(
-    commodity_year = c("2023", "2023", "2023", "2023"),
-    insurance_plan_code = c("1", "1", "2", "2"),
-    insurance_plan = c("APH", "APH", "Revenue Protection", "Revenue Protection"),
-    insurance_plan_abbrv = c("APH", "APH", "RP", "RP"),
-    stringsAsFactors = FALSE
-  )
-
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(mock_data_with_dupes),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      result <- get_insurance_plan_codes(year = 2023, force = TRUE)
-      expect_s3_class(result, "data.frame")
-      expect_true(nrow(result) > 0)
-      expect_true(all(c("APH", "Revenue Protection") %in% result$insurance_plan))
-    }
-  )
-})
-
-test_that("get_insurance_plan_codes URL construction works correctly", {
-  # Pure parameter check, no download
-  expect_no_error({
-    params_test <- list(year = 2023, plan = NULL)
+test_that("invalid or incomplete ADM schemas cannot become successful lookup results", {
+  local_mocked_bindings(get_adm_data = function(...) data.frame(error = "unavailable"))
+  expect_error(get_insurance_plan_codes(2024), "missing required")
+  with_mocked_bindings(get_adm_data = function(...) mock_plan_adm(2023), {
+    expect_error(get_insurance_plan_codes(2024), "invalid or missing")
   })
 })
 
-test_that("get_insurance_plan_codes column selection works with different data structures", {
-  mock_data_extra_cols <- data.frame(
-    commodity_year = c("2023", "2023"),
-    insurance_plan_code = c("1", "2"),
-    insurance_plan = c("APH", "Revenue Protection"),
-    insurance_plan_abbrv = c("APH", "RP"),
-    extra_col1 = c("Extra1", "Extra2"),
-    extra_col2 = c("Extra3", "Extra4"),
-    stringsAsFactors = FALSE
-  )
-
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(mock_data_extra_cols),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      result <- get_insurance_plan_codes(year = 2023, force = TRUE)
-      expect_equal(ncol(result), 4)
-      expect_true(all(c("commodity_year", "insurance_plan_code", "insurance_plan", "insurance_plan_abbrv") %in% names(result)))
-      expect_false("extra_col1" %in% names(result))
-      expect_false("extra_col2" %in% names(result))
-    }
-  )
+test_that("different plan filters reuse a single real ADM cache asset", {
+  cache <- local_sob_cache()
+  asset <- "2024_A00460_InsurancePlan_YTD.parquet"
+  requests <- 0L
+  local_mocked_bindings(list_data_assets = function() asset)
+  local_mocked_bindings(pb_download = function(file, repo, tag, dest, show_progress) {
+    requests <<- requests + 1L
+    write_parquet_compat(mock_plan_adm(2024), file.path(dest, file))
+  }, .package = "piggyback")
+  expect_equal(get_insurance_plan_codes(2024, "YP")$insurance_plan_code, 1L)
+  expect_equal(get_insurance_plan_codes(2024, "RP")$insurance_plan_code, 2L)
+  expect_equal(requests, 1)
+  expect_equal(list.files(cache), asset)
+  get_insurance_plan_codes(2024, force = TRUE)
+  get_insurance_plan_codes(2024, force = TRUE)
+  expect_equal(requests, 3)
+  clear_rfcip_cache(function_name = "get_insurance_plan_codes", years = 2024)
+  get_insurance_plan_codes(2024)
+  expect_equal(requests, 4)
 })
 
-test_that("get_insurance_plan_codes handles edge cases with basic parameters", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      # NULL plan (returns all)
-      result <- get_insurance_plan_codes(year = 2023, plan = NULL, force = TRUE)
-      expect_s3_class(result, "data.frame")
-
-      # default (current) year
-      result <- get_insurance_plan_codes(force = TRUE)
-      expect_s3_class(result, "data.frame")
-    }
-  )
+test_that("ADM lookup recovery is not hidden by memoised fallback", {
+  local_sob_cache()
+  asset <- "2024_A00460_InsurancePlan_YTD.parquet"
+  requests <- 0L
+  fail <- FALSE
+  local_mocked_bindings(list_data_assets = function() asset)
+  local_mocked_bindings(pb_download = function(file, repo, tag, dest, show_progress) {
+    requests <<- requests + 1L
+    if (fail) stop("GitHub unavailable")
+    write_parquet_compat(mock_plan_adm(2024), file.path(dest, file))
+  }, .package = "piggyback")
+  first <- get_insurance_plan_codes(2024)
+  fail <- TRUE
+  # The underlying ADM cache retains its existing fallback notification semantics.
+  expect_equal(get_insurance_plan_codes(2024, force = TRUE), first)
+  fail <- FALSE
+  get_insurance_plan_codes(2024, force = TRUE)
+  expect_equal(requests, 3)
 })
 
-test_that("get_insurance_plan_codes hierarchical plan matching works correctly", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      # abbreviation match
-      result_abbrev <- get_insurance_plan_codes(year = 2023, plan = "RP", force = TRUE)
-      expect_s3_class(result_abbrev, "data.frame")
-      expect_true(nrow(result_abbrev) > 0)
-
-      # full name match
-      result_full <- get_insurance_plan_codes(year = 2023, plan = "Revenue Protection", force = TRUE)
-      expect_s3_class(result_full, "data.frame")
-      expect_true(nrow(result_full) > 0)
-
-      # numeric code match
-      result_numeric <- get_insurance_plan_codes(year = 2023, plan = 2, force = TRUE)
-      expect_s3_class(result_numeric, "data.frame")
-      expect_true(nrow(result_numeric) > 0)
-    }
-  )
+test_that("plan-cache clearing matches only A00460 and legacy lookup files", {
+  cache <- local_sob_cache()
+  dir.create(cache, recursive = TRUE)
+  files <- c("2011_A00460_InsurancePlan_YTD.parquet", "2024_A00460_InsurancePlan_YTD.parquet",
+             "insurance_plans_year_1990_plan_RP.xlsx", "insurance_plans_year_2024_plan_RP.xlsx",
+             "2024_A00420_Commodity_YTD.parquet", "2024_A004600_other.parquet",
+             "sob_year_2024.parquet")
+  file.create(file.path(cache, files))
+  clear_rfcip_cache("get_insurance_plan_codes", years = 1990)
+  expect_setequal(list.files(cache), files[-c(1, 3)])
+  clear_rfcip_cache("get_insurance_plan_codes")
+  expect_setequal(list.files(cache), files[5:7])
 })
 
-test_that("get_insurance_plan_codes caching behavior can be tested", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      # First call - forced download
-      expect_no_error({
-        result1 <- get_insurance_plan_codes(year = 2023, force = TRUE)
-        expect_s3_class(result1, "data.frame")
-      })
-
-      # Second call - non-forced (uses cache if present, else mocked download)
-      expect_no_error({
-        result2 <- get_insurance_plan_codes(year = 2023, force = FALSE)
-        expect_s3_class(result2, "data.frame")
-      })
-    }
+test_that("SOBTPU plan filters work without contacting the application", {
+  skip_if_not_installed("writexl")
+  local_sob_cache()
+  calls <- list()
+  downloads <- 0L
+  source_dir <- withr::local_tempdir()
+  # A minimal valid 27-column SOBTPU file, with two different plans.
+  row <- c(2024, 19, "Iowa", "IA", 1, "Adair", 41, "Corn", 1, "YP",
+           "A", 0.8, "RBUP", 16, "Grain", 3, "Non-Irrigated", "EU", "Enterprise",
+           100, "Acres", 1000, 100, 50, 10, 0.1, 0)
+  second <- row
+  second[9:10] <- c("2", "RP")
+  writeLines(c(paste(row, collapse = "|"), paste(second, collapse = "|")),
+             file.path(source_dir, "SOBSCCTPU24.TXT"))
+  archive <- file.path(source_dir, "fixture.zip")
+  withr::with_dir(source_dir, utils::zip(archive, "SOBSCCTPU24.TXT", flags = "-q"))
+  local_mocked_bindings(
+    get_adm_data = function(year, dataset, force, ...) {
+      calls[[length(calls) + 1L]] <<- list(year = year, dataset = dataset, force = force)
+      mock_plan_adm(year)
+    },
+    get_crop_codes = function(...) data.frame(commodity_code = 41L),
+    locate_sobtpu_links = function(...) data.frame(year = 2024, url = "https://bulk.example/sobtpu.zip"),
+    sob_http_request = function(...) stop("SOB application must not be contacted")
   )
-})
-
-test_that("get_insurance_plan_codes mixed plan filtering scenarios", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      # mixed abbreviations and full names
-      result <- get_insurance_plan_codes(year = 2023, plan = c("RP", "Yield Protection"), force = TRUE)
-      expect_s3_class(result, "data.frame")
-
-      # mixed abbreviations and numeric codes
-      result <- get_insurance_plan_codes(year = 2023, plan = c("APH", 2), force = TRUE)
-      expect_s3_class(result, "data.frame")
-    }
-  )
-})
-
-test_that("get_insurance_plan_codes downloadfile vs httr behavior", {
-  with_mocked_bindings(
-    download.file = create_insurance_plan_download_mock(),
-    cache_raw_data = cache_raw_data_passthrough,
-    {
-      expect_no_error({
-        result <- get_insurance_plan_codes(year = 2023, force = TRUE)
-        expect_s3_class(result, "data.frame")
-      })
-    }
-  )
+  local_mocked_bindings(download.file = function(url, destfile, ...) {
+    expect_equal(url, "https://bulk.example/sobtpu.zip")
+    downloads <<- downloads + 1L
+    file.copy(archive, destfile)
+    invisible(0L)
+  }, .package = "utils")
+  yp <- get_sob_data(2024, crop = "corn", insurance_plan = "YP", sob_version = "sobtpu")
+  rp <- get_sob_data(2024, crop = "corn", insurance_plan = 2, sob_version = "sobtpu")
+  expect_equal(yp$insurance_plan_code, 1L)
+  expect_equal(rp$insurance_plan_code, 2L)
+  expect_equal(downloads, 1)
+  get_sob_data(2024, insurance_plan = 2, sob_version = "sobtpu", force = TRUE)
+  expect_equal(downloads, 2)
+  expect_equal(calls[[3]], list(year = 2024, dataset = "A00460", force = TRUE))
 })

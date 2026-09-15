@@ -54,13 +54,48 @@ return the same data, but further dissagregated by insurance plan and coverage l
 
 \item{sob_version}{a character string indicating the version of the summary of business to use. The default is "sob" which uses the summary of business app. The alternative is "sobtpu" which downloads the summary of business by type, practice, and unit structure.}
 
-\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
+\item{force}{Logical (default FALSE). Each TRUE call attempts fresh retrieval.
+For SOB exports, a failed download or invalid response falls back to a usable
+matching disk cache with an \code{rfcip_cache_fallback} warning.}
 }
 \value{
 Returns a tibble
 }
 \description{
 Downloads and imports data from RMA's summary of buisness app
+}
+\details{
+SOB results are cached on disk for the exact query. A successful
+refresh replaces that cache after all requested years have been validated.
+If saving fresh data fails, the fresh result is returned with an
+\code{rfcip_cache_write_warning}; the previous usable cache is preserved.
+Invalid arguments are errors, not reasons to return cached results.
+Insurance-plan filters resolve through the ADM A00460 lookup for the
+requested years (2011 for earlier years) and receive the refresh intent.
+Errors from the ADM lookup retain their own source and fallback behavior.
+Crop lookup remains separately memoised and does not gain a guaranteed
+refresh from this argument. SOBTPU bulk caching retains its existing behavior.
+Omitting \code{year} requests the current calendar year. Clearing SOB's disk
+cache removes its saved results; there is no additional SOB memory cache.
+
+Each yearly SOB export makes at most four attempts for HTTP 429, 502, 503,
+or 504 and recognized transient connection/transfer errors. Retry waits are
+approximately 1, 2, and 4 seconds with jitter. A server's \code{Retry-After}
+delay (seconds or HTTP date) is respected, including on 503. Total retry
+sleep is limited to 60 seconds per year; a longer required delay stops
+retrieval rather than retrying early. After failure, the usual forced-call
+cache fallback applies. Interruptions propagate immediately.
+
+Each transfer uses the R \code{timeout} option, explicitly passed to httr.
+It must be a finite numeric number of seconds between 0.001 and
+\code{.Machine$integer.max / 1000}. This transfer timeout is separate from the
+retry sleep budget; a multi-year call can take longer than 60 seconds.
+Other HTTP errors, certificate/local write errors, unrecognized transport
+errors, and invalid workbooks are not retried. Typed transport errors are
+recognized with curl 6.0.0 or later; older untyped errors fail immediately.
+An \code{rfcip_sob_download_error} retains \code{year}, \code{status} (when available),
+\code{attempts}, \code{url}, and the underlying \code{parent} condition (when available).
+These retries apply only to SOB exports, not ADM lookup or SOBTPU downloads.
 }
 \examples{
 \dontrun{

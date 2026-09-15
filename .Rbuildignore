@@ -9,3 +9,5 @@ data-raw
 ^Meta$
 codecov.yml
 .claude
+^SOB_SERVICE_INVESTIGATION\.md$
+^SOB_RELIABILITY_PLAN\.md$

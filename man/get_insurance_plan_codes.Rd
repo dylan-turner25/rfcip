@@ -4,7 +4,7 @@
 \alias{get_insurance_plan_codes}
 \title{Lookup insurance plan codes for FCIP insurance plans}
 \source{
-Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
+USDA RMA Actuarial Data Master insurance-plan table A00460, distributed through the package's GitHub release assets.
 }
 \usage{
 get_insurance_plan_codes(
@@ -14,17 +14,27 @@ get_insurance_plan_codes(
 )
 }
 \arguments{
-\item{year}{A single numeric value, or vector of numeric values, indicating what years of the summary of business should be used to get crop names and crop codes. Defaults to the current year.}
+\item{year}{A numeric year or vector of ADM reinsurance years. Defaults to the current year. Years before 2011 use the 2011 lookup with a warning.}
 
 \item{plan}{can be either a character string indicating an insurance plan (ex: \code{yp} and \verb{yield protection} are both valid) or a numeric value indicating the insurance plan code (i.e. \code{1}). Inputting nothing for the \code{plan} argument will return codes for all insurance plans in the specified year(s).}
 
-\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
+\item{force}{Logical (default FALSE). Forwarded to \code{get_adm_data()} on every call to attempt fresh asset retrieval. The existing ADM cache controls fallback on failure.}
 }
 \value{
-Returns a tibble containing the relevant commodity year, insurance plan codes, insurance plan name, and insurance plan abbreviation
+A tibble with \code{commodity_year}, \code{insurance_plan_code}, \code{insurance_plan}, and \code{insurance_plan_abbrv}. For compatibility, \code{commodity_year} contains the ADM reinsurance year used for lookup, including 2011 for pre-2011 requests.
 }
 \description{
 Lookup insurance plan codes for FCIP insurance plans
+}
+\details{
+The complete A00460 asset is cached by year; plan filters are applied
+after loading, so different filters reuse the same asset. Lookup data comes
+from the package's GitHub release assets, independently of the SOB application.
+ADM lookup may still query release metadata when its data file is cached.
+Names and abbreviations describe the source year and do not establish
+historical plan participation. The legacy abbreviation \code{RP-HPE} is accepted
+as an alias for \code{RPHPE}. All supplied identifiers must match a plan.
+Generic ADM cache and fallback behavior is inherited unchanged.
 }
 \examples{
 \dontrun{

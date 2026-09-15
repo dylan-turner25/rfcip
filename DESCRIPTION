@@ -17,6 +17,7 @@ Suggests:
     webmockr (>= 0.8.0),
     mockery,
     writexl,
+    withr,
     gh,
     knitr,
     rmarkdown,

@@ -18,7 +18,40 @@
 #' dis-aggregated by year only where. The function call
 #' `get_sob_data(year = 2023:2024, group_by = c("insurance_plan","cov_lvl"))` will
 #'  return the same data, but further dissagregated by insurance plan and coverage level
-#' @param force logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning
+#' @param force Logical (default FALSE). Each TRUE call attempts fresh retrieval.
+#' For SOB exports, a failed download or invalid response falls back to a usable
+#' matching disk cache with an `rfcip_cache_fallback` warning.
+#' @details SOB results are cached on disk for the exact query. A successful
+#' refresh replaces that cache after all requested years have been validated.
+#' If saving fresh data fails, the fresh result is returned with an
+#' `rfcip_cache_write_warning`; the previous usable cache is preserved.
+#' Invalid arguments are errors, not reasons to return cached results.
+#' Insurance-plan filters resolve through the ADM A00460 lookup for the
+#' requested years (2011 for earlier years) and receive the refresh intent.
+#' Errors from the ADM lookup retain their own source and fallback behavior.
+#' Crop lookup remains separately memoised and does not gain a guaranteed
+#' refresh from this argument. SOBTPU bulk caching retains its existing behavior.
+#' Omitting `year` requests the current calendar year. Clearing SOB's disk
+#' cache removes its saved results; there is no additional SOB memory cache.
+#'
+#' Each yearly SOB export makes at most four attempts for HTTP 429, 502, 503,
+#' or 504 and recognized transient connection/transfer errors. Retry waits are
+#' approximately 1, 2, and 4 seconds with jitter. A server's `Retry-After`
+#' delay (seconds or HTTP date) is respected, including on 503. Total retry
+#' sleep is limited to 60 seconds per year; a longer required delay stops
+#' retrieval rather than retrying early. After failure, the usual forced-call
+#' cache fallback applies. Interruptions propagate immediately.
+#'
+#' Each transfer uses the R `timeout` option, explicitly passed to httr.
+#' It must be a finite numeric number of seconds between 0.001 and
+#' `.Machine$integer.max / 1000`. This transfer timeout is separate from the
+#' retry sleep budget; a multi-year call can take longer than 60 seconds.
+#' Other HTTP errors, certificate/local write errors, unrecognized transport
+#' errors, and invalid workbooks are not retried. Typed transport errors are
+#' recognized with curl 6.0.0 or later; older untyped errors fail immediately.
+#' An `rfcip_sob_download_error` retains `year`, `status` (when available),
+#' `attempts`, `url`, and the underlying `parent` condition (when available).
+#' These retries apply only to SOB exports, not ADM lookup or SOBTPU downloads.
 #' @return Returns a tibble
 #' @export
 #' @importFrom utils download.file
@@ -45,139 +78,81 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
                          sob_version = "sob",
                          force = FALSE) {
   
-  # input checking
-  stopifnot("`year` must be a numeric value or vector of numeric values." = is.numeric(year))
+  validate_sob_years(year)
+  validate_sob_force(force)
+  sob_version <- match.arg(sob_version, c("sob", "sobtpu"))
 
-  # initialize
-  full_data <- NULL
-  
-
-  # if sob_version is "sob", pull data from the application
-  if(sob_version == "sob"){
-    
-    # Generate cache key based on parameters
+  if (sob_version == "sob") {
     cache_params <- list(
-      year = year,
-      crop = crop,
-      delivery_type = delivery_type,
-      insurance_plan = insurance_plan,
-      state = state,
-      county = county,
-      fips = fips,
-      cov_lvl = cov_lvl,
-      comm_cat = comm_cat,
-      group_by = group_by
+      year = year, crop = crop, delivery_type = delivery_type,
+      insurance_plan = insurance_plan, state = state, county = county,
+      fips = fips, cov_lvl = cov_lvl, comm_cat = comm_cat, group_by = group_by
     )
-    
     cache_key <- generate_cache_key("sob", cache_params, "parquet")
-    dest_dir <- tools::R_user_dir("rfcip", which = "cache")
-    cache_file <- file.path(dest_dir, cache_key)
-    
-    # Check if data is already cached and force=FALSE
-    if (file.exists(cache_file) && !force) {
+    cache_file <- file.path(tools::R_user_dir("rfcip", which = "cache"), cache_key)
+    full_data <- if (!force) load_usable_sob_cache(cache_file) else NULL
+
+    if (!is.null(full_data)) {
       cli::cli_alert_info("Loading data from cache")
-      full_data <- load_cached_data(cache_file)
     } else {
-      # Download and cache new data
+      # Resolve and validate inputs before the download/fallback handler. Invalid
+      # arguments must not be hidden by a usable result cache on a forced call.
+      timeout <- sob_timeout()
+      plans <- if (!is.null(insurance_plan)) {
+        get_insurance_plan_codes(year = unique(year), plan = insurance_plan, force = force)
+      } else NULL
+      urls <- vapply(year, function(y) {
+        codes <- if (!is.null(plans)) {
+          unique(plans$insurance_plan_code[plans$commodity_year == max(y, 2011)])
+        } else NULL
+        if (!is.null(plans) && !length(codes)) {
+          stop("No matching insurance plan codes for lookup year ", max(y, 2011), ".")
+        }
+        get_sob_url(
+          year = y, crop = crop, delivery_type = delivery_type,
+          insurance_plan = insurance_plan, state = state, county = county,
+          fips = fips, cov_lvl = cov_lvl, comm_cat = comm_cat, group_by = group_by,
+          .insurance_plan_codes = codes
+        )
+      }, character(1))
+
       cli::cli_alert_info("Downloading and caching new data")
-      
-      success <- FALSE
-      
-      # initialize progress bar
-      cli::cli_progress_bar("Downloading summary of business data for specified crop years", total = length(year))
-      
-      # loop over years to avoid server timeout issues.
-      tryCatch({
-        for (y in year) {
-          
-          cli::cli_progress_update()
-          
-          url <- get_sob_url(
-            year = y,
-            crop = crop,
-            delivery_type = delivery_type,
-            insurance_plan = insurance_plan,
-            state = state,
-            county = county,
-            fips = fips,
-            cov_lvl = cov_lvl,
-            comm_cat = comm_cat,
-            group_by = group_by
+      progress <- cli::cli_progress_bar("Downloading summary of business data for specified crop years",
+                                        total = length(year))
+      fresh <- tryCatch({
+        pieces <- lapply(seq_along(year), function(i) {
+          cli::cli_progress_update(id = progress)
+          download_sob_year(urls[[i]], year[[i]], timeout)
+        })
+        convert_sob_types(validate_sob_data(dplyr::bind_rows(pieces)))
+      }, error = function(e) e)
+      cli::cli_progress_done(id = progress)
+
+      if (inherits(fresh, "error")) {
+        full_data <- if (force) load_usable_sob_cache(cache_file) else NULL
+        if (is.null(full_data)) stop(fresh)
+        warn_sob_cache(
+          paste0("SOB download failed; using cached data. ", conditionMessage(fresh)),
+          "rfcip_cache_fallback", cache_file, fresh
+        )
+      } else {
+        full_data <- fresh
+        # A persistence failure must not discard a valid freshly retrieved result.
+        tryCatch(save_sob_cache(full_data, cache_file), error = function(e) {
+          warn_sob_cache(
+            paste0("Returning fresh SOB data, but the cache could not be updated: ",
+                   conditionMessage(e)),
+            "rfcip_cache_write_warning", cache_file, e
           )
-      
-          temp_data <- tempfile(fileext = ".xlsx")
-      
-          download.file(url, destfile = temp_data, mode = "wb", quiet = T)
-      
-          data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data)))
-      
-          if (colnames(data)[2] == "x2") {
-            data <- suppressMessages(janitor::clean_names(readxl::read_excel(temp_data, skip = 1)))
-          }
-          
-          # remove the temporary file
-          unlink(temp_data)
-          
-          # convert all columns to character values
-          data <- dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
-          
-          # bind temp data to full data
-          full_data <- dplyr::bind_rows(full_data, data)
-        }
-        success <- TRUE
-      }, error = function(e) {
-        if (force && file.exists(cache_file)) {
-          cli::cli_alert_warning("Download failed, using cached data")
-          full_data <<- load_cached_data(cache_file)
-          success <<- TRUE
-        } else {
-          stop(e)
-        }
-      })
-        
-      # close progress bar
-      cli::cli_progress_done()
-      
-      # Cache the processed data only if download was successful
-      if (success && !file.exists(cache_file)) {
-        cache_processed_data(full_data, cache_key)
+        })
       }
     }
-    
+  } else {
+    full_data <- convert_sob_types(get_sobtpu_data(
+      year = year, crop = crop, insurance_plan = insurance_plan, state = state,
+      county = county, fips = fips, cov_lvl = cov_lvl, force = force
+    ))
   }
-  
-  # is sob_version is "sobtpu", pull data from bulk files
-  if(sob_version == "sobtpu"){
-    
-    # use the helper function get_sobtpu_data
-    full_data <- get_sobtpu_data(
-      year = year,
-      crop = crop,
-      insurance_plan = insurance_plan,
-      state = state,
-      county = county,
-      fips = fips,
-      cov_lvl = cov_lvl,
-      force = force
-    )
-    
-    
-  
-    
-  }
-  
-  # perform any type checking and converting here
-  full_data <- suppressMessages(
-    readr::type_convert(
-      full_data,
-      col_types = readr::cols(
-        commodity_code = readr::col_integer(),
-        insurance_plan_code = readr::col_integer(),
-        cov_level_percent = readr::col_double()
-        
-      )
-    )
-  )
 
   if (is.null(dest_file)) {
     return(full_data)
