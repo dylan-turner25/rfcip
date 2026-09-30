@@ -21,10 +21,17 @@ To look up crop codes, use the \code{get_crop_codes()} function.}
 \item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
 }
 \value{
-Returns a tibble containing data on project and harvest prices.
+Returns a tibble containing projected and harvest prices.
 }
 \description{
 Download RMA projected and harvest prices used for revenue protection insurance plans.
+}
+\details{
+Commodity codes are padded to four digits in requests. Empty or
+malformed cached responses are refreshed automatically. Fresh responses are
+parsed and validated before replacing the disk cache. Empty responses raise
+an explicit no-data error. Repeated forced calls attempt fresh downloads;
+a failed refresh can return a validated prior cache with a warning.
 }
 \examples{
 \dontrun{get_price_data(2024,"corn")}

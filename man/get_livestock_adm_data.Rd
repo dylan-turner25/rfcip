@@ -40,7 +40,9 @@ A data.frame containing the requested livestock ADM data, or
 Downloads and processes livestock actuarial reference data from the USDA RMA
 FTP server. This data includes pricing, yield, draw, and gross margin data
 for Dairy Revenue Protection (DRP), Livestock Risk Protection (LRP), and
-Livestock Gross Margin (LGM) insurance programs.
+Livestock Gross Margin (LGM) insurance programs. Commodity names and
+abbreviations are joined from ADM A00420 independently of the SOB crop lookup.
+If label retrieval fails, observations are retained with NA labels and a warning.
 }
 \details{
 The function accesses livestock actuarial data from

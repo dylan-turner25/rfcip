@@ -152,8 +152,12 @@ empty tibble.
 
 ### Finding crop and insurance-plan identifiers
 
-`get_crop_codes()` uses the ADM Commodity table (A00420), which includes crop and
-livestock commodities. Names and codes can be used for `crop`:
+`get_crop_codes()` uses a cascade of sources, starting with what has been cached 
+locally from previous function calls. On a cache
+miss it tries the SOB application, then the coverage-level bulk files. From the user perspective, 
+the details are hopefully not important as the function should just return the data in the same form,
+ regaurdless of what happens under the hood. Setting `force = TRUE` will pull data from source,
+  regaurdless of what is in the local cache:
 
 
 ``` r
@@ -392,7 +396,7 @@ lgm_data <- get_livestock_adm_data(year = 2020:2025, dataset = "lgm")
 fmmo <- get_livestock_adm_data(year = 2020:2024, dataset = "drp_fmmo_pricing")
 ```
 
-For LRP and LGM datasets, commodity names are automatically merged into the results using the `get_crop_codes()` lookup table, so you'll see `commodity_name` alongside `commodity_code` in the returned data.
+For LRP and LGM datasets, commodity names and abbreviations are joined directly from ADM A00420, independently of the SOB crop lookup. Historical files do not need the optional planting-code column. If label retrieval fails, the observations are retained with missing labels and a warning.
 
 ### The `date` Parameter
 
@@ -583,11 +587,14 @@ annual files when a download fails. A warning also reports when fresh data was
 retrieved but could not be saved to the cache. `force = TRUE` requests an update;
 it cannot guarantee a fresh result during an outage.
 
-`get_sob_data()` and `get_insurance_plan_codes()` no longer keep an additional
-memoised result in memory. Some other functions, including `get_crop_codes()`,
-`get_col_data()`, `get_price_data()`, and `get_livestock_data()`, still do. Their
-existing cache behavior is unchanged, and clearing disk files does not clear
-those separate session results.
+`get_sob_data()`, `get_insurance_plan_codes()`, `get_crop_codes()`, and
+`get_price_data()` do not keep an additional memoised result in memory.
+`get_col_data()` and `get_livestock_data()` still do; clearing their disk files
+does not clear those separate session results. Crop lookups cache all commodities
+for each year before filtering. `clear_rfcip_cache(function_name = "get_crop_codes")`
+removes these lookups while retaining the shared SOB COV ZIPs. Price downloads
+validate responses before caching and automatically refresh empty or malformed
+old cache entries. Commodity codes are padded to four digits in service URLs.
 
 ## Inspecting and clearing the cache
 

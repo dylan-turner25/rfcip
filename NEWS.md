@@ -1,6 +1,25 @@
 # NEWS
 
-## Development version
+## rfcip 1.1.0 (2026-09-30)
+
+* Crop-code lookup now uses a validated per-year disk cache, then the SOB
+  application and SOB COV bulk fallback. Annual bulk ZIPs are shared with
+  `get_sob_data()`. Failed refreshes preserve a usable lookup with a warning;
+  bulk publication/commodity coverage differences are reported. Clear compact
+  lookups with `clear_rfcip_cache(function_name = "get_crop_codes")`.
+* Crop filters accept names, numeric codes, and padded character codes. Every
+  requested identifier must match; invalid and partially matched requests no
+  longer broaden filters or silently drop crops. SOB/SOBTPU/price callers pass
+  the requested lookup years and refresh flag.
+* Crop codes remain integers. The existing `commodity_abbreviation` and
+  `annual_planting_code` columns now contain `NA_character_`, since SOB supplies
+  neither. Livestock ADM names/abbreviations use a separate A00420 lookup that
+  supports historical schemas and preserves observations if labels are unavailable.
+* Price requests pad codes to four digits, refresh unusable old XML caches,
+  reject empty/invalid responses before caching, and preserve usable caches on
+  failed refreshes or writes. Missing final newlines no longer cause warnings.
+* Removed crop and price memoisation so repeated forced calls and disk-cache
+  clearing take effect immediately. Reload the package to activate the load hook.
 
 * Added `log = FALSE` to `get_sob_data()`. Set `log = TRUE` to show each year's
   API request and success, bulk fallback, bulk download or cache use, and retry
@@ -40,8 +59,8 @@
   arguments and ADM lookup errors are not disguised as SOB download failures.
 * Added `clear_rfcip_cache(function_name = "get_insurance_plan_codes")` for
   A00460 and legacy plan caches. Other ADM datasets are preserved.
-* Crop-code memoisation and generic ADM cache behavior are unchanged. Reload
-  the package after updating to activate the revised load hook.
+* Generic ADM cache behavior is unchanged. Reload the package after updating
+  to activate the revised load hook.
 * SOB exports now retry HTTP 429/502/503/504 and recognized transient transport
   failures, with at most four attempts per year and exponential waits with
   jitter. `Retry-After` seconds and HTTP dates are respected within a cumulative

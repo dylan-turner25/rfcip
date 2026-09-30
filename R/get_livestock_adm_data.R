@@ -19,7 +19,9 @@ LIVESTOCK_ADM_DATASETS <- list(
 #' Downloads and processes livestock actuarial reference data from the USDA RMA
 #' FTP server. This data includes pricing, yield, draw, and gross margin data
 #' for Dairy Revenue Protection (DRP), Livestock Risk Protection (LRP), and
-#' Livestock Gross Margin (LGM) insurance programs.
+#' Livestock Gross Margin (LGM) insurance programs. Commodity names and
+#' abbreviations are joined from ADM A00420 independently of the SOB crop lookup.
+#' If label retrieval fails, observations are retained with NA labels and a warning.
 #'
 #' @param year Numeric vector. The year(s) of livestock ADM data to retrieve
 #'   (2014-2026). Defaults to the current year.
@@ -292,9 +294,7 @@ get_livestock_adm_data <- function(
 
   # Merge in commodity names if commodity_code exists in the data
   if ("commodity_code" %in% names(result)) {
-    crop_codes <- get_crop_codes(year = year)
-    crop_codes <- crop_codes[, c("commodity_code", "commodity_name", "commodity_abbreviation")]
-    crop_codes <- unique(crop_codes)
+    crop_codes <- livestock_commodity_labels(year = year, force = force)
     result <- dplyr::left_join(result, crop_codes, by = "commodity_code")
   }
 

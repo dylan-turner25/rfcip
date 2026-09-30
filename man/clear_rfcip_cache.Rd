@@ -8,7 +8,7 @@ clear_rfcip_cache(function_name = NULL, years = NULL, program = NULL)
 }
 \arguments{
 \item{function_name}{Character. Optional function name to clear cache for
-(e.g., "get_sob_data", "get_col_data", "get_insurance_plan_codes"). If NULL, clears all cache.}
+(e.g., "get_sob_data", "get_crop_codes", "get_insurance_plan_codes"). If NULL, clears all cache.}
 
 \item{years}{Numeric vector. Optional years to clear from cache. For
 \code{get_insurance_plan_codes}, pre-2011 years also clear the effective 2011 ADM asset.}
@@ -27,7 +27,9 @@ or filter by function type, specific years, or other criteria.
 Plan-code clearing removes A00460 assets and legacy
 \code{insurance_plans_} Excel caches. Clearing SOB results does not clear plan
 lookup assets. The \code{get_sob_data} selector includes API report caches, SOBTPU,
-and SOB COV annual ZIPs. Other package functions may retain separate memoised results.
+and SOB COV annual ZIPs. The \code{get_crop_codes} selector removes compact lookups
+and legacy crop-code Excel caches, retaining shared SOB COV ZIPs and ADM assets.
+Crop and price lookups do not retain separate memoised results.
 }
 \examples{
 \dontrun{
@@ -39,6 +41,9 @@ clear_rfcip_cache(function_name = "get_sob_data")
 
 # Clear ADM plan lookup assets and legacy plan caches
 clear_rfcip_cache(function_name = "get_insurance_plan_codes")
+
+# Clear crop lookups without deleting shared bulk files
+clear_rfcip_cache(function_name = "get_crop_codes")
 
 # Clear specific years
 clear_rfcip_cache(years = 2023)

@@ -4,7 +4,7 @@
 \alias{get_crop_codes}
 \title{Lookup crop codes for FCIP commodities}
 \source{
-Data is sourced from the USDA RMA Actuarial Data Master commodity table (A00420).
+USDA RMA Summary of Business application and bulk data.
 }
 \usage{
 get_crop_codes(
@@ -14,17 +14,33 @@ get_crop_codes(
 )
 }
 \arguments{
-\item{year}{A single numeric value, or vector of numeric values, indicating what years of the ADM commodity table should be used to get crop names and crop codes. Defaults to the current year.}
+\item{year}{A numeric crop year or vector of crop years. Defaults to the
+current year. SOB bulk fallback is available from 1989 onward; earlier years
+require the SOB application or a previously cached lookup.}
 
-\item{crop}{A vector of either character strings with commodity names (not case sensitive) or a vector with numeric crop codes. Can be left NULL to return crop codes for all commodities.}
+\item{crop}{A vector of commodity names (not case sensitive) or numeric crop
+codes. Character codes and mixed names/codes are also accepted. NULL returns
+all commodities present in the requested years. Every identifier must match.}
 
-\item{force}{logical (default FALSE). If TRUE, attempts to download fresh data regardless of cache, but falls back to cached data on failure with a warning}
+\item{force}{Logical. If TRUE, refresh from the application, then bulk data
+on failure. If both fail, use a validated prior lookup with a warning.}
 }
 \value{
-Returns a data frame containing commodity_year, commodity_code, commodity_name, commodity_abbreviation, and annual_planting_code.
+A data frame containing commodity_year, numeric commodity_code, and
+commodity_name. The compatibility columns commodity_abbreviation and
+annual_planting_code are NA_character_: SOB does not supply these ADM fields.
 }
 \description{
 Lookup crop codes for FCIP commodities
+}
+\details{
+A complete, validated lookup is cached separately for each year,
+before filtering by crop. On a cache miss, the SOB application is tried first,
+followed by the state/county/crop coverage-level bulk file. Bulk ZIP caches
+are shared with get_sob_data(). Application and bulk publication/coverage can
+differ; fallback emits a warning. An absent crop is never replaced by other
+crops. Multi-year filters match against the union of the requested years.
+Lookup failure does not imply that a commodity has no actuarial offer.
 }
 \examples{
 \dontrun{
@@ -33,7 +49,6 @@ get_crop_codes(year = 2024, crop = 41)
 get_crop_codes(crop = c("corn", "SOYbEaNs"))
 get_crop_codes(crop = c(41, 81))
 get_crop_codes()
-get_crop_codes(year = 2024, force = TRUE)  # Force fresh download
+get_crop_codes(year = 2024, force = TRUE)
 }
-
 }

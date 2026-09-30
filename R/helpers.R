@@ -157,7 +157,7 @@ get_sobtpu_data <- function(year = NULL,
   
   # clean crop entry
   if (!is.null(crop)) {
-    crop <- as.numeric(data.frame(get_crop_codes(crop = crop))[, "commodity_code"])
+    crop <- unique(as.numeric(get_crop_codes(year = year, crop = crop, force = force)$commodity_code))
   }
   
   # clean insurance plan entry
@@ -593,8 +593,8 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
 
   # clean crop entry
   if (!is.null(crop)) {
-    crop <- data.frame(get_crop_codes(crop = crop))[, "commodity_code"]
-    crop <- sprintf("%04d", as.numeric(crop))
+    crop <- get_crop_codes(year = year, crop = crop, force = force)$commodity_code
+    crop <- unique(sprintf("%04d", as.numeric(as.character(crop))))
   }
 
   # clean insurance plan entry
@@ -1006,7 +1006,7 @@ restore_factor_levels <- function(data, filename) {
 #' or filter by function type, specific years, or other criteria.
 #'
 #' @param function_name Character. Optional function name to clear cache for 
-#'   (e.g., "get_sob_data", "get_col_data", "get_insurance_plan_codes"). If NULL, clears all cache.
+#'   (e.g., "get_sob_data", "get_crop_codes", "get_insurance_plan_codes"). If NULL, clears all cache.
 #' @param years Numeric vector. Optional years to clear from cache. For
 #'   `get_insurance_plan_codes`, pre-2011 years also clear the effective 2011 ADM asset.
 #' @param program Character. Optional program to clear (for livestock data).
@@ -1016,7 +1016,9 @@ restore_factor_levels <- function(data, filename) {
 #' @details Plan-code clearing removes A00460 assets and legacy
 #' `insurance_plans_` Excel caches. Clearing SOB results does not clear plan
 #' lookup assets. The `get_sob_data` selector includes API report caches, SOBTPU,
-#' and SOB COV annual ZIPs. Other package functions may retain separate memoised results.
+#' and SOB COV annual ZIPs. The `get_crop_codes` selector removes compact lookups
+#' and legacy crop-code Excel caches, retaining shared SOB COV ZIPs and ADM assets.
+#' Crop and price lookups do not retain separate memoised results.
 #'
 #' @examples
 #' \dontrun{
@@ -1029,6 +1031,9 @@ restore_factor_levels <- function(data, filename) {
 #' # Clear ADM plan lookup assets and legacy plan caches
 #' clear_rfcip_cache(function_name = "get_insurance_plan_codes")
 #' 
+#' # Clear crop lookups without deleting shared bulk files
+#' clear_rfcip_cache(function_name = "get_crop_codes")
+#'
 #' # Clear specific years
 #' clear_rfcip_cache(years = 2023)
 #' 
@@ -1058,6 +1063,7 @@ clear_rfcip_cache <- function(function_name = NULL, years = NULL, program = NULL
     pattern <- switch(function_name,
       "get_sob_data" = "^(sob_|sobtpu_|sobcov_)",
       "get_insurance_plan_codes" = "^(insurance_plans_|[0-9]{4}_A00460(_|[.]))",
+      "get_crop_codes" = "^crop_codes_",
       "get_col_data" = "^col_",
       "get_livestock_data" = "^livestock_",
       "get_price_data" = "^price_",
@@ -1416,7 +1422,8 @@ get_cache_info <- function() {
                         ifelse(grepl("^col_", result$filename), "get_col_data",
                         ifelse(grepl("^livestock_", result$filename), "get_livestock_data",
                         ifelse(grepl("^price_", result$filename), "get_price_data",
-                        "ADM or other"))))))
+                        ifelse(grepl("^crop_codes_", result$filename), "get_crop_codes",
+                        "ADM or other")))))))
 
   # Add description column for hashed cache keys
   result$description <- ""

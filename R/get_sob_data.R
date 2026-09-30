@@ -171,7 +171,7 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
           year = y, crop = crop, delivery_type = delivery_type,
           insurance_plan = insurance_plan, state = state, county = county,
           fips = fips, cov_lvl = cov_lvl, comm_cat = comm_cat, group_by = group_by,
-          .insurance_plan_codes = codes
+          force = force, .insurance_plan_codes = codes
         )
       }, character(1))
 

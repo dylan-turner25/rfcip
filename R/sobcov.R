@@ -92,7 +92,7 @@ locate_sobcov_links <- function(log = FALSE) {
   data.frame(year = years, url = unname(urls))
 }
 
-new_sobcov_loader <- function(force = FALSE, log = FALSE) {
+new_sobcov_loader <- function(force = FALSE, log = FALSE, fallback_to_cache = TRUE) {
   links <- NULL
   function(year) {
     if (year < 1989) stop("SOB COV files are available from 1989 onward; cannot retrieve ", year, ".")
@@ -119,7 +119,7 @@ new_sobcov_loader <- function(force = FALSE, log = FALSE) {
       process_sobcov_zip(path, year)
     }, error = function(e) e)
     if (inherits(fresh, "error")) {
-      if (is.null(cached)) stop(fresh)
+      if (is.null(cached) || !fallback_to_cache) stop(fresh)
       if (log) cli::cli_alert_info("SOB COV year {year}: refresh failed; loading cached bulk data.")
       warn_sob_cache(paste0("SOB COV year ", year, " refresh failed; using cached data. ",
                             conditionMessage(fresh)), "rfcip_cache_fallback", target, fresh)
