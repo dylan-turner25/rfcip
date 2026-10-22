@@ -24,12 +24,17 @@ convert_sob_types <- function(data) {
   )))
 }
 
+# Reinsurance-year exports carry reinsurance_year in place of commodity_year.
+sob_year_column <- function(data) {
+  if ("reinsurance_year" %in% names(data)) "reinsurance_year" else "commodity_year"
+}
+
 validate_sob_data <- function(data) {
   if (!is.data.frame(data) ||
-      !all(c("commodity_year", "policies_sold") %in% names(data))) {
+      !all(c(sob_year_column(data), "policies_sold") %in% names(data))) {
     stop("Invalid SOB data: missing commodity_year or policies_sold.")
   }
-  years <- suppressWarnings(as.numeric(as.character(data$commodity_year)))
+  years <- suppressWarnings(as.numeric(as.character(data[[sob_year_column(data)]])))
   counts <- suppressWarnings(as.numeric(as.character(data$policies_sold)))
   if (anyNA(years) || any(!is.finite(years)) || any(years != floor(years)) ||
       any(!is.na(data$policies_sold) & is.na(counts))) {
@@ -54,8 +59,8 @@ download_sob_year <- function(url, year, timeout = sob_timeout(), log = FALSE) {
       data <- suppressMessages(janitor::clean_names(readxl::read_excel(path, skip = 1)))
     }
     validate_sob_data(data)
-    if (any(as.numeric(as.character(data$commodity_year)) != year)) {
-      stop("Workbook contains a different commodity year than requested.")
+    if (any(as.numeric(as.character(data[[sob_year_column(data)]])) != year)) {
+      stop("Workbook contains a different year than requested.")
     }
     dplyr::mutate(data, dplyr::across(dplyr::everything(), as.character))
   }, error = function(e) {

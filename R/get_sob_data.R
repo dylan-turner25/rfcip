@@ -26,6 +26,12 @@
 #' For default SOB calls, API retry exhaustion first attempts the yearly SOB COV
 #' backup, forwarding force. A failed forced retrieval can return a usable matching
 #' disk cache with an `rfcip_cache_fallback` warning.
+#' @param year_type Either `"commodity"` (the default) or `"reinsurance"`. With
+#' `"reinsurance"`, `year` is read as the reinsurance year (July 1 of the prior
+#' year to June 30), RMA assigns each policy by its sales closing date, and the
+#' result has a `reinsurance_year` column in place of `commodity_year`. Only
+#' available from the API (`sob_version = "sob"`); bulk files are commodity
+#' year only, so API failures are not backed up by SOB COV.
 #' @param log Logical (default FALSE). If TRUE, show detailed per-year API and
 #' SOB COV source, cache, success, and retry messages. Progress bars, warnings,
 #' errors, and existing messages from other data sources are unaffected.
@@ -117,6 +123,7 @@
 #' get_sob_data(year = 2008:2020, sob_version = "sobcov")
 #' get_sob_data(year = 2008:2020, log = TRUE)
 #' get_sob_data(year = 2024, crop = "corn", state = "IA", sob_version = "sobcov")
+#' get_sob_data(year = 2025, comm_cat = "S", year_type = "reinsurance")
 #' }
 #' @source Data is downloaded directly from RMA's summary of business app: \url{https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator}
 get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")), 
@@ -132,7 +139,8 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
                          group_by = NULL,
                          sob_version = "sob",
                          force = FALSE,
-                         log = FALSE) {
+                         log = FALSE,
+                         year_type = "commodity") {
   
   validate_sob_years(year)
   validate_sob_force(force)
@@ -140,6 +148,10 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
     stop("`log` must be TRUE or FALSE.")
   }
   sob_version <- match.arg(sob_version, c("sob", "sobtpu", "sobcov"))
+  year_type <- match.arg(year_type, c("commodity", "reinsurance"))
+  if (year_type == "reinsurance" && sob_version != "sob") {
+    stop("`year_type = \"reinsurance\"` is only available with `sob_version = \"sob\"`; bulk files are commodity year only.")
+  }
 
   if (sob_version == "sob") {
     cache_params <- list(
@@ -147,6 +159,8 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
       insurance_plan = insurance_plan, state = state, county = county,
       fips = fips, cov_lvl = cov_lvl, comm_cat = comm_cat, group_by = group_by
     )
+    # Added only for reinsurance year so existing commodity-year cache keys are unchanged.
+    if (year_type == "reinsurance") cache_params$year_type <- year_type
     cache_key <- generate_cache_key("sob", cache_params, "parquet")
     cache_file <- file.path(tools::R_user_dir("rfcip", which = "cache"), cache_key)
     full_data <- if (!force) load_usable_sob_cache(cache_file) else NULL
@@ -171,7 +185,7 @@ get_sob_data <- function(year = as.numeric(format(Sys.Date(), "%Y")),
           year = y, crop = crop, delivery_type = delivery_type,
           insurance_plan = insurance_plan, state = state, county = county,
           fips = fips, cov_lvl = cov_lvl, comm_cat = comm_cat, group_by = group_by,
-          force = force, .insurance_plan_codes = codes
+          force = force, .insurance_plan_codes = codes, year_type = year_type
         )
       }, character(1))
 

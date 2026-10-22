@@ -213,3 +213,34 @@ test_that("cache replacement rolls back on platforms without overwrite rename", 
   expect_equal(readLines(old), "new")
   expect_length(list.files(dir), 1)
 })
+
+test_that("reinsurance-year calls return reinsurance_year and cache separately", {
+  cache <- local_sob_cache()
+  state <- local_sob_download()
+  cy <- get_sob_data(2024)
+  ry <- get_sob_data(2024, year_type = "reinsurance")
+  expect_true(grepl("[?&]RY=2024&", state$urls[2]))
+  expect_true(all(ry$reinsurance_year == 2024))
+  expect_false("commodity_year" %in% names(ry))
+  expect_true("commodity_year" %in% names(cy))
+  expect_length(list.files(cache, pattern = "parquet$"), 2)
+  expect_equal(get_sob_data(2024, year_type = "reinsurance"), ry)
+  expect_equal(length(state$urls), 2)
+})
+
+test_that("reinsurance-year calls never fall back to commodity-year bulk files", {
+  local_sob_cache()
+  state <- local_sob_download()
+  state$fail <- TRUE
+  loader <- 0
+  local_mocked_bindings(new_sobcov_loader = function(...) function(year) {
+    loader <<- loader + 1
+    stop("bulk should not be used")
+  })
+  expect_error(get_sob_data(2024, year_type = "reinsurance"),
+               class = "rfcip_sob_download_error")
+  expect_equal(loader, 0)
+  expect_error(get_sob_data(2024, sob_version = "sobcov", year_type = "reinsurance"),
+               "commodity year only")
+  expect_error(get_sob_data(2024, year_type = "crop"))
+})

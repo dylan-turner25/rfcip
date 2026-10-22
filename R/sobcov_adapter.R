@@ -77,7 +77,9 @@ sob_year_with_backup <- function(url, year, timeout, bulk_loader, log = FALSE) {
     if (log) cli::cli_alert_success("SOB year {year}: API data received.")
     return(list(data = api, source = "api"))
   }
-  if (!sob_backup_eligible(api)) stop(api)
+  # Bulk SOB COV files are commodity year only, so reinsurance-year requests
+  # have no backup source.
+  if (!sob_backup_eligible(api) || !is.null(httr::parse_url(url)$query$RY)) stop(api)
   bulk <- tryCatch({
     # Reject unsupported source semantics before unnecessary bulk downloads.
     validate_sobcov_options(httr::parse_url(url)$query$CC)

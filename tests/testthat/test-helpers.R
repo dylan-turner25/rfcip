@@ -46,6 +46,15 @@ test_that("get_sob_url does not duplicate ORD codes when a filter and group_by o
   expect_true(grepl("ORD=CY,ST,CT&", url, fixed = TRUE))
 })
 
+test_that("get_sob_url requests reinsurance year with RY and ReinsuranceYear", {
+  url <- get_sob_url(year = 2025, crop = NULL, group_by = c("year", "state"),
+                     year_type = "reinsurance")
+  expect_true(grepl("?RY=2025&", url, fixed = TRUE))
+  expect_true(grepl("ORD=RY,ST&", url, fixed = TRUE))
+  expect_true(grepl("VisibleColumns=ReinsuranceYear,", url, fixed = TRUE))
+  expect_false(grepl("CY=|CommodityYear", url))
+})
+
 test_that("get_sob_url treats group_by fips as state plus county", {
   url <- get_sob_url(year = 2023, crop = NULL, group_by = "fips")
   expect_true(grepl("ORD=CY,ST,CT&", url, fixed = TRUE))

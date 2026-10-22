@@ -35,7 +35,7 @@ local_sob_download <- function(.env = parent.frame()) {
     destfile <- path
     state$urls <- c(state$urls, url)
     state$paths <- c(state$paths, destfile)
-    year <- as.numeric(sub(".*[?&]CY=([0-9]+).*", "\\1", url))
+    year <- as.numeric(sub(".*[?&][CR]Y=([0-9]+).*", "\\1", url))
     status <- if (state$fail || identical(year, state$fail_year)) 503L else 200L
     if (length(state$statuses)) {
       status <- state$statuses[1L]
@@ -48,6 +48,7 @@ local_sob_download <- function(.env = parent.frame()) {
     } else {
       data <- create_mock_sob_data()
       data$commodity_year <- year
+      if (grepl("[?&]RY=", url)) names(data)[names(data) == "commodity_year"] <- "reinsurance_year"
       data$total_prem <- state$marker
       writexl::write_xlsx(data, destfile)
     }

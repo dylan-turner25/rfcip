@@ -21,7 +21,8 @@ get_sob_data(
   group_by = NULL,
   sob_version = "sob",
   force = FALSE,
-  log = FALSE
+  log = FALSE,
+  year_type = "commodity"
 )
 }
 \arguments{
@@ -67,6 +68,13 @@ disk cache with an \code{rfcip_cache_fallback} warning.}
 \item{log}{Logical (default FALSE). If TRUE, show detailed per-year API and
 SOB COV source, cache, success, and retry messages. Progress bars, warnings,
 errors, and existing messages from other data sources are unaffected.}
+
+\item{year_type}{Either \code{"commodity"} (the default) or \code{"reinsurance"}. With
+\code{"reinsurance"}, \code{year} is read as the reinsurance year (July 1 of the prior
+year to June 30), RMA assigns each policy by its sales closing date, and the
+result has a \code{reinsurance_year} column in place of \code{commodity_year}. Only
+available from the API (\code{sob_version = "sob"}); bulk files are commodity
+year only, so API failures are not backed up by SOB COV.}
 }
 \value{
 Returns a tibble
@@ -159,5 +167,6 @@ get_sob_data(year = 2022, crop = c(41, 81), group_by = "state")
 get_sob_data(year = 2008:2020, sob_version = "sobcov")
 get_sob_data(year = 2008:2020, log = TRUE)
 get_sob_data(year = 2024, crop = "corn", state = "IA", sob_version = "sobcov")
+get_sob_data(year = 2025, comm_cat = "S", year_type = "reinsurance")
 }
 }

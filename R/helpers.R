@@ -583,12 +583,16 @@ include_and <- function(url){
 #' @keywords internal
 #' @importFrom usmap fips
 #'
-get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", group_by = NULL, force = FALSE, .insurance_plan_codes = NULL) {
+get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), delivery_type = NULL, insurance_plan = NULL, state = NULL, county = NULL, fips = NULL, cov_lvl = NULL, comm_cat = "B", group_by = NULL, force = FALSE, .insurance_plan_codes = NULL, year_type = "commodity") {
+  # the API filters and labels rows by either commodity year (CY) or reinsurance year (RY)
+  year_code <- if (year_type == "reinsurance") "RY" else "CY"
+
   # define the prefix and suffix of the URL string (i.e. these are constant)
   prefix <- "https://public-rma.fpac.usda.gov/apps/SummaryOfBusiness/ReportGenerator/ExportToExcel?"
 
 
   suffix <- "&VisibleColumns=CommodityYear,CommodityName,CommodityCode,LocationStateAbbreviation,LocationStateCode,LocationCountyName,LocationCountyCode,DeliveryTypeCode,DeliveryTypeName,InsurancePlanAbbreviation,InsurancePlanCode,InsurancePlanName,CoverageLevelPercent,PolicySoldCount,PolicyPremiumCount,PolicyIndemnityCount,UnitPremiumCount,UnitIndemnityCount,CommodityReportingLevelAmount,CommodityReportingLevelType,EndorsedReportingLevelAmount,LiabilityAmount,TotalPremiumAmount,SubsidyAmount,IndemnityAmount,EFAPremiumAmount,AdditionalSubsidyAmount,StatePrivateSubsidyAmount,PccpStateMatchingAmount,OrganicCertifiedSubsidyAmount,OrganicTransitionalSubsidyAmount,EarnPremiumRate,loss_ratio&SortField=&SortDir="
+  if (year_code == "RY") suffix <- sub("CommodityYear", "ReinsuranceYear", suffix, fixed = TRUE)
 
 
   # clean crop entry
@@ -628,8 +632,8 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
 
   # year
   if (!is.null(year)) {
-    parameter_string <- paste0(parameter_string, "CY=", paste(year, collapse = ","), "&")
-    ORD <- append(ORD, "CY")
+    parameter_string <- paste0(parameter_string, year_code, "=", paste(year, collapse = ","), "&")
+    ORD <- append(ORD, year_code)
   }
 
   # commodity
@@ -705,6 +709,7 @@ get_sob_url <- function(year = c(2023, 2024), crop = c("corn", "soybeans"), deli
       group_by <- c(group_by, "state")
     }
 
+    names(group_by_codes)[group_by_codes == "year"] <- year_code
     ORD <- append(ORD, names(group_by_codes)[group_by_codes %in% group_by])
   }
 

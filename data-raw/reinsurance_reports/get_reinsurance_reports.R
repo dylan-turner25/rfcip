@@ -44,11 +44,25 @@ download_reinsurance_reports <- function(year,geography,type = "standard",livest
     # set temporary directory
     file <-tempfile(fileext = ".xls")
     
-    # download the file from RMA's website to a temporary file
-    download.file(url=paste0("https://public-rma.fpac.usda.gov/apps/ReinsuranceReports/Areas/GetReinsuranceReport?",
-                             "reinsuranceYear=",year,"&reportType=",geography,"&reportFormat=EXCEL"), 
-                  destfile = file,
-                  method = "curl", mode = "wb")
+    # download the file from RMA's website to a temporary file. The app only
+    # accepts a POST carrying the anti-forgery token (and cookie) from its form
+    # page; the old GET URL returns HTTP 405.
+    app <- "https://public-rma.fpac.usda.gov/apps/ReinsuranceReports/"
+    handle <- httr::handle(app)
+    page <- httr::content(httr::GET(app, handle = handle), as = "text", encoding = "UTF-8")
+    token <- sub('.*name="__RequestVerificationToken"[^>]*value="([^"]*)".*', "\\1", page)
+    response <- httr::POST(paste0(app, "Areas/GetReinsuranceReport"), handle = handle,
+                           body = list(`__RequestVerificationToken` = token,
+                                       ReinsuranceYear = year,
+                                       ReportType = geography,
+                                       reportFormat = "EXCEL"),
+                           encode = "form", httr::write_disk(file, overwrite = TRUE))
+    # unpublished years come back as an HTML page rather than a workbook
+    if (httr::status_code(response) != 200 ||
+        !grepl("excel", httr::headers(response)[["content-type"]])) {
+      stop("no report published (HTTP ", httr::status_code(response), ", ",
+           httr::headers(response)[["content-type"]], ")")
+    }
     
 
     # load the data from the temporary file
@@ -127,7 +141,9 @@ download_reinsurance_reports <- function(year,geography,type = "standard",livest
                         geography,"_", year, ".rds")
     saveRDS(data, file_path)
     
-  }, error=function(e){})
+  }, error=function(e){
+    warning("Standard reinsurance report ", year, " (", geography, ") not saved: ", conditionMessage(e), call. = FALSE)
+  })
   }
   
   if(type == "livestock"){
@@ -222,7 +238,9 @@ download_reinsurance_reports <- function(year,geography,type = "standard",livest
                           geography,"_", year, ".rds")
       saveRDS(data, file_path)
       
-    }, error=function(e){})
+    }, error=function(e){
+      warning("Livestock reinsurance report ", year, " not saved: ", conditionMessage(e), call. = FALSE)
+    })
   }
 }
 
@@ -301,7 +319,6 @@ mapply(FUN = download_reinsurance_reports,
        year = 1998:as.numeric(format(Sys.Date(),"%Y")), 
        MoreArgs = list(geography = "state", type = "standard"))
 
-download_reinsurance_reports(2020, geography = "state", type = "standard")
 # download and save national reinsurance reports for livestock reinsurance agreement
 
 # links for the livestock reinsurance report excel files. RMA publishes these in
