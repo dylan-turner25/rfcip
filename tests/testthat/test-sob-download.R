@@ -159,12 +159,24 @@ test_that("the R timeout is validated and passed to every httr transfer", {
   }
   expect_equal(sob_timeout(0.001), 0.001)
   captured <- NULL
-  local_mocked_bindings(GET = function(url, ...) {
-    captured <<- list(url = url, configs = list(...))
+  local_mocked_bindings(GET = function(url, ..., handle = NULL) {
+    captured <<- list(url = url, configs = list(...), handle = handle)
   }, .package = "httr")
   sob_http_request("https://example.invalid/export", state$path, 17)
   expect_equal(captured$configs[[1]]$options$timeout_ms, 17000)
   expect_equal(captured$configs[[2]]$output$path, state$path)
+})
+
+test_that("each SOB request uses a fresh handle so retries can reach another backend", {
+  handles <- list()
+  local_mocked_bindings(GET = function(url, ..., handle = NULL) {
+    handles[[length(handles) + 1L]] <<- handle
+  }, .package = "httr")
+  path <- tempfile()
+  sob_http_request("https://example.invalid/export", path, 17)
+  sob_http_request("https://example.invalid/export", path, 17)
+  expect_s3_class(handles[[1]], "handle")
+  expect_false(identical(handles[[1]]$handle, handles[[2]]$handle))
 })
 
 test_that("invalid timeout settings cannot turn a forced call into cached fallback", {

@@ -9,7 +9,11 @@ sob_timeout <- function(seconds = getOption("timeout", 60)) {
 }
 
 sob_http_request <- function(url, path, timeout) {
-  httr::GET(url, httr::timeout(timeout), httr::write_disk(path, overwrite = TRUE))
+  # RMA's load balancer sets a sticky AWSALB cookie even on a 503 from an
+  # unhealthy backend. httr's shared per-host handle would keep that cookie and
+  # send every retry (and later call) to the same backend, so use a fresh handle.
+  httr::GET(url, handle = httr::handle(url), httr::timeout(timeout),
+            httr::write_disk(path, overwrite = TRUE))
 }
 
 sob_transient_error <- function(error) {
